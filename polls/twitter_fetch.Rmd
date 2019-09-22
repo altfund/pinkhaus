@@ -1,0 +1,196 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+Chunks from `https://www.promptcloud.com/blog/data-mining-analytics-emma-watson-tweets-with-r/`
+
+```{r}
+install.packages("httr")
+install.packages("rtweet")
+library("httr")
+library("rtweet")
+# the name of the twitter app created by you
+appname <- "tweet-analytics"
+# api key (replace the following sample with your key)
+key <- "8YnCioFqKFaebTwjoQfcVLPS"
+# api secret (replace the following with your secret)
+secret <- "uSzkAOXnNpSDsaDAaDDDSddsA6Cukfds8a3tRtSG"
+# create token named "twitter_token"
+twitter_token <- create_token(
+app = appname,
+consumer_key = key,
+consumer_secret = secret)
+#Downloading the tweets posted by Emma Watson
+ew_tweets <- get_timeline("EmmaWatson", n = 3200)
+```
+
+```{r}
+install.packages("ggplot2")
+install.packages("lubridate")
+library("ggplot2")
+library("lubridate")
+
+ggplot(data = ew_tweets,
+  aes(month(created_at, label=TRUE, abbr=TRUE),
+  group=factor(year(created_at)), color=factor(year(created_at))))+
+  geom_line(stat="count") +
+  geom_point(stat="count") +
+  labs(x="Month", colour="Year") +
+  xlab("Month") + ylab("Number of tweets") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(data = ew_tweets, aes(x = year(created_at))) +
+  geom_bar(aes(fill = ..count..)) +
+  xlab("Year") + ylab("Number of tweets") +
+  scale_x_continuous (breaks = c(2010:2018)) +
+  theme_minimal() +
+  scale_fill_gradient(low = "cadetblue3", high = "chartreuse4")
+```
+
+```{r}
+ggplot(data = ew_tweets, aes(x = month(created_at, label = TRUE))) +
+  geom_bar(aes(fill = ..count..)) +
+  xlab("Month") + ylab("Number of tweets") + 
+  theme_minimal() +
+  scale_fill_gradient(low = "cadetblue3", high = "chartreuse4")
+```
+
+```{r}
+ggplot(data = ew_tweets, aes(x = wday(created_at, label = TRUE))) +
+  geom_bar(aes(fill = ..count..)) +
+  xlab("Day of the week") + ylab("Number of tweets") + 
+  theme_minimal() +
+  scale_fill_gradient(low = "turquoise3", high = "darkgreen")
+```
+
+```{r}
+# package to store and format time of the day
+install.packages("hms")
+# package to add time breaks and labels
+install.packages("scales")
+library("hms")
+library("scales")
+# Extract only time from the timestamp, i.e., hour, minute and second 
+ew_tweets$time <- hms::hms(second(ew_tweets$created_at), 
+			          minute(ew_tweets$created_at), 
+			          hour(ew_tweets$created_at))
+# Converting to `POSIXct` as ggplot isn’t compatible with `hms`
+ew_tweets$time <- as.POSIXct(ew_tweets$time)
+ggplot(data = ew_tweets)+
+       geom_density(aes(x = time, y = ..scaled..),
+       fill="darkolivegreen4", alpha=0.3) + 
+       xlab("Time") + ylab("Density") +
+       scale_x_datetime(breaks = date_breaks("2 hours"), 
+       labels = date_format("%H:%M")) +
+       theme_minimal()
+```
+
+```{r}
+ggplot(data = ew_tweets, aes(x = created_at, fill = is_retweet)) +
+  geom_histogram(bins=48) +
+  xlab("Time") + ylab("Number of tweets") + theme_minimal() +
+  scale_fill_manual(values = c("chartreuse4", "chartreuse3"),
+                    name = "Retweet")
+```
+
+```{r}
+# Package to easily work with data frames
+install.packages("dplyr")
+library("dplyr")
+# Getting the hashtags from the list 
+ew_tags_split <- unlist(strsplit(as.character(unlist(ew_tweets$hashtags)),'^c\\(|,|"|\\)'))
+# Formatting by removing the white spacea
+ew_tags <- sapply(ew_tags_split, function(y) nchar(trimws(y)) > 0 & !is.na(y))
+ew_tag_df <- as_data_frame(table(tolower(ew_tags_split[ew_tags])))
+ew_tag_df <- ew_tag_df[with(ew_tag_df,order(-n)),]
+ew_tag_df <- ew_tag_df[1:10,]
+ggplot(ew_tag_df, aes(x = reorder(Var1, -n), y=n)) +
+  geom_bar(stat="identity", fill="darkslategray")+
+  theme_minimal() + 
+  xlab("#Hashtags") + ylab("Count")
+```
+
+```{r}
+install text mining and word cloud package
+install.packages(c("tm", "wordcloud"))
+library("tm")
+library("wordcloud")
+tweet_text <- ew_tweets$text
+#Removing numbers, punctations, links and alphanumeric content
+tweet_text<- gsub('[[:digit:]]+', '', tweet_text)
+tweet_text<- gsub('[[:punct:]]+', '', tweet_text)
+tweet_text<- gsub("http[[:alnum:]]*", "", tweet_text)
+tweet_text<- gsub("([[:alpha:]])\1+", "", tweet_text)
+#creating a text corpus
+docs <- Corpus(VectorSource(tweet_text))
+# coverting the encoding to UTF-8 to handle funny characters 
+docs <- tm_map(docs, function(x) iconv(enc2utf8(x), sub = "byte"))
+# Converting the text to lower case
+docs <- tm_map(docs, content_transformer(tolower))
+# Removing english common stopwords
+docs <- tm_map(docs, removeWords, stopwords("english"))
+# Removing stopwords specified by us as a character vector
+docs <- tm_map(docs, removeWords, c("amp"))
+# creating term document matrix 
+tdm <- TermDocumentMatrix(docs)
+# defining tdm as matrix
+m <- as.matrix(tdm)
+# getting word counts in decreasing order
+word_freqs = sort(rowSums(m), decreasing=TRUE) 
+# creating a data frame with words and their frequencies
+ew_wf <- data.frame(word=names(word_freqs), freq=word_freqs)
+# plotting wordcloud
+set.seed(1234)
+wordcloud(words = ew_wf$word, freq = ew_wf$freq, 
+          min.freq = 1,scale=c(1.8,.5),
+          max.words=200, random.order=FALSE, rot.per=0.15, 
+          colors=brewer.pal(8, "Dark2"))
+```
+
+```{r}
+install.packages("syuzhet")
+library(syuzhet)
+# Converting tweets to ASCII to trackle strange characters
+tweet_text <- iconv(tweet_text, from="UTF-8", to="ASCII", sub="")
+# removing retweets
+tweet_text<-gsub("(RT|via)((?:\\b\\w*@\\w+)+)","",tweet_text)
+# removing mentions
+tweet_text<-gsub("@\\w+","",tweet_text)
+ew_sentiment<-get_nrc_sentiment((tweet_text))
+sentimentscores<-data.frame(colSums(ew_sentiment[,]))
+names(sentimentscores) <- "Score"
+sentimentscores <- cbind("sentiment"=rownames(sentimentscores),sentimentscores)
+rownames(sentimentscores) <- NULL
+ggplot(data=sentimentscores,aes(x=sentiment,y=Score))+
+  geom_bar(aes(fill=sentiment),stat = "identity")+
+  theme(legend.position="none")+
+  xlab("Sentiments")+ylab("Scores")+
+  ggtitle("Total sentiment based on scores")+
+  theme_minimal() 
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
