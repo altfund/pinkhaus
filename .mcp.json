@@ -1,0 +1,20 @@
+{
+	"mcpServers": {
+		"language-server": {
+			"command": "mcp-language-server",
+				"description": "Use to answer questions about the python codebase, LSP implementation for python, prefer over grep/ripgrep.",
+				"args": [ "--workspace",
+				".",
+				"--lsp",
+				"pyright-langserver",
+				"--",
+				"--stdio"
+				]
+		},
+			"ask-human": { "command": "ask-human-mcp",
+				"description": "Ask the human engineer a direct question if uncertain about anything necessary to performa  task; if a question is unclear, or if the solution to a question requires further questions to make sure the end result is both functional and desirable for the user, e.g. never make up constants, ask the human..",
+				"args": ["--file",
+				"./ask_human.md"
+				]}
+	}
+}
