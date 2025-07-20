@@ -19,6 +19,7 @@ version = 1
 # gum.version = "^0.14.5"
 numpy.pkg-path = "python313Packages.numpy"
 numpy.version = "<2.3"
+ffmpeg.pkg-path = "ffmpeg"
 
 
 ## Environment Variables ---------------------------------------------

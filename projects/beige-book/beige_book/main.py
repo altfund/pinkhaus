@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import traceback
 import whisper
 import sys
 import argparse
@@ -17,8 +18,9 @@ def transcribe_file(filename, model_name="tiny"):
     """Transcribe an audio file using Whisper"""
     if not os.path.exists(filename):
         raise FileNotFoundError(f"File '{filename}' not found")
+    
     model = whisper.load_model(model_name)
-    result = model.transcribe(filename)
+    result = model.transcribe(audio=filename, verbose=True)
     return result["text"].strip()
 
 
@@ -42,6 +44,7 @@ def main():
         print(text)
     except FileNotFoundError:
         print(f"Error: File '{args.filename}' not found", file=sys.stderr)
+        traceback.print_exc()
         sys.exit(1)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
