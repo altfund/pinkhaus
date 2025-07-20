@@ -21,6 +21,7 @@ jobs:
         uses: "flox/activate-action@v1"
         with:
           command: |
+            cd ./projects/beige-book/
             just install
             just check
           dir: ./projects/beige-book/
