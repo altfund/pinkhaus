@@ -1,8 +1,10 @@
-.json
-.html
+*.json
+*.html
 betting_reports/
-.csv
+*.csv
 workbench/
+*.db
+*.sqlite
 
 # History files
 .Rhistory
