@@ -35,7 +35,9 @@ print()
 print("Finding all transcriptions for this file...")
 transcriptions = db.find_by_hash(result.file_hash)
 for trans in transcriptions:
-    print(f"  ID: {trans['id']}, Model: {trans['model_name']}, Created: {trans['created_at']}")
+    print(
+        f"  ID: {trans['id']}, Model: {trans['model_name']}, Created: {trans['created_at']}"
+    )
 print()
 
 # Get recent transcriptions
@@ -55,9 +57,9 @@ print(f"First segment: {exported.segments[0].text}")
 print("\nUsing custom table names...")
 db.create_tables("my_metadata", "my_segments")
 custom_id = db.save_transcription(
-    result, 
+    result,
     model_name="base",
     metadata_table="my_metadata",
-    segments_table="my_segments"
+    segments_table="my_segments",
 )
 print(f"Saved to custom tables with ID: {custom_id}")
