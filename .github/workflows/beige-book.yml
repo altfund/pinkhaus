@@ -16,7 +16,6 @@ jobs:
 
       - name: "Install Flox"
         uses: "flox/install-flox-action@v2"
-        working-directory: ./projects/beige-book/
 
       - name: "Build and test"
         uses: "flox/activate-action@v1"
