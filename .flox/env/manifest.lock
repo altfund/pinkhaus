@@ -21,6 +21,9 @@
       "jupyter": {
         "pkg-path": "python313Packages.jupyter"
       },
+      "just": {
+        "pkg-path": "just"
+      },
       "pyright": {
         "pkg-path": "pyright"
       },
@@ -761,6 +764,134 @@
       "outputs": {
         "dist": "/nix/store/9jnziwnbmcg5p4yfpi6glzrx06r4jnh4-python3.13-jupyter-1.1.1-dist",
         "out": "/nix/store/1hn80zsy99ci40xhv7ny1iayprxdakl1-python3.13-jupyter-1.1.1"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "just",
+      "broken": false,
+      "derivation": "/nix/store/2l97ib8q28fli9aghizimk4i3l99f6l9-just-1.40.0.drv",
+      "description": "Handy way to save and run project-specific commands",
+      "install_id": "just",
+      "license": "CC0-1.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "name": "just-1.40.0",
+      "pname": "just",
+      "rev": "6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "rev_count": 831064,
+      "rev_date": "2025-07-16T17:35:22Z",
+      "scrape_date": "2025-07-19T00:32:25.201890Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.40.0",
+      "outputs_to_install": [
+        "man",
+        "out"
+      ],
+      "outputs": {
+        "doc": "/nix/store/qzd5f1148jn8migs0m53gdzlkhlyiacb-just-1.40.0-doc",
+        "man": "/nix/store/rp2mgqlhjzbysxsipdljfqd2pkbz5rdw-just-1.40.0-man",
+        "out": "/nix/store/3pnak51jl5d1r1mxf9hw69pgpwnb2xii-just-1.40.0"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "just",
+      "broken": false,
+      "derivation": "/nix/store/11vpfdvakndlsnyjpnb7bjdl1s5anzr3-just-1.40.0.drv",
+      "description": "Handy way to save and run project-specific commands",
+      "install_id": "just",
+      "license": "CC0-1.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "name": "just-1.40.0",
+      "pname": "just",
+      "rev": "6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "rev_count": 831064,
+      "rev_date": "2025-07-16T17:35:22Z",
+      "scrape_date": "2025-07-19T00:58:05.554424Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.40.0",
+      "outputs_to_install": [
+        "man",
+        "out"
+      ],
+      "outputs": {
+        "doc": "/nix/store/pw2nj5ff9xywr77phc53xw2wv5kkg55a-just-1.40.0-doc",
+        "man": "/nix/store/z1pim1jpjshj03kwpkqhn7hk34bh6lnv-just-1.40.0-man",
+        "out": "/nix/store/bm9ijhx6ngf5a39p8wlhhj71v8q4qbxk-just-1.40.0"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "just",
+      "broken": false,
+      "derivation": "/nix/store/jp93gqa5hmmv8fwh2qvzm4v6qmwpfpza-just-1.40.0.drv",
+      "description": "Handy way to save and run project-specific commands",
+      "install_id": "just",
+      "license": "CC0-1.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "name": "just-1.40.0",
+      "pname": "just",
+      "rev": "6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "rev_count": 831064,
+      "rev_date": "2025-07-16T17:35:22Z",
+      "scrape_date": "2025-07-19T01:21:12.900645Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.40.0",
+      "outputs_to_install": [
+        "man",
+        "out"
+      ],
+      "outputs": {
+        "doc": "/nix/store/96ycyfg17mwjhlg0sadpirai6d5bcvvn-just-1.40.0-doc",
+        "man": "/nix/store/748wgg7spyjd49d3rq8ll49d87ivk1af-just-1.40.0-man",
+        "out": "/nix/store/r4s8g0mgjys5hv7lq6q5zcryygacg7zi-just-1.40.0"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "just",
+      "broken": false,
+      "derivation": "/nix/store/7m5h1vhzrgfz516sri2binyzhl08sq0w-just-1.40.0.drv",
+      "description": "Handy way to save and run project-specific commands",
+      "install_id": "just",
+      "license": "CC0-1.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "name": "just-1.40.0",
+      "pname": "just",
+      "rev": "6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "rev_count": 831064,
+      "rev_date": "2025-07-16T17:35:22Z",
+      "scrape_date": "2025-07-19T01:48:25.900468Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.40.0",
+      "outputs_to_install": [
+        "man",
+        "out"
+      ],
+      "outputs": {
+        "doc": "/nix/store/paqsnvnk83lwi7i9jb60w29wlpn1h3ra-just-1.40.0-doc",
+        "man": "/nix/store/k4zz8spld7kb60zmrq86hjc56rv6mi5z-just-1.40.0-man",
+        "out": "/nix/store/zys6pzpajv2pgy95wi7iklpvklzld6mf-just-1.40.0"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
