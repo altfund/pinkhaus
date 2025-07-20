@@ -34,7 +34,7 @@
       }
     },
     "hook": {
-      "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nexport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\nmkdir -p \"${GOBIN}\"\ngo install \"github.com/isaacphi/mcp-language-server@latest\"\nexport PATH=\"${GOBIN}:${PATH}\"\nuv sync\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n"
+      "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n\texport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n\tmkdir -p \"${GOBIN}\"\n\tgo install \"github.com/isaacphi/mcp-language-server@latest\"\n\texport PATH=\"${GOBIN}:${PATH}\"\nfi\nuv sync\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n"
     },
     "profile": {},
     "options": {
@@ -1006,10 +1006,13 @@
         "numpy": {
           "pkg-path": "python313Packages.numpy",
           "version": "<2.3"
+        },
+        "uv": {
+          "pkg-path": "uv"
         }
       },
       "hook": {
-        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nexport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\nmkdir -p \"${GOBIN}\"\ngo install \"github.com/isaacphi/mcp-language-server@latest\"\nexport PATH=\"${GOBIN}:${PATH}\"\nuv sync\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n"
+        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n\texport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n\tmkdir -p \"${GOBIN}\"\n\tgo install \"github.com/isaacphi/mcp-language-server@latest\"\n\texport PATH=\"${GOBIN}:${PATH}\"\nfi\nuv sync\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n"
       },
       "profile": {},
       "options": {
@@ -1073,6 +1076,15 @@
       }
     ],
     "warnings": [
+      {
+        "warning": {
+          "Overriding": [
+            "install",
+            "uv"
+          ]
+        },
+        "higher_priority_name": "Current manifest"
+      },
       {
         "warning": {
           "Overriding": [
