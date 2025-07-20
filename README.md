@@ -1,6 +1,6 @@
 # Pre-Requisites
 
-- Intsall `git bubtree`
+- Intsall `git subtree`
     - https://github.com/apenwarr/git-subtree/
 - Install `flox`
     - https://flox.dev/docs/install-flox/
