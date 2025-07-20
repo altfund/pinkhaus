@@ -1,1 +1,3 @@
 pgdata
+**/*.mcp.json
+.idea
