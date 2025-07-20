@@ -8,6 +8,7 @@ dependencies = [
 	"toml>=0.10.2",
 	"openai-whisper",
 	"numpy<=2.2",
+	"pytest>=8.4.1",
 ]
 
 [project.scripts]
