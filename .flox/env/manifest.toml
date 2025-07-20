@@ -41,10 +41,12 @@ just.pkg-path = "just"
 ## -------------------------------------------------------------------
 [hook]
 on-activate = '''
-export GOBIN="${FLOX_ENV_CACHE}/go/bin/"
-mkdir -p "${GOBIN}"
-go install "github.com/isaacphi/mcp-language-server@latest"
-export PATH="${GOBIN}:${PATH}"
+if [[ ! -z $DEV ]]; then
+	export GOBIN="${FLOX_ENV_CACHE}/go/bin/"
+	mkdir -p "${GOBIN}"
+	go install "github.com/isaacphi/mcp-language-server@latest"
+	export PATH="${GOBIN}:${PATH}"
+fi
 uv sync
 echo "RUN "
 echo "source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\""
