@@ -1,3 +1,17 @@
+# Pre-Requisites
+
+- Intsall `git bubtree`
+    - https://github.com/apenwarr/git-subtree/
+- Install `flox`
+    - https://flox.dev/docs/install-flox/
+- Install `docker` (for open-webui and letta)
+    - https://docs.docker.com/engine/install/
+
+
+
+## AI
+
+### Local AI w/ OpenWebUI and Ollama
 - local AI w/ webui - https://martech.org/how-to-run-deepseek-locally-on-your-computer/
 - start an ollama instance
     - `ollama run deepseek-r1:8b`
@@ -7,7 +21,7 @@
     - with RAG:
         https://docs.openwebui.com/tutorials/tips/rag-tutorial/
 
-RAG
+### RAG
 - letta (RAG)
     docker run   -v ./pgdata:/var/lib/postgresql/data   -p 8283:8283   --env-file .env   letta/letta:latest
 
