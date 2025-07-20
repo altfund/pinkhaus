@@ -19,12 +19,11 @@ jobs:
 
       - name: "Build and test"
         uses: "flox/activate-action@v1"
-        working-directory: ./projects/beige-book/
         with:
-          dir: ./projects/beige-book/
           command: |
             just install
             just check
+          dir: ./projects/beige-book/
 
       - name: "Build and test"
         working-directory: ./projects/beige-book/
