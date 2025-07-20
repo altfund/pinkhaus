@@ -20,14 +20,7 @@ jobs:
       - name: "Build and test" 
         uses: "flox/activate-action@v1"
         with:
-          dir: projects/beige-book
+          dir: ./projects/beige-book/
           command: |
-            # uv sync is run automatically in the flox activation hook
-            # Run linting
-            uv run ruff check .
-            # Check formatting
-            uv run ruff format --check .
-            # Run type checking if available
-            # uv run mypy . || true
-            # Build the package (uncomment when ready)
-            # uv build
+            just install
+            just check
