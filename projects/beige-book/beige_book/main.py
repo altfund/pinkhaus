@@ -3,10 +3,20 @@
 import whisper
 import sys
 import argparse
+import os
+
+def valid_path(path):
+    if not os.path.exists(path):
+        raise argparse.ArgumentTypeError(f"Path '{path}' does not exist")
+    if not os.path.isfile(path):
+        raise argparse.ArgumentTypeError(f"Path '{path}' is not a file")
+    return path
 
 
 def transcribe_file(filename, model_name="tiny"):
     """Transcribe an audio file using Whisper"""
+    if not os.path.exists(filename):
+        raise FileNotFoundError(f"File '{filename}' not found")
     model = whisper.load_model(model_name)
     result = model.transcribe(filename)
     return result["text"].strip()
@@ -15,7 +25,9 @@ def transcribe_file(filename, model_name="tiny"):
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(description="Transcribe audio files with Whisper")
-    parser.add_argument("filename", help="Audio file to transcribe")
+    parser.add_argument("filename",
+                        type=valid_path,
+                        help="Audio file to transcribe")
     parser.add_argument(
         "--model",
         default="tiny",
