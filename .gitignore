@@ -2,6 +2,7 @@
 .html
 betting_reports/
 .csv
+workbench/
 
 # History files
 .Rhistory
