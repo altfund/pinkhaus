@@ -20,6 +20,7 @@ version = 1
 numpy.pkg-path = "python313Packages.numpy"
 numpy.version = "<2.3"
 ffmpeg.pkg-path = "ffmpeg"
+just.pkg-path = "just"
 
 
 ## Environment Variables ---------------------------------------------
