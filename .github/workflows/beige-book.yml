@@ -1,0 +1,33 @@
+name: Build and Test Beige Book Module
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: "Build and test"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
+
+      - name: "Install Flox" 
+        uses: "flox/install-flox-action@v2"
+
+      - name: "Build and test" 
+        uses: "flox/activate-action@v1"
+        with:
+          dir: projects/beige-book
+          command: |
+            # uv sync is run automatically in the flox activation hook
+            # Run linting
+            uv run ruff check .
+            # Check formatting
+            uv run ruff format --check .
+            # Run type checking if available
+            # uv run mypy . || true
+            # Build the package (uncomment when ready)
+            # uv build
