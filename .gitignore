@@ -1,3 +1,4 @@
 pgdata
 **/*.mcp.json
 .idea
+**/*__pycache__
