@@ -1,6 +1,7 @@
 .json
 .html
 betting_reports/
+.csv
 
 # History files
 .Rhistory
