@@ -42,7 +42,7 @@ def args_to_request(args) -> TranscriptionRequest:
         type="feed" if args.feed else "file",
         source=args.filename
     )
-    
+
     # Create feed options if processing feeds
     feed_options = None
     if args.feed:
@@ -50,14 +50,14 @@ def args_to_request(args) -> TranscriptionRequest:
             limit=args.limit,
             order=args.order
         )
-    
+
     # Create processing config
     processing_config = ProcessingConfig(
         model=args.model,
         verbose=args.verbose,
         feed_options=feed_options
     )
-    
+
     # Create database config if needed
     database_config = None
     if args.db_path or args.format == "sqlite":
@@ -66,14 +66,14 @@ def args_to_request(args) -> TranscriptionRequest:
             metadata_table=args.metadata_table,
             segments_table=args.segments_table
         )
-    
+
     # Create output config
     output_config = OutputConfig(
         format=args.format,
         destination=args.output,
         database=database_config
     )
-    
+
     return TranscriptionRequest(
         input=input_config,
         processing=processing_config,
@@ -84,28 +84,28 @@ def args_to_request(args) -> TranscriptionRequest:
 def process_single_file(args):
     """Process a single audio file using the service"""
     service = TranscriptionService()
-    
+
     # Convert args to request
     request = args_to_request(args)
-    
+
     # Process the request
     response = service.process(request)
-    
+
     # Handle output
     if response.success and response.results:
         result = response.results[0]
-        
+
         if args.format == "sqlite":
             # Already saved by service
             print(f"Saved to database: {args.db_path or 'beige_book.db'}")
         else:
             # Format and output
             formatted = OutputFormatter.format_results(
-                response.results, 
+                response.results,
                 args.format,
                 include_feed_metadata=False
             )
-            
+
             if args.output:
                 with open(args.output, 'w', encoding='utf-8') as f:
                     f.write(formatted)
@@ -122,13 +122,13 @@ def process_single_file(args):
 def process_feeds(args, is_resumable: bool):
     """Process RSS feeds using the service"""
     service = TranscriptionService()
-    
+
     # Convert args to request
     request = args_to_request(args)
-    
+
     # Process the request
     response = service.process(request)
-    
+
     # Handle output
     if args.format == "sqlite":
         # Results already saved by service
@@ -148,14 +148,14 @@ def process_feeds(args, is_resumable: bool):
                 args.format,
                 include_feed_metadata=True
             )
-            
+
             if args.output:
                 with open(args.output, 'w', encoding='utf-8') as f:
                     f.write(formatted)
                 print(f"\nOutput written to: {args.output}")
             else:
                 print(formatted)
-        
+
         # Print summary
         print(f"\nProcessing complete:")
         if response.summary:
@@ -164,13 +164,13 @@ def process_feeds(args, is_resumable: bool):
             print(f"  Skipped (already processed): {response.summary.skipped}")
             print(f"  Failed: {response.summary.failed}")
             print(f"  Time elapsed: {response.summary.elapsed_time:.2f}s")
-    
+
     # Print errors if any
     if response.errors:
         print("\nErrors encountered:")
         for error in response.errors:
             print(f"  - {error.source}: {error.message}")
-    
+
     # Exit with error code if not successful
     if not response.success:
         sys.exit(1)

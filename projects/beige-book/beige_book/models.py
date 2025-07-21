@@ -17,7 +17,7 @@ class InputConfig:
     """Configuration for input sources"""
     type: Literal["file", "feed"]  # Input type
     source: str  # File path or TOML path
-    
+
     def validate(self):
         """Validate the input configuration"""
         if not self.source:
@@ -34,7 +34,7 @@ class FeedOptions:
     order: Literal["newest", "oldest"] = "newest"
     max_retries: int = 3
     initial_delay: float = 1.0
-    
+
     def validate(self):
         """Validate feed options"""
         if self.limit is not None and self.limit < 1:
@@ -53,7 +53,7 @@ class ProcessingConfig:
     model: Literal["tiny", "base", "small", "medium", "large"] = "tiny"
     verbose: bool = False
     feed_options: Optional[FeedOptions] = None
-    
+
     def validate(self):
         """Validate processing configuration"""
         valid_models = ["tiny", "base", "small", "medium", "large"]
@@ -70,7 +70,7 @@ class DatabaseConfig:
     db_path: str
     metadata_table: str = "transcription_metadata"
     segments_table: str = "transcription_segments"
-    
+
     def validate(self):
         """Validate database configuration"""
         if not self.db_path:
@@ -87,17 +87,17 @@ class OutputConfig:
     format: Literal["text", "json", "table", "csv", "toml", "sqlite"] = "text"
     destination: Optional[str] = None  # File path or None for stdout
     database: Optional[DatabaseConfig] = None
-    
+
     def validate(self):
         """Validate output configuration"""
         valid_formats = ["text", "json", "table", "csv", "toml", "sqlite"]
         if self.format not in valid_formats:
             raise ValueError(f"Invalid format: {self.format}. Must be one of {valid_formats}")
-        
+
         # SQLite format requires database config
         if self.format == "sqlite" and not self.database:
             raise ValueError("SQLite format requires database configuration")
-        
+
         if self.database:
             self.database.validate()
 
@@ -109,54 +109,54 @@ class TranscriptionRequest:
     input: InputConfig
     processing: ProcessingConfig
     output: OutputConfig
-    
+
     def validate(self):
         """Validate the entire request"""
         self.input.validate()
         self.processing.validate()
         self.output.validate()
-        
+
         # Cross-field validation
         if self.input.type == "file" and self.processing.feed_options:
             raise ValueError("Feed options provided for file input")
         if self.input.type == "feed" and not self.processing.feed_options:
             # Create default feed options if not provided
             self.processing.feed_options = FeedOptions()
-    
+
     def to_json(self) -> str:
         """Convert request to JSON string"""
         return json.dumps(asdict(self), indent=2)
-    
+
     @classmethod
     def from_json(cls, json_str: str) -> 'TranscriptionRequest':
         """Create request from JSON string"""
         data = json.loads(json_str)
-        
+
         # Reconstruct nested objects
         input_config = InputConfig(**data['input'])
-        
+
         feed_options = None
         if data['processing'].get('feed_options'):
             feed_options = FeedOptions(**data['processing']['feed_options'])
-        
+
         processing_config = ProcessingConfig(
             model=data['processing']['model'],
             verbose=data['processing']['verbose'],
             feed_options=feed_options
         )
-        
+
         database_config = None
         if data['output'].get('database'):
             database_config = DatabaseConfig(**data['output']['database'])
-        
+
         output_config = OutputConfig(
             format=data['output']['format'],
             destination=data['output'].get('destination'),
             database=database_config
         )
-        
+
         return cls(input=input_config, processing=processing_config, output=output_config)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert request to dictionary"""
         return asdict(self)
@@ -170,7 +170,7 @@ class ProcessingError:
     error_type: str
     message: str
     timestamp: datetime = field(default_factory=datetime.now)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary with ISO timestamp"""
         data = asdict(self)
@@ -186,7 +186,7 @@ class ProcessingSummary:
     skipped: int
     failed: int
     elapsed_time: float
-    
+
     @property
     def success_rate(self) -> float:
         """Calculate success rate percentage"""
@@ -202,7 +202,7 @@ class TranscriptionResponse:
     results: List[Any] = field(default_factory=list)  # List of TranscriptionResult objects
     errors: List[ProcessingError] = field(default_factory=list)
     summary: Optional[ProcessingSummary] = None
-    
+
     def add_error(self, source: str, error_type: str, message: str):
         """Add an error to the response"""
         self.errors.append(ProcessingError(
@@ -210,7 +210,7 @@ class TranscriptionResponse:
             error_type=error_type,
             message=message
         ))
-    
+
     def to_json(self) -> str:
         """Convert response to JSON string"""
         # Convert results to dicts if they have to_dict method
@@ -253,7 +253,7 @@ def create_feed_request(
     database_config = None
     if db_path or format == "sqlite":
         database_config = DatabaseConfig(db_path=db_path or "beige_book_feeds.db")
-    
+
     return TranscriptionRequest(
         input=InputConfig(type="feed", source=toml_path),
         processing=ProcessingConfig(
