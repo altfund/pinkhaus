@@ -9,6 +9,7 @@ import hashlib
 from typing import Optional, Tuple
 from pathlib import Path
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -124,13 +125,14 @@ class AudioDownloader:
         except Exception as e:
             logger.warning(f"Failed to clean up temp file {temp_path}: {e}")
     
-    def download_with_retry(self, url: str, max_retries: int = 3) -> Tuple[str, str]:
+    def download_with_retry(self, url: str, max_retries: int = 5, initial_delay: float = 1.0) -> Tuple[str, str]:
         """
-        Download with retry logic.
+        Download with retry logic and exponential backoff.
         
         Args:
             url: URL to download
             max_retries: Maximum number of retry attempts
+            initial_delay: Initial delay between retries in seconds
             
         Returns:
             Tuple of (temp_file_path, file_hash)
@@ -143,8 +145,16 @@ class AudioDownloader:
             except Exception as e:
                 last_error = e
                 if attempt < max_retries - 1:
-                    logger.warning(f"Download attempt {attempt + 1} failed, retrying: {e}")
+                    # Calculate exponential backoff with jitter
+                    delay = initial_delay * (2 ** attempt)  # 1s, 2s, 4s, 8s, 16s
+                    # Add jitter (±20%) to prevent thundering herd
+                    import random
+                    jitter = delay * 0.2 * (2 * random.random() - 1)
+                    actual_delay = delay + jitter
+                    
+                    logger.warning(f"Download attempt {attempt + 1} failed, retrying in {actual_delay:.1f}s: {e}")
+                    time.sleep(actual_delay)
                 else:
-                    logger.error(f"All download attempts failed")
+                    logger.error(f"All download attempts failed for: {url}")
         
         raise last_error

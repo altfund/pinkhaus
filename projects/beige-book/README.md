@@ -219,9 +219,6 @@ When outputting to a file or database, the tool tracks which items have been pro
 # Resumable with database
 uv run transcribe feeds.toml --feed --format sqlite --db-path podcasts.db
 
-# Resumable with specific database tables
-uv run transcribe feeds.toml --feed --format sqlite --db-path podcasts.db --metadata-table my_metadata --segments-table my_segments 
-
 # Resumable with file output
 uv run transcribe feeds.toml --feed --format json --output transcriptions.json
 
@@ -343,12 +340,6 @@ See `examples/` directory for more usage examples.
 
 The project includes a comprehensive test suite using pytest.
 
-### Install Test Dependencies
-
-```bash
-uv pip install pytest
-```
-
 ### Run All Tests
 
 ```bash
@@ -424,37 +415,3 @@ Try using a smaller model or processing the audio in chunks.
 ### Poor transcription quality
 - Use a larger model (`--model medium` or `--model large`)
 - Ensure audio quality is good (clear speech, minimal background noise)
-
-## Development
-
-### Project Structure
-```
-beige-book/
-   beige_book/
-      __init__.py
-      cli.py          # CLI interface
-      transcriber.py  # Core transcription library
-      database.py     # SQLite database operations
-      main.py         # Entry point
-   tests/
-      test_transcriber.py
-      test_database.py
-      fixtures/
-          harvard.wav
-   examples/
-      library_usage.py
-      database_usage.py
-   pyproject.toml
-```
-
-### Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
-
-## License
-
-[Add your license here]
