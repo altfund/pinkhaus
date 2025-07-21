@@ -17,7 +17,13 @@ jobs:
       - name: "Install system dependencies"
         run: |
           sudo apt-get update
-          sudo apt-get install -y libstdc++6
+          # Install C++ runtime and other dependencies needed by PyTorch
+          sudo apt-get install -y \
+            libstdc++6 \
+            libgomp1 \
+            libgcc-s1 \
+            libc6 \
+            libgcc1
 
       - name: "Install Flox"
         uses: "flox/install-flox-action@v2"
@@ -31,4 +37,7 @@ jobs:
       - name: "Run pytest with Flox"
         working-directory: ./projects/beige-book/
         run: |
-          flox activate -- uv run pytest
+          # Set library path for PyTorch
+          export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+          # Run all tests
+          flox activate -- bash -c "export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH && uv run pytest -v"
