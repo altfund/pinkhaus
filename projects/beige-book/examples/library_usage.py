@@ -32,7 +32,7 @@ print(result.to_json()[:200] + "...")
 print()
 
 print("CSV output (first 3 lines):")
-print('\n'.join(result.to_csv().split('\n')[:3]))
+print("\n".join(result.to_csv().split("\n")[:3]))
 print()
 
 # You can also save to files
