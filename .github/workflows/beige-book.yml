@@ -37,7 +37,4 @@ jobs:
       - name: "Run pytest with Flox"
         working-directory: ./projects/beige-book/
         run: |
-          # Set library path for PyTorch
-          export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
-          # Run all tests
-          flox activate -- bash -c "export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH && uv run pytest -v"
+          flox activate -- uv run pytest
