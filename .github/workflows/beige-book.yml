@@ -17,17 +17,13 @@ jobs:
       - name: "Install Flox"
         uses: "flox/install-flox-action@v2"
 
-      - name: "Build and test"
-        uses: "flox/activate-action@v1"
-        with:
-          command: |
-            cd ./projects/beige-book/
-            just install
-            just check
-          dir: ./projects/beige-book/
-
-      - name: "Build and test"
+      - name: "Activate Flox and run lint/format"
         working-directory: ./projects/beige-book/
         run: |
-            souce .venv/bin/activate
-            pytest
+          flox activate -- just install
+          flox activate -- just check
+
+      - name: "Run pytest with Flox"
+        working-directory: ./projects/beige-book/
+        run: |
+          flox activate -- python3.13 -m pytest -v
