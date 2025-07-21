@@ -26,37 +26,37 @@ logger = logging.getLogger(__name__)
 
 class TranscriptionService:
     """Main service for handling transcription requests"""
-    
+
     def __init__(self):
         """Initialize the transcription service"""
         self.transcriber = None
         self.database = None
         self.feed_parser = FeedParser()
         self.downloader = AudioDownloader()
-    
+
     def process(self, request: TranscriptionRequest) -> TranscriptionResponse:
         """
         Process a transcription request.
-        
+
         Args:
             request: The transcription request to process
-            
+
         Returns:
             TranscriptionResponse with results or errors
         """
         try:
             # Validate request
             request.validate()
-            
+
             # Initialize transcriber with requested model
             self.transcriber = AudioTranscriber(model_name=request.processing.model)
-            
+
             # Process based on input type
             if request.input.type == "file":
                 return self._process_file(request)
             else:
                 return self._process_feeds(request)
-                
+
         except Exception as e:
             logger.error(f"Request processing failed: {e}")
             response = TranscriptionResponse(success=False)
@@ -66,12 +66,12 @@ class TranscriptionService:
                 message=str(e)
             )
             return response
-    
+
     def _process_file(self, request: TranscriptionRequest) -> TranscriptionResponse:
         """Process a single audio file"""
         start_time = time.time()
         response = TranscriptionResponse(success=True)
-        
+
         try:
             # Transcribe the file
             result = self.transcriber.transcribe_file(
@@ -79,10 +79,10 @@ class TranscriptionService:
                 verbose=request.processing.verbose
             )
             response.results.append(result)
-            
+
             # Handle output
             self._handle_output(request, [result], response)
-            
+
             # Add summary
             response.summary = ProcessingSummary(
                 total_items=1,
@@ -91,7 +91,7 @@ class TranscriptionService:
                 failed=0,
                 elapsed_time=time.time() - start_time
             )
-            
+
         except Exception as e:
             logger.error(f"File processing failed: {e}")
             response.success = False
@@ -107,14 +107,14 @@ class TranscriptionService:
                 failed=1,
                 elapsed_time=time.time() - start_time
             )
-        
+
         return response
-    
+
     def _process_feeds(self, request: TranscriptionRequest) -> TranscriptionResponse:
         """Process RSS feeds from TOML file"""
         start_time = time.time()
         response = TranscriptionResponse(success=True)
-        
+
         # Setup database if needed for resumability
         db = None
         is_resumable = self._is_resumable(request)
@@ -126,7 +126,7 @@ class TranscriptionService:
                 request.output.database.segments_table if request.output.database else "transcription_segments"
             )
             self.database = db
-        
+
         # Parse feeds
         try:
             feed_items_dict = self.feed_parser.parse_all_feeds(
@@ -141,18 +141,18 @@ class TranscriptionService:
                 message=f"Failed to parse feeds: {str(e)}"
             )
             return response
-        
+
         # Process items
         total_items = 0
         processed = 0
         skipped = 0
         failed = 0
-        
+
         for feed_url, items in feed_items_dict.items():
             # Sort and limit items
             sorted_items = self._sort_and_limit_items(items, request.processing.feed_options)
             total_items += len(sorted_items)
-            
+
             for item in sorted_items:
                 try:
                     # Check if already processed
@@ -163,7 +163,7 @@ class TranscriptionService:
                         logger.info(f"Skipping already processed: {item.title}")
                         skipped += 1
                         continue
-                    
+
                     # Process item
                     result = self._process_feed_item(item, request)
                     if result:
@@ -171,7 +171,7 @@ class TranscriptionService:
                         processed += 1
                     else:
                         failed += 1
-                        
+
                 except Exception as e:
                     logger.error(f"Failed to process {item.title}: {e}")
                     response.add_error(
@@ -180,7 +180,7 @@ class TranscriptionService:
                         message=str(e)
                     )
                     failed += 1
-        
+
         # Set summary
         response.summary = ProcessingSummary(
             total_items=total_items,
@@ -189,32 +189,32 @@ class TranscriptionService:
             failed=failed,
             elapsed_time=time.time() - start_time
         )
-        
+
         response.success = failed == 0
         return response
-    
+
     def _process_feed_item(self, item: FeedItem, request: TranscriptionRequest) -> Optional[TranscriptionResult]:
         """Process a single feed item"""
         logger.info(f"Processing: {item.title}")
-        
+
         # Download audio
         temp_path, file_hash = self.downloader.download_with_retry(
             item.audio_url,
             max_retries=request.processing.feed_options.max_retries,
             initial_delay=request.processing.feed_options.initial_delay
         )
-        
+
         try:
             # Transcribe
             result = self.transcriber.transcribe_file(
                 temp_path,
                 verbose=(request.processing.verbose and not request.output.destination)
             )
-            
+
             # Save to database if configured
             if self.database:
                 self._save_to_database(result, item, request)
-            
+
             # Add feed metadata to result for output formatting
             result.feed_metadata = {
                 'feed_url': item.feed_url,
@@ -223,13 +223,13 @@ class TranscriptionService:
                 'audio_url': item.audio_url,
                 'published': item.published.isoformat() if item.published else None
             }
-            
+
             return result
-            
+
         finally:
             # Clean up temp file
             self.downloader.cleanup_temp_file(temp_path)
-    
+
     def _save_to_database(self, result: TranscriptionResult, item: FeedItem, request: TranscriptionRequest):
         """Save transcription to database with feed metadata"""
         db_config = request.output.database
@@ -243,7 +243,7 @@ class TranscriptionService:
             feed_item_title=item.title,
             feed_item_published=item.published.isoformat() if item.published else None
         )
-    
+
     def _sort_and_limit_items(self, items: List[FeedItem], feed_options) -> List[FeedItem]:
         """Sort and limit feed items based on options"""
         # Sort by publication date
@@ -251,19 +251,19 @@ class TranscriptionService:
             sorted_items = sorted(items, key=lambda x: x.published or datetime.min, reverse=True)
         else:
             sorted_items = sorted(items, key=lambda x: x.published or datetime.min)
-        
+
         # Apply limit
         if feed_options.limit:
             sorted_items = sorted_items[:feed_options.limit]
-        
+
         return sorted_items
-    
+
     def _is_resumable(self, request: TranscriptionRequest) -> bool:
         """Check if the request supports resumability"""
         resumable_formats = {"text", "json", "table", "csv", "toml", "sqlite"}
-        return (request.output.format in resumable_formats and 
+        return (request.output.format in resumable_formats and
                 (request.output.database or request.output.destination))
-    
+
     def _handle_output(self, request: TranscriptionRequest, results: List[TranscriptionResult], response: TranscriptionResponse):
         """Handle output formatting and writing"""
         if request.output.format == "sqlite":
@@ -273,7 +273,7 @@ class TranscriptionService:
                 db_config = request.output.database
                 db = TranscriptionDatabase(db_config.db_path)
                 db.create_tables(db_config.metadata_table, db_config.segments_table)
-                
+
                 for result in results:
                     db.save_transcription(
                         result,
@@ -290,17 +290,17 @@ class TranscriptionService:
 
 class OutputFormatter:
     """Helper class for formatting output based on request"""
-    
+
     @staticmethod
     def format_results(results: List[TranscriptionResult], format: str, include_feed_metadata: bool = False) -> str:
         """
         Format multiple results into a single output string.
-        
+
         Args:
             results: List of transcription results
             format: Output format
             include_feed_metadata: Whether to include feed metadata in output
-            
+
         Returns:
             Formatted output string
         """
@@ -313,7 +313,7 @@ class OutputFormatter:
                 else:
                     outputs.append(result.full_text)
             return "\n\n".join(outputs)
-        
+
         elif format == "json":
             import json
             all_results = []
@@ -323,7 +323,7 @@ class OutputFormatter:
                     data['feed_metadata'] = result.feed_metadata
                 all_results.append(data)
             return json.dumps(all_results, indent=2, ensure_ascii=False)
-        
+
         else:
             # For other formats, concatenate individual formatted results
             outputs = []
@@ -334,7 +334,7 @@ class OutputFormatter:
                 else:
                     outputs.append(result.format(format))
             return "\n\n".join(outputs)
-    
+
     @staticmethod
     def _format_feed_header(feed_metadata: dict) -> str:
         """Format feed metadata as text header"""
@@ -345,7 +345,7 @@ class OutputFormatter:
         header += f"Audio URL: {feed_metadata['audio_url']}\n"
         header += "-" * 80 + "\n\n"
         return header
-    
+
     @staticmethod
     def _format_feed_comment(feed_metadata: dict, format: str) -> str:
         """Format feed metadata as comment for various formats"""

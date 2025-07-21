@@ -23,7 +23,7 @@ class FeedItem:
     published: Optional[datetime] = None
     description: Optional[str] = None
     duration: Optional[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation"""
         return {
@@ -39,27 +39,27 @@ class FeedItem:
 
 class FeedParser:
     """Parse RSS feeds and extract audio items"""
-    
+
     def __init__(self):
         """Initialize the feed parser"""
         self.supported_audio_types = {
             'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/m4a',
             'audio/ogg', 'audio/wav', 'audio/x-m4a', 'audio/x-wav'
         }
-    
+
     def parse_toml_feeds(self, toml_path: str) -> List[str]:
         """
         Parse a TOML file containing RSS feed URLs.
-        
+
         Args:
             toml_path: Path to the TOML file
-            
+
         Returns:
             List of RSS feed URLs
         """
         with open(toml_path, 'r') as f:
             data = toml.load(f)
-        
+
         # Support both feeds.rss and rss directly
         if 'feeds' in data and 'rss' in data['feeds']:
             return data['feeds']['rss']
@@ -67,16 +67,16 @@ class FeedParser:
             return data['rss']
         else:
             raise ValueError("No RSS feeds found in TOML file. Expected 'feeds.rss' or 'rss' key.")
-    
+
     def parse_feed_with_retry(self, feed_url: str, max_retries: int = 3, initial_delay: float = 1.0) -> List[FeedItem]:
         """
         Parse a single RSS feed with retry logic and exponential backoff.
-        
+
         Args:
             feed_url: URL of the RSS feed
             max_retries: Maximum number of retry attempts
             initial_delay: Initial delay between retries in seconds
-            
+
         Returns:
             List of FeedItem objects
         """
@@ -101,7 +101,7 @@ class FeedParser:
                     logger.error(f"All feed parsing attempts failed for {feed_url}")
 
         raise last_error
-    
+
     def parse_feed(self, feed_url: str) -> List[FeedItem]:
         """
         Parse a single RSS feed and extract audio items.
@@ -172,18 +172,18 @@ class FeedParser:
 
             logger.info(f"Found {len(items)} audio items in feed")
             return items
-            
+
         except Exception as e:
             logger.error(f"Error parsing feed {feed_url}: {e}")
             raise
-    
+
     def _extract_audio_url(self, entry: Any) -> Optional[str]:
         """
         Extract audio URL from feed entry.
-        
+
         Args:
             entry: Feed entry object
-            
+
         Returns:
             Audio URL if found, None otherwise
         """
@@ -192,7 +192,7 @@ class FeedParser:
             for enclosure in entry.enclosures:
                 if enclosure.get('type', '').lower() in self.supported_audio_types:
                     return enclosure.get('href', enclosure.get('url'))
-        
+
         # Check links
         if hasattr(entry, 'links'):
             for link in entry.links:
@@ -201,23 +201,23 @@ class FeedParser:
                 # Some feeds use rel="enclosure"
                 if link.get('rel') == 'enclosure' and link.get('href'):
                     return link.get('href')
-        
+
         return None
-    
+
     def parse_all_feeds(self, toml_path: str, max_retries: int = 3) -> Dict[str, List[FeedItem]]:
         """
         Parse all feeds from a TOML file with retry logic.
-        
+
         Args:
             toml_path: Path to the TOML file
             max_retries: Maximum number of retry attempts per feed
-            
+
         Returns:
             Dictionary mapping feed URLs to their items
         """
         feed_urls = self.parse_toml_feeds(toml_path)
         results = {}
-        
+
         for feed_url in feed_urls:
             try:
                 items = self.parse_feed_with_retry(feed_url, max_retries)
@@ -225,5 +225,5 @@ class FeedParser:
             except Exception as e:
                 logger.error(f"Failed to parse feed {feed_url} after {max_retries} attempts: {e}")
                 results[feed_url] = []
-        
+
         return results
