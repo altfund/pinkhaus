@@ -22,6 +22,12 @@
         "pkg-path": "python313Packages.numpy",
         "version": "<2.3"
       },
+      "openai-whisper": {
+        "pkg-path": "python313Packages.openai-whisper"
+      },
+      "pytest": {
+        "pkg-path": "python313Packages.pytest"
+      },
       "python313Full": {
         "pkg-path": "python313Full"
       },
@@ -32,12 +38,21 @@
           "x86_64-linux"
         ]
       },
+      "tabulate": {
+        "pkg-path": "python313Packages.tabulate"
+      },
+      "toml": {
+        "pkg-path": "python313Packages.toml"
+      },
+      "torch": {
+        "pkg-path": "python313Packages.torch"
+      },
       "uv": {
         "pkg-path": "uv"
       }
     },
     "hook": {
-      "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n  export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n  mkdir -p \"${GOBIN}\"\n  go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\nfi\nuv sync\nuv venv\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n"
+      "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n  export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n  mkdir -p \"${GOBIN}\"\n  go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\nfi\n# Use python3.13 directly without venv since packages are installed via Nix\n# Set PYTHONPATH to include the project directory and the correct site-packages\nexport PYTHONPATH=\"${FLOX_ENV_PROJECT}:${FLOX_ENV}/lib/python3.13/site-packages:${PYTHONPATH}\"\nalias python=python3.13\n"
     },
     "profile": {},
     "options": {
@@ -827,6 +842,258 @@
       "priority": 5
     },
     {
+      "attr_path": "python313Packages.openai-whisper",
+      "broken": false,
+      "derivation": "/nix/store/8vcgz6arxzfva66vdd1y5m72al0pccyi-python3.13-whisper-20240930-unstable-2025-01-04.drv",
+      "description": "General-purpose speech recognition model",
+      "install_id": "openai-whisper",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-whisper-20240930-unstable-2025-01-04",
+      "pname": "openai-whisper",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:39.056486Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2025-01-04",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/6cfcnzv6sz192fi3f5gkpxflc0d9m7hv-python3.13-whisper-20240930-unstable-2025-01-04-dist",
+        "out": "/nix/store/jzsnav1579qxg4csaapy7jzx40zyjclp-python3.13-whisper-20240930-unstable-2025-01-04"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.openai-whisper",
+      "broken": false,
+      "derivation": "/nix/store/8s076dlz1s4l277fmvdz7v10x7ir1msi-python3.13-whisper-20240930-unstable-2025-01-04.drv",
+      "description": "General-purpose speech recognition model",
+      "install_id": "openai-whisper",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-whisper-20240930-unstable-2025-01-04",
+      "pname": "openai-whisper",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:55:32.162281Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2025-01-04",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/j1rcffiv4463crc4sfydgrp0gikfs25r-python3.13-whisper-20240930-unstable-2025-01-04-dist",
+        "out": "/nix/store/pz5483ng4654r5dclkvrdfwiwi1vv9d7-python3.13-whisper-20240930-unstable-2025-01-04"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.openai-whisper",
+      "broken": false,
+      "derivation": "/nix/store/6di82w27cqz87nihba7l9dh07xgf1p6x-python3.13-whisper-20240930-unstable-2025-01-04.drv",
+      "description": "General-purpose speech recognition model",
+      "install_id": "openai-whisper",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-whisper-20240930-unstable-2025-01-04",
+      "pname": "openai-whisper",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:12:46.851964Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2025-01-04",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/by14h3x9q6d5l0fnz4k81aga03mb6mvb-python3.13-whisper-20240930-unstable-2025-01-04-dist",
+        "out": "/nix/store/8n8n65xr7j07j05vcq5sfl5440l9irn9-python3.13-whisper-20240930-unstable-2025-01-04"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.openai-whisper",
+      "broken": false,
+      "derivation": "/nix/store/rdwnjngf0qidi4arlfkappfx3nzjamlp-python3.13-whisper-20240930-unstable-2025-01-04.drv",
+      "description": "General-purpose speech recognition model",
+      "install_id": "openai-whisper",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-whisper-20240930-unstable-2025-01-04",
+      "pname": "openai-whisper",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:33:16.472211Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2025-01-04",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/313x1vxlq7vq37hivd0l5zr12hza04mr-python3.13-whisper-20240930-unstable-2025-01-04-dist",
+        "out": "/nix/store/n22hxnfyn2qvbds3pb83g1clhq634592-python3.13-whisper-20240930-unstable-2025-01-04"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.pytest",
+      "broken": false,
+      "derivation": "/nix/store/5impwd42wnvy6lm4jasd8rq4mrniggwd-python3.13-pytest-8.3.5.drv",
+      "description": "Framework for writing tests",
+      "install_id": "pytest",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-pytest-8.3.5",
+      "pname": "pytest",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:40.820332Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "8.3.5",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/6v6sj37lpafz9c7ln02mgbhy6g19icm8-python3.13-pytest-8.3.5-dist",
+        "out": "/nix/store/dilxc8d21dlqvzh3lgia4m7xppkr23sh-python3.13-pytest-8.3.5",
+        "testout": "/nix/store/c7596ahial0lfq95464nrr2kamyjmw93-python3.13-pytest-8.3.5-testout"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.pytest",
+      "broken": false,
+      "derivation": "/nix/store/fwqsxvaq26qkmhbi1wqy5snr09w1nyp1-python3.13-pytest-8.3.5.drv",
+      "description": "Framework for writing tests",
+      "install_id": "pytest",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-pytest-8.3.5",
+      "pname": "pytest",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:55:34.700119Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "8.3.5",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/h38h5sjj31jfjgvfrfnsdgqf4nd786bv-python3.13-pytest-8.3.5-dist",
+        "out": "/nix/store/lcxwcpg47mcmz96c7dd2qswagb6vz6kv-python3.13-pytest-8.3.5",
+        "testout": "/nix/store/2y0v6g49204pgrz1mk3a5i2hr4hzi9yk-python3.13-pytest-8.3.5-testout"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.pytest",
+      "broken": false,
+      "derivation": "/nix/store/b3hrd2m1brpb0k6rvpqmfv0xx6h98h77-python3.13-pytest-8.3.5.drv",
+      "description": "Framework for writing tests",
+      "install_id": "pytest",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-pytest-8.3.5",
+      "pname": "pytest",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:12:48.656939Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "8.3.5",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/nil3rv9c1acdq1mbnb9b07sby61fbm9d-python3.13-pytest-8.3.5-dist",
+        "out": "/nix/store/qkbfv4xiyp7xf5kl220bqry9dknglix4-python3.13-pytest-8.3.5",
+        "testout": "/nix/store/s9hjkbqsj6czd9hps0rn0zdp0dp0jkcx-python3.13-pytest-8.3.5-testout"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.pytest",
+      "broken": false,
+      "derivation": "/nix/store/zq3vpqnjwq9zw8wixysvdnm0c5wlm313-python3.13-pytest-8.3.5.drv",
+      "description": "Framework for writing tests",
+      "install_id": "pytest",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-pytest-8.3.5",
+      "pname": "pytest",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:33:19.161996Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "8.3.5",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/rlk5jwi94j6sc1w6xp3a678rh4dalsvq-python3.13-pytest-8.3.5-dist",
+        "out": "/nix/store/hkfyg5vls2farazb6vvvaqmnzdzi79xm-python3.13-pytest-8.3.5",
+        "testout": "/nix/store/0hd8inqsgvb0nz4hh10yqp12w4jpj39q-python3.13-pytest-8.3.5-testout"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
       "attr_path": "python313Full",
       "broken": false,
       "derivation": "/nix/store/bkj4m5b0n9z8hrcj0gs4p2nsidq04k3j-python3-3.13.3.drv",
@@ -1011,6 +1278,390 @@
       "priority": 5
     },
     {
+      "attr_path": "python313Packages.tabulate",
+      "broken": false,
+      "derivation": "/nix/store/zg36wqrp8v5y8qfw2ddrp9iql7rdrk44-python3.13-tabulate-0.9.0.drv",
+      "description": "Pretty-print tabular data",
+      "install_id": "tabulate",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-tabulate-0.9.0",
+      "pname": "tabulate",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:42.771803Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.9.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/mmrpa0wsiqnapbvmisl6wbx9q8aapji9-python3.13-tabulate-0.9.0-dist",
+        "out": "/nix/store/xi0lqq5lml53bvqxajgiw5p3sygvfssa-python3.13-tabulate-0.9.0"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.tabulate",
+      "broken": false,
+      "derivation": "/nix/store/6ipjlkbwb74iids6ifp1sd3ag848qi8q-python3.13-tabulate-0.9.0.drv",
+      "description": "Pretty-print tabular data",
+      "install_id": "tabulate",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-tabulate-0.9.0",
+      "pname": "tabulate",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:55:37.462108Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.9.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/lba0nd7sh05z83apra22bb8m1hni50lv-python3.13-tabulate-0.9.0-dist",
+        "out": "/nix/store/lzpgmnm7vihiinrv9066i77jkal72i0q-python3.13-tabulate-0.9.0"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.tabulate",
+      "broken": false,
+      "derivation": "/nix/store/rqs79fhgjbm131aiwz3jz0w1myrb36j6-python3.13-tabulate-0.9.0.drv",
+      "description": "Pretty-print tabular data",
+      "install_id": "tabulate",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-tabulate-0.9.0",
+      "pname": "tabulate",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:12:50.657041Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.9.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/k7xqhlp0azbkkhkpd9889v6q00cxkxxv-python3.13-tabulate-0.9.0-dist",
+        "out": "/nix/store/ybhpbv1qzzkqdhm3glv8dr3y69l44sx2-python3.13-tabulate-0.9.0"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.tabulate",
+      "broken": false,
+      "derivation": "/nix/store/ryhjfzggw3zabvicjkhxghx8d0x543r5-python3.13-tabulate-0.9.0.drv",
+      "description": "Pretty-print tabular data",
+      "install_id": "tabulate",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-tabulate-0.9.0",
+      "pname": "tabulate",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:33:22.094187Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.9.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/aljdjzzx4lr3hz9kngimalxhj47rwmhp-python3.13-tabulate-0.9.0-dist",
+        "out": "/nix/store/i91y6xcbhac1118h9sil4h7c55pyzxj9-python3.13-tabulate-0.9.0"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.toml",
+      "broken": false,
+      "derivation": "/nix/store/6ij3ca62jjzzbwbp88l64ysw9zz30cpm-python3.13-toml-0.10.2.drv",
+      "description": "Python library for parsing and creating TOML",
+      "install_id": "toml",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-toml-0.10.2",
+      "pname": "toml",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:43.009602Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.10.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/bwcvnv989jhmgr6xv50pd0m5q9slyv67-python3.13-toml-0.10.2-dist",
+        "out": "/nix/store/rlkcz9faf2rbcd0xcxk5xiix7c09jxj3-python3.13-toml-0.10.2"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.toml",
+      "broken": false,
+      "derivation": "/nix/store/0hzwf74gv1pc9f5nmsnhxjyk72v3s9f2-python3.13-toml-0.10.2.drv",
+      "description": "Python library for parsing and creating TOML",
+      "install_id": "toml",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-toml-0.10.2",
+      "pname": "toml",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:55:37.794466Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.10.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/r0ifs0sdl44d6rznxgsrna90xxgz9nn0-python3.13-toml-0.10.2-dist",
+        "out": "/nix/store/cr7nabnghxvyvg9h890f54vga994s8qd-python3.13-toml-0.10.2"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.toml",
+      "broken": false,
+      "derivation": "/nix/store/80ycs5lcjgsr94z6j77rwshprl914mfj-python3.13-toml-0.10.2.drv",
+      "description": "Python library for parsing and creating TOML",
+      "install_id": "toml",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-toml-0.10.2",
+      "pname": "toml",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:12:50.899974Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.10.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/pcfl1x4xj3vw2pd97lbydjaik454zl5r-python3.13-toml-0.10.2-dist",
+        "out": "/nix/store/w4415z9qcd8nxb1wxgxyf3ml3h5mrhga-python3.13-toml-0.10.2"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.toml",
+      "broken": false,
+      "derivation": "/nix/store/5vrw7f9g9c26mgf2yd90h8nyyg3vlby1-python3.13-toml-0.10.2.drv",
+      "description": "Python library for parsing and creating TOML",
+      "install_id": "toml",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-toml-0.10.2",
+      "pname": "toml",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:33:22.450652Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.10.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/6yfjf8m77qsc4gl5y76bg86ddf6j5drz-python3.13-toml-0.10.2-dist",
+        "out": "/nix/store/ijkmhkwjnsjq0dd9ddwvh9hmimfv690a-python3.13-toml-0.10.2"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.torch",
+      "broken": false,
+      "derivation": "/nix/store/7yvz34hjnh4f8vp6lw0nsg9cij7hnjnh-python3.13-torch-2.7.1.drv",
+      "description": "PyTorch: Tensors and Dynamic neural networks in Python with strong GPU acceleration",
+      "install_id": "torch",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-torch-2.7.1",
+      "pname": "torch",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:43.021271Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.7.1",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "cxxdev": "/nix/store/djwppan9ca39z3fq7v7yrdjkcrxl4hkv-python3.13-torch-2.7.1-cxxdev",
+        "dev": "/nix/store/rgr4lg69gif7j2k4j9pdllkrqp5v9kdp-python3.13-torch-2.7.1-dev",
+        "dist": "/nix/store/hr041i832i672zyb12iwgpjh6zipzw9h-python3.13-torch-2.7.1-dist",
+        "lib": "/nix/store/v0i437h7zvsrsfa7pzfc31ciyfv13wfi-python3.13-torch-2.7.1-lib",
+        "out": "/nix/store/sjvjcaxk6vnf46mfyaj9k4nnqna3c17j-python3.13-torch-2.7.1"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.torch",
+      "broken": false,
+      "derivation": "/nix/store/sa2vpmhls9n2954j3zpdlrbw92mvs26n-python3.13-torch-2.7.1.drv",
+      "description": "PyTorch: Tensors and Dynamic neural networks in Python with strong GPU acceleration",
+      "install_id": "torch",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-torch-2.7.1",
+      "pname": "torch",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:55:37.810323Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.7.1",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "cxxdev": "/nix/store/adbix6bfzjdlff6jr5g3hhvr7036j720-python3.13-torch-2.7.1-cxxdev",
+        "dev": "/nix/store/lwqmhfjayiyand69yfhk7815cw37w6rn-python3.13-torch-2.7.1-dev",
+        "dist": "/nix/store/m4xk8m8ws07lg5m29y4d6bmi0l74ryqy-python3.13-torch-2.7.1-dist",
+        "lib": "/nix/store/rhvn1l2q1jvs8wlj2xvz17gbf4i0qhhf-python3.13-torch-2.7.1-lib",
+        "out": "/nix/store/fhhh7cqa7bqmz79bc8fsd89w8hv79cgc-python3.13-torch-2.7.1"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.torch",
+      "broken": false,
+      "derivation": "/nix/store/n9x1sdx9dgzsqp6s15pj2khr7qq45sqh-python3.13-torch-2.7.1.drv",
+      "description": "PyTorch: Tensors and Dynamic neural networks in Python with strong GPU acceleration",
+      "install_id": "torch",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-torch-2.7.1",
+      "pname": "torch",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:12:50.912092Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.7.1",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "cxxdev": "/nix/store/zqxrq9fnc3mphjni4wzdwwvq5g8azp97-python3.13-torch-2.7.1-cxxdev",
+        "dev": "/nix/store/vc53lr6ywlka8pjhfsvxdhkb6vbkngxa-python3.13-torch-2.7.1-dev",
+        "dist": "/nix/store/773sdg86ms2sashrlfcdk3fkx6zbmvbz-python3.13-torch-2.7.1-dist",
+        "lib": "/nix/store/ni5i9d62lczgkza4pxfpsjz0zv806qiv-python3.13-torch-2.7.1-lib",
+        "out": "/nix/store/8m9ckfg3q8777xll1b7yj7mm06q3fkkb-python3.13-torch-2.7.1"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.torch",
+      "broken": false,
+      "derivation": "/nix/store/82mjxiafmrw5p19gvwqyi3lkl0fl8nqq-python3.13-torch-2.7.1.drv",
+      "description": "PyTorch: Tensors and Dynamic neural networks in Python with strong GPU acceleration",
+      "install_id": "torch",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-torch-2.7.1",
+      "pname": "torch",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:33:22.467385Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.7.1",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "cxxdev": "/nix/store/98cvxm356na2bcb1fz9bpadah2a7m3q4-python3.13-torch-2.7.1-cxxdev",
+        "dev": "/nix/store/igmrs1lcrhyql3zjc9jw54qz7pr45sg6-python3.13-torch-2.7.1-dev",
+        "dist": "/nix/store/qfxqd0p6bnqxvx31y70y4vabzvahai1x-python3.13-torch-2.7.1-dist",
+        "lib": "/nix/store/ri4mk85j65xgq04psk5m8505f6b7rb6b-python3.13-torch-2.7.1-lib",
+        "out": "/nix/store/dlhxkvzai2klvgdff1yq6lck451phan6-python3.13-torch-2.7.1"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
       "attr_path": "uv",
       "broken": false,
       "derivation": "/nix/store/isqz0gb01bzj059z0bkv7xn1nr7v6jy7-uv-0.7.13.drv",
@@ -1144,10 +1795,28 @@
         "numpy": {
           "pkg-path": "python313Packages.numpy",
           "version": "<2.3"
+        },
+        "openai-whisper": {
+          "pkg-path": "python313Packages.openai-whisper"
+        },
+        "pytest": {
+          "pkg-path": "python313Packages.pytest"
+        },
+        "python313Full": {
+          "pkg-path": "python313Full"
+        },
+        "tabulate": {
+          "pkg-path": "python313Packages.tabulate"
+        },
+        "toml": {
+          "pkg-path": "python313Packages.toml"
+        },
+        "torch": {
+          "pkg-path": "python313Packages.torch"
         }
       },
       "hook": {
-        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n  export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n  mkdir -p \"${GOBIN}\"\n  go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\nfi\nuv sync\nuv venv\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n"
+        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n  export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n  mkdir -p \"${GOBIN}\"\n  go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\nfi\n# Use python3.13 directly without venv since packages are installed via Nix\n# Set PYTHONPATH to include the project directory and the correct site-packages\nexport PYTHONPATH=\"${FLOX_ENV_PROJECT}:${FLOX_ENV}/lib/python3.13/site-packages:${PYTHONPATH}\"\nalias python=python3.13\n"
       },
       "profile": {},
       "options": {
@@ -1211,6 +1880,15 @@
       }
     ],
     "warnings": [
+      {
+        "warning": {
+          "Overriding": [
+            "install",
+            "python313Full"
+          ]
+        },
+        "higher_priority_name": "Current manifest"
+      },
       {
         "warning": {
           "Overriding": [
