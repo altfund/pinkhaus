@@ -4,7 +4,6 @@ Database operations for storing transcription data in SQLite.
 
 import sqlite3
 from typing import Optional, Dict, List, Any
-from datetime import datetime
 from pathlib import Path
 from contextlib import contextmanager
 
@@ -13,18 +12,18 @@ from .transcriber import TranscriptionResult, Segment
 
 class TranscriptionDatabase:
     """Handle SQLite database operations for transcriptions"""
-    
+
     def __init__(self, db_path: str):
         """Initialize database connection"""
         self.db_path = db_path
         self._ensure_parent_directory()
-    
+
     def _ensure_parent_directory(self):
         """Ensure the parent directory for the database exists"""
         parent = Path(self.db_path).parent
         if not parent.exists():
             parent.mkdir(parents=True, exist_ok=True)
-    
+
     @contextmanager
     def _get_connection(self):
         """Context manager for database connections"""
@@ -40,19 +39,22 @@ class TranscriptionDatabase:
             raise
         finally:
             conn.close()
-    
-    def create_tables(self, metadata_table: str = "transcription_metadata", 
-                     segments_table: str = "transcription_segments"):
+
+    def create_tables(
+        self,
+        metadata_table: str = "transcription_metadata",
+        segments_table: str = "transcription_segments",
+    ):
         """
         Create the database tables if they don't exist.
-        
+
         Args:
             metadata_table: Name of the metadata table
             segments_table: Name of the segments table
         """
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            
+
             # Create metadata table
             cursor.execute(f"""
                 CREATE TABLE IF NOT EXISTS {metadata_table} (
@@ -66,7 +68,7 @@ class TranscriptionDatabase:
                     UNIQUE(file_hash, model_name)
                 )
             """)
-            
+
             # Create segments table
             cursor.execute(f"""
                 CREATE TABLE IF NOT EXISTS {segments_table} (
@@ -81,216 +83,266 @@ class TranscriptionDatabase:
                     UNIQUE(transcription_id, segment_index)
                 )
             """)
-            
+
             # Create indexes for better query performance
             cursor.execute(f"""
                 CREATE INDEX IF NOT EXISTS idx_{segments_table}_transcription_id 
                 ON {segments_table}(transcription_id)
             """)
-            
+
             cursor.execute(f"""
                 CREATE INDEX IF NOT EXISTS idx_{metadata_table}_file_hash 
                 ON {metadata_table}(file_hash)
             """)
-    
-    def save_transcription(self, result: TranscriptionResult, 
-                          model_name: str = "unknown",
-                          metadata_table: str = "transcription_metadata", 
-                          segments_table: str = "transcription_segments") -> int:
+
+    def save_transcription(
+        self,
+        result: TranscriptionResult,
+        model_name: str = "unknown",
+        metadata_table: str = "transcription_metadata",
+        segments_table: str = "transcription_segments",
+    ) -> int:
         """
         Save a transcription result to the database.
-        
+
         Args:
             result: TranscriptionResult object to save
             model_name: Name of the model used for transcription
             metadata_table: Name of the metadata table
             segments_table: Name of the segments table
-            
+
         Returns:
             The transcription_id of the saved record
         """
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            
+
             # Check if this transcription already exists
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 SELECT id FROM {metadata_table} 
                 WHERE file_hash = ? AND model_name = ?
-            """, (result.file_hash, model_name))
-            
+            """,
+                (result.file_hash, model_name),
+            )
+
             existing = cursor.fetchone()
             if existing:
-                return existing['id']
-            
+                return existing["id"]
+
             # Insert metadata
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 INSERT INTO {metadata_table} 
                 (filename, file_hash, language, full_text, model_name)
                 VALUES (?, ?, ?, ?, ?)
-            """, (result.filename, result.file_hash, result.language, 
-                  result.full_text, model_name))
-            
+            """,
+                (
+                    result.filename,
+                    result.file_hash,
+                    result.language,
+                    result.full_text,
+                    model_name,
+                ),
+            )
+
             transcription_id = cursor.lastrowid
-            
+
             # Insert segments
             for idx, segment in enumerate(result.segments):
                 duration = segment.end - segment.start
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     INSERT INTO {segments_table}
                     (transcription_id, segment_index, start_time, end_time, duration, text)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (transcription_id, idx, segment.start, segment.end, 
-                      duration, segment.text.strip()))
-            
+                """,
+                    (
+                        transcription_id,
+                        idx,
+                        segment.start,
+                        segment.end,
+                        duration,
+                        segment.text.strip(),
+                    ),
+                )
+
             return transcription_id
-    
-    def get_transcription(self, transcription_id: int,
-                         metadata_table: str = "transcription_metadata",
-                         segments_table: str = "transcription_segments") -> Optional[Dict[str, Any]]:
+
+    def get_transcription(
+        self,
+        transcription_id: int,
+        metadata_table: str = "transcription_metadata",
+        segments_table: str = "transcription_segments",
+    ) -> Optional[Dict[str, Any]]:
         """
         Retrieve a transcription by ID.
-        
+
         Args:
             transcription_id: ID of the transcription to retrieve
             metadata_table: Name of the metadata table
             segments_table: Name of the segments table
-            
+
         Returns:
             Dictionary with transcription data or None if not found
         """
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            
+
             # Get metadata
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 SELECT * FROM {metadata_table} WHERE id = ?
-            """, (transcription_id,))
-            
+            """,
+                (transcription_id,),
+            )
+
             metadata = cursor.fetchone()
             if not metadata:
                 return None
-            
+
             # Get segments
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 SELECT * FROM {segments_table} 
                 WHERE transcription_id = ?
                 ORDER BY segment_index
-            """, (transcription_id,))
-            
+            """,
+                (transcription_id,),
+            )
+
             segments = cursor.fetchall()
-            
+
             return {
-                'metadata': dict(metadata),
-                'segments': [dict(seg) for seg in segments]
+                "metadata": dict(metadata),
+                "segments": [dict(seg) for seg in segments],
             }
-    
-    def find_by_hash(self, file_hash: str,
-                    metadata_table: str = "transcription_metadata") -> List[Dict[str, Any]]:
+
+    def find_by_hash(
+        self, file_hash: str, metadata_table: str = "transcription_metadata"
+    ) -> List[Dict[str, Any]]:
         """
         Find all transcriptions for a given file hash.
-        
+
         Args:
             file_hash: SHA256 hash of the file
             metadata_table: Name of the metadata table
-            
+
         Returns:
             List of transcription metadata dictionaries
         """
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            
-            cursor.execute(f"""
+
+            cursor.execute(
+                f"""
                 SELECT * FROM {metadata_table} 
                 WHERE file_hash = ?
                 ORDER BY created_at DESC
-            """, (file_hash,))
-            
+            """,
+                (file_hash,),
+            )
+
             return [dict(row) for row in cursor.fetchall()]
-    
-    def get_recent_transcriptions(self, limit: int = 10,
-                                 metadata_table: str = "transcription_metadata") -> List[Dict[str, Any]]:
+
+    def get_recent_transcriptions(
+        self, limit: int = 10, metadata_table: str = "transcription_metadata"
+    ) -> List[Dict[str, Any]]:
         """
         Get the most recent transcriptions.
-        
+
         Args:
             limit: Maximum number of transcriptions to return
             metadata_table: Name of the metadata table
-            
+
         Returns:
             List of transcription metadata dictionaries
         """
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            
-            cursor.execute(f"""
+
+            cursor.execute(
+                f"""
                 SELECT * FROM {metadata_table}
                 ORDER BY created_at DESC, id DESC
                 LIMIT ?
-            """, (limit,))
-            
+            """,
+                (limit,),
+            )
+
             return [dict(row) for row in cursor.fetchall()]
-    
-    def delete_transcription(self, transcription_id: int,
-                           metadata_table: str = "transcription_metadata",
-                           segments_table: str = "transcription_segments") -> bool:
+
+    def delete_transcription(
+        self,
+        transcription_id: int,
+        metadata_table: str = "transcription_metadata",
+        segments_table: str = "transcription_segments",
+    ) -> bool:
         """
         Delete a transcription and its segments.
-        
+
         Args:
             transcription_id: ID of the transcription to delete
             metadata_table: Name of the metadata table
             segments_table: Name of the segments table
-            
+
         Returns:
             True if deleted, False if not found
         """
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            
+
             # First delete segments
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 DELETE FROM {segments_table} WHERE transcription_id = ?
-            """, (transcription_id,))
-            
+            """,
+                (transcription_id,),
+            )
+
             # Then delete metadata
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 DELETE FROM {metadata_table} WHERE id = ?
-            """, (transcription_id,))
-            
+            """,
+                (transcription_id,),
+            )
+
             return cursor.rowcount > 0
-    
-    def export_to_dict(self, transcription_id: int,
-                      metadata_table: str = "transcription_metadata",
-                      segments_table: str = "transcription_segments") -> Optional[TranscriptionResult]:
+
+    def export_to_dict(
+        self,
+        transcription_id: int,
+        metadata_table: str = "transcription_metadata",
+        segments_table: str = "transcription_segments",
+    ) -> Optional[TranscriptionResult]:
         """
         Export a transcription from database back to TranscriptionResult object.
-        
+
         Args:
             transcription_id: ID of the transcription
             metadata_table: Name of the metadata table
             segments_table: Name of the segments table
-            
+
         Returns:
             TranscriptionResult object or None if not found
         """
         data = self.get_transcription(transcription_id, metadata_table, segments_table)
         if not data:
             return None
-        
-        metadata = data['metadata']
+
+        metadata = data["metadata"]
         segments = []
-        
-        for seg in data['segments']:
-            segments.append(Segment(
-                start=seg['start_time'],
-                end=seg['end_time'],
-                text=seg['text']
-            ))
-        
+
+        for seg in data["segments"]:
+            segments.append(
+                Segment(start=seg["start_time"], end=seg["end_time"], text=seg["text"])
+            )
+
         return TranscriptionResult(
-            filename=metadata['filename'],
-            file_hash=metadata['file_hash'],
-            language=metadata['language'],
+            filename=metadata["filename"],
+            file_hash=metadata["file_hash"],
+            language=metadata["language"],
             segments=segments,
-            full_text=metadata['full_text']
+            full_text=metadata["full_text"],
         )
