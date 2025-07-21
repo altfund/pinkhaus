@@ -1,0 +1,29 @@
+name: Build and Test Beige Book Module
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: "Build and test"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
+
+      - name: "Install Flox"
+        uses: "flox/install-flox-action@v2"
+
+      - name: "Activate Flox and run lint/format"
+        working-directory: ./projects/beige-book/
+        run: |
+          flox activate -- just install
+          flox activate -- just check
+
+      - name: "Run pytest with Flox"
+        working-directory: ./projects/beige-book/
+        run: |
+          flox activate -- python3.13 -m pytest -v
