@@ -24,6 +24,7 @@ jobs:
             libgcc-s1 \
             libc6 \
             libgcc1
+          sudo ldconfig
 
       - name: "Install Flox"
         uses: "flox/install-flox-action@v2"
