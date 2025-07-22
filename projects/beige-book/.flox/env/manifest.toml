@@ -27,7 +27,9 @@ openai-whisper.pkg-path = "python313Packages.openai-whisper"
 ffmpeg.pkg-path = "ffmpeg"
 sqlite.pkg-path = "sqlite"
 just.pkg-path = "just"
-
+uvicorn.pkg-path = "python313Packages.uvicorn"
+fastapi.pkg-path = "python313Packages.fastapi"
+feedparser.pkg-path = "python313Packages.feedparser"
 
 ## Environment Variables ---------------------------------------------
 ##  ... available for use in the activated environment

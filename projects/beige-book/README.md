@@ -1,6 +1,6 @@
 # Beige Book - Audio Transcription Tool
 
-A command-line tool and Python library for transcribing audio files using OpenAI's Whisper model with support for multiple structured output formats including SQLite database storage. Now with RSS/podcast feed processing capabilities.
+A command-line tool, Python library, and REST API for transcribing audio files using OpenAI's Whisper model with support for multiple structured output formats including SQLite database storage. Now with RSS/podcast feed processing capabilities.
 
 ## Features
 
@@ -12,6 +12,7 @@ A command-line tool and Python library for transcribing audio files using OpenAI
 - Resumable feed processing with duplicate detection
 - Feed item ordering (newest/oldest first) and limiting
 - Python library API for programmatic use
+- REST API with Swagger/OpenAPI documentation
 - Comprehensive test suite
 
 ## Installation
@@ -24,6 +25,13 @@ A command-line tool and Python library for transcribing audio files using OpenAI
    flox activate
    uv pip install -e .
    ```
+
+### API Dependencies
+
+To run the REST API server, install additional dependencies:
+```bash
+uv pip install fastapi uvicorn
+```
 
 ## Command Line Usage
 
@@ -313,14 +321,14 @@ for item in feed_items[:5]:  # Process first 5 items
     # Check if already processed
     if db.check_feed_item_exists(item.feed_url, item.item_id):
         continue
-    
+
     # Download audio
     temp_path, file_hash = downloader.download_to_temp(item.audio_url)
-    
+
     try:
         # Transcribe
         result = transcriber.transcribe_file(temp_path)
-        
+
         # Save with feed metadata
         db.save_transcription(
             result,
@@ -335,6 +343,82 @@ for item in feed_items[:5]:  # Process first 5 items
 ```
 
 See `examples/` directory for more usage examples.
+
+## REST API
+
+The tool includes a REST API server with Swagger/OpenAPI documentation.
+
+### Starting the API Server
+
+```bash
+# Basic usage
+uv run python run_api.py
+
+# With auto-reload for development
+uv run python run_api.py --reload
+
+# Custom host and port
+uv run python run_api.py --host 0.0.0.0 --port 8080
+
+# With debug logging
+uv run python run_api.py --log-level debug
+```
+
+### API Documentation
+
+Once the server is running, access the documentation at:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+- OpenAPI JSON: http://localhost:8000/openapi.json
+
+### API Usage Example
+
+Transcribe an audio file with curl:
+
+```bash
+curl -X POST http://localhost:8000/transcribe \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": {
+      "type": "file",
+      "source": "/path/to/audio.wav"
+    },
+    "processing": {
+      "model": "medium",
+      "verbose": false
+    },
+    "output": {
+      "format": "json"
+    }
+  }'
+```
+
+Process RSS feeds:
+
+```bash
+curl -X POST http://localhost:8000/transcribe \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": {
+      "type": "feed",
+      "source": "/path/to/feeds.toml"
+    },
+    "processing": {
+      "model": "base",
+      "verbose": true,
+      "feed_options": {
+        "limit": 10,
+        "order": "newest"
+      }
+    },
+    "output": {
+      "format": "sqlite",
+      "database": {
+        "db_path": "/path/to/podcasts.db"
+      }
+    }
+  }'
+```
 
 ## Running Tests
 
