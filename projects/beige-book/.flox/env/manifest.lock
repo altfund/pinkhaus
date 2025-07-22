@@ -6,6 +6,12 @@
       "calysto": {
         "pkg-path": "python313Packages.calysto"
       },
+      "fastapi": {
+        "pkg-path": "python313Packages.fastapi"
+      },
+      "feedparser": {
+        "pkg-path": "python313Packages.feedparser"
+      },
       "ffmpeg": {
         "pkg-path": "ffmpeg"
       },
@@ -52,10 +58,13 @@
       },
       "uv": {
         "pkg-path": "uv"
+      },
+      "uvicorn": {
+        "pkg-path": "python313Packages.uvicorn"
       }
     },
     "hook": {
-      "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n  export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n  mkdir -p \"${GOBIN}\"\n  go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\nfi\n<<<<<<< HEAD\nuv sync\nuv venv\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n||||||| 5a3c54f\nuv sync\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n=======\n# Use python3.13 directly without venv since packages are installed via Nix\n# Set PYTHONPATH to include the project directory and the correct site-packages\nexport PYTHONPATH=\"${FLOX_ENV_PROJECT}:${FLOX_ENV}/lib/python3.13/site-packages:${PYTHONPATH}\"\nalias python=python3.13\n>>>>>>> main\n"
+      "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n  export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n  mkdir -p \"${GOBIN}\"\n  go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\nfi\n# Use python3.13 directly without venv since packages are installed via Nix\n# Set PYTHONPATH to include the project directory and the correct site-packages\nexport PYTHONPATH=\"${FLOX_ENV_PROJECT}:${FLOX_ENV}/lib/python3.13/site-packages:${PYTHONPATH}\"\nalias python=python3.13\n"
     },
     "profile": {},
     "options": {
@@ -187,6 +196,254 @@
       "outputs": {
         "dist": "/nix/store/kdqdpm4lrkx24396skpf8nm7j0vqy4bz-python3.13-calysto-1.0.6-dist",
         "out": "/nix/store/9r0h92cvi3xlgz59yai7kw6hr8by8d82-python3.13-calysto-1.0.6"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.fastapi",
+      "broken": false,
+      "derivation": "/nix/store/hdc5x26b0c6p4kjhff1hfpajgqv87b0f-python3.13-fastapi-0.115.12.drv",
+      "description": "Web framework for building APIs",
+      "install_id": "fastapi",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-fastapi-0.115.12",
+      "pname": "fastapi",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:36.001260Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.115.12",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/6q00m14dfy1g2kxjx3bmsckcld1zqyqf-python3.13-fastapi-0.115.12-dist",
+        "out": "/nix/store/2xafysk94h22wdw72r3x2ikdh4m8jzg8-python3.13-fastapi-0.115.12"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.fastapi",
+      "broken": false,
+      "derivation": "/nix/store/6pkhi38v2f5b0xh072cl38l4h49dmc8p-python3.13-fastapi-0.115.12.drv",
+      "description": "Web framework for building APIs",
+      "install_id": "fastapi",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-fastapi-0.115.12",
+      "pname": "fastapi",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:55:27.719714Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.115.12",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/a0gb939pdcbl10xmgg55lj2qlbkk7dfs-python3.13-fastapi-0.115.12-dist",
+        "out": "/nix/store/gp7llhnm6jy3xy2fgm6znwxbx9r1m9k1-python3.13-fastapi-0.115.12"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.fastapi",
+      "broken": false,
+      "derivation": "/nix/store/blnn3jpk0yyfzxhcii4yl5xzaiija325-python3.13-fastapi-0.115.12.drv",
+      "description": "Web framework for building APIs",
+      "install_id": "fastapi",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-fastapi-0.115.12",
+      "pname": "fastapi",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:12:43.713485Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.115.12",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/iwnnj21ksajqchdfhid0b7sc90aal472-python3.13-fastapi-0.115.12-dist",
+        "out": "/nix/store/rn8zg4d6ra64nxjbhwzkmy7q0drd722w-python3.13-fastapi-0.115.12"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.fastapi",
+      "broken": false,
+      "derivation": "/nix/store/ringb28v9sfmsy77shcizr449126wxvb-python3.13-fastapi-0.115.12.drv",
+      "description": "Web framework for building APIs",
+      "install_id": "fastapi",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-fastapi-0.115.12",
+      "pname": "fastapi",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:33:11.749206Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.115.12",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/vkxvb1hvcs0iygd73ban6kg9079hvwxv-python3.13-fastapi-0.115.12-dist",
+        "out": "/nix/store/8zjs2bbvvj4n7c4hcqv7nr61gvkh6z6v-python3.13-fastapi-0.115.12"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.feedparser",
+      "broken": false,
+      "derivation": "/nix/store/p9zd5p1sma8w8k3kb90khc8bpzss4w7h-python3.13-feedparser-6.0.11.drv",
+      "description": "Universal feed parser",
+      "install_id": "feedparser",
+      "license": "BSD-2-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-feedparser-6.0.11",
+      "pname": "feedparser",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:36.050570Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "6.0.11",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/zmwibf3hsy99akgymvpisfv2hn7hx04z-python3.13-feedparser-6.0.11-dist",
+        "out": "/nix/store/wg8zksrnznnijrq6mnv63rjjhdqv1gyw-python3.13-feedparser-6.0.11"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.feedparser",
+      "broken": false,
+      "derivation": "/nix/store/4chya2q4kqqv0ransd9b25pcq1fgjkyw-python3.13-feedparser-6.0.11.drv",
+      "description": "Universal feed parser",
+      "install_id": "feedparser",
+      "license": "BSD-2-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-feedparser-6.0.11",
+      "pname": "feedparser",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:55:27.787691Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "6.0.11",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/p2sagcakaynlmiw0bf8ssjiw1j8ahanb-python3.13-feedparser-6.0.11-dist",
+        "out": "/nix/store/pnz5kdls6m6v6b2dy9v9cpy5vv88mzaq-python3.13-feedparser-6.0.11"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.feedparser",
+      "broken": false,
+      "derivation": "/nix/store/ar8s76k980kbx4414gpzw415v1m3ki2g-python3.13-feedparser-6.0.11.drv",
+      "description": "Universal feed parser",
+      "install_id": "feedparser",
+      "license": "BSD-2-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-feedparser-6.0.11",
+      "pname": "feedparser",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:12:43.763946Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "6.0.11",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/p7c2qxaai5yxhdk5c8mhs2drxny2xyfq-python3.13-feedparser-6.0.11-dist",
+        "out": "/nix/store/3ird1c8071s7irq21d5n8j2vxd5cnz9y-python3.13-feedparser-6.0.11"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.feedparser",
+      "broken": false,
+      "derivation": "/nix/store/xllj9x57vbajww0gp4z8vcqmirjmy14p-python3.13-feedparser-6.0.11.drv",
+      "description": "Universal feed parser",
+      "install_id": "feedparser",
+      "license": "BSD-2-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-feedparser-6.0.11",
+      "pname": "feedparser",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:33:11.822836Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "6.0.11",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/vqmsisxybzs0h7wzs94ba03ic7ni8553-python3.13-feedparser-6.0.11-dist",
+        "out": "/nix/store/5rhwrskhcq10l6qh2lshg1dy4crrgs4q-python3.13-feedparser-6.0.11"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -1925,12 +2182,146 @@
       "system": "x86_64-linux",
       "group": "toplevel",
       "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.uvicorn",
+      "broken": false,
+      "derivation": "/nix/store/hqbwn8r80p3srfxdksjfprvv8pwwvi3d-python3.13-uvicorn-0.34.0.drv",
+      "description": "Lightning-fast ASGI server",
+      "install_id": "uvicorn",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-uvicorn-0.34.0",
+      "pname": "uvicorn",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:44.063016Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.34.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/syjp4bram6vyw6rjhcr0bba5cmlh1p8m-python3.13-uvicorn-0.34.0-dist",
+        "out": "/nix/store/i764r57y3cfpyswq3fwll3s0sy96klx8-python3.13-uvicorn-0.34.0",
+        "testsout": "/nix/store/dmsmfbsii7iw1z12jnk6bqj4wrzwp35s-python3.13-uvicorn-0.34.0-testsout"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.uvicorn",
+      "broken": false,
+      "derivation": "/nix/store/hg5iidwpbs4jxq4sbgyfj7b6p3dgw2hd-python3.13-uvicorn-0.34.0.drv",
+      "description": "Lightning-fast ASGI server",
+      "install_id": "uvicorn",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-uvicorn-0.34.0",
+      "pname": "uvicorn",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:55:39.254190Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.34.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/nqb2l60a1rqjj0ychxy59j7icc38hyx2-python3.13-uvicorn-0.34.0-dist",
+        "out": "/nix/store/jq706sh4d9s92wcnyz3bsf1yxpz54xmc-python3.13-uvicorn-0.34.0",
+        "testsout": "/nix/store/zcxm7g0hnq7fnqg0bln6xzg52lxbjag9-python3.13-uvicorn-0.34.0-testsout"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.uvicorn",
+      "broken": false,
+      "derivation": "/nix/store/4j81chrrvb4p13zgh5f4m2bx7b55swm8-python3.13-uvicorn-0.34.0.drv",
+      "description": "Lightning-fast ASGI server",
+      "install_id": "uvicorn",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-uvicorn-0.34.0",
+      "pname": "uvicorn",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:12:51.979051Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.34.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/xz91wpj2707b8mqif9sv0wm09ifz1qsw-python3.13-uvicorn-0.34.0-dist",
+        "out": "/nix/store/g3s0hxfs7yzah1wsnpl8j14fp5skmdhi-python3.13-uvicorn-0.34.0",
+        "testsout": "/nix/store/f4s8bjwqgk91hjan6gwa4y6935s8b818-python3.13-uvicorn-0.34.0-testsout"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.uvicorn",
+      "broken": false,
+      "derivation": "/nix/store/jyjahshr36nhyyf40r22w441mfc873vc-python3.13-uvicorn-0.34.0.drv",
+      "description": "Lightning-fast ASGI server",
+      "install_id": "uvicorn",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-uvicorn-0.34.0",
+      "pname": "uvicorn",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:33:23.991889Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.34.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/77nr9rkqv5lcbgdwjvj231ij1cr9j063-python3.13-uvicorn-0.34.0-dist",
+        "out": "/nix/store/xm40vyj2q3fgj8yjy1ivjv2jfa9n81bw-python3.13-uvicorn-0.34.0",
+        "testsout": "/nix/store/jjlrlqwhrbk4042881ig1pzql3sl3i1r-python3.13-uvicorn-0.34.0-testsout"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
     }
   ],
   "compose": {
     "composer": {
       "version": 1,
       "install": {
+        "fastapi": {
+          "pkg-path": "python313Packages.fastapi"
+        },
+        "feedparser": {
+          "pkg-path": "python313Packages.feedparser"
+        },
         "ffmpeg": {
           "pkg-path": "ffmpeg"
         },
@@ -1961,10 +2352,13 @@
         },
         "torch": {
           "pkg-path": "python313Packages.torch"
+        },
+        "uvicorn": {
+          "pkg-path": "python313Packages.uvicorn"
         }
       },
       "hook": {
-        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n  export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n  mkdir -p \"${GOBIN}\"\n  go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\nfi\n<<<<<<< HEAD\nuv sync\nuv venv\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n||||||| 5a3c54f\nuv sync\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n=======\n# Use python3.13 directly without venv since packages are installed via Nix\n# Set PYTHONPATH to include the project directory and the correct site-packages\nexport PYTHONPATH=\"${FLOX_ENV_PROJECT}:${FLOX_ENV}/lib/python3.13/site-packages:${PYTHONPATH}\"\nalias python=python3.13\n>>>>>>> main\n"
+        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n  export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n  mkdir -p \"${GOBIN}\"\n  go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\nfi\n# Use python3.13 directly without venv since packages are installed via Nix\n# Set PYTHONPATH to include the project directory and the correct site-packages\nexport PYTHONPATH=\"${FLOX_ENV_PROJECT}:${FLOX_ENV}/lib/python3.13/site-packages:${PYTHONPATH}\"\nalias python=python3.13\n"
       },
       "profile": {},
       "options": {

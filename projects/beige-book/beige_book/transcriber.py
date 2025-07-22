@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from tabulate import tabulate
 import whisper
+import toml
 
 
 @dataclass
@@ -137,6 +138,75 @@ class TranscriptionResult:
             return self.to_toml()
         else:
             raise ValueError(f"Unknown format: {format_type}")
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'TranscriptionResult':
+        """Create TranscriptionResult from dictionary"""
+        # Convert segment dictionaries to Segment objects
+        segments = []
+        for seg_data in data.get('segments', []):
+            # Parse time string back to seconds if needed
+            if isinstance(seg_data.get('start'), str):
+                # Parse HH:MM:SS.mmm format
+                time_parts = seg_data['start'].split(':')
+                start = float(time_parts[0]) * 3600 + float(time_parts[1]) * 60 + float(time_parts[2])
+                time_parts = seg_data['end'].split(':')
+                end = float(time_parts[0]) * 3600 + float(time_parts[1]) * 60 + float(time_parts[2])
+            else:
+                start = seg_data['start']
+                end = seg_data['end']
+
+            segments.append(Segment(
+                start=start,
+                end=end,
+                text=seg_data['text']
+            ))
+
+        return cls(
+            filename=data['filename'],
+            file_hash=data['file_hash'],
+            language=data['language'],
+            segments=segments,
+            full_text=data['full_text']
+        )
+
+    @classmethod
+    def from_json(cls, json_str: str) -> 'TranscriptionResult':
+        """Create TranscriptionResult from JSON string"""
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+
+    @classmethod
+    def from_toml(cls, toml_str: str) -> 'TranscriptionResult':
+        """Create TranscriptionResult from TOML string"""
+        data = toml.loads(toml_str)
+
+        # TOML structure is slightly different
+        transcription = data.get('transcription', {})
+        segments_data = data.get('segments', [])
+
+        # Convert TOML segments format
+        segments = []
+        for seg in segments_data:
+            # Parse time string to seconds
+            time_parts = seg['start'].split(':')
+            start = float(time_parts[0]) * 3600 + float(time_parts[1]) * 60 + float(time_parts[2])
+            time_parts = seg['end'].split(':')
+            end = float(time_parts[0]) * 3600 + float(time_parts[1]) * 60 + float(time_parts[2])
+
+            segments.append(Segment(
+                start=start,
+                end=end,
+                text=seg['text']
+            ))
+
+        return cls(
+            filename=transcription['filename'],
+            file_hash=transcription['file_hash'],
+            language=transcription['language'],
+            segments=segments,
+            full_text=transcription['full_text']
+        )
 
 
 class AudioTranscriber:
