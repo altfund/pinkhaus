@@ -72,6 +72,11 @@ def main():
         help="Ollama API base URL (default: http://localhost:11434)",
     )
     parser.add_argument(
+        "--embedding-model",
+        default="nomic-embed-text",
+        help="Embedding model to use for indexing (default: nomic-embed-text)",
+    )
+    parser.add_argument(
         "--verbose",
         "-v",
         action="store_true",
@@ -99,6 +104,7 @@ def main():
         date_threshold=args.date_threshold,
         days_back=args.days,
         ollama_base_url=args.ollama_base_url,
+        embedding_model=args.embedding_model,
         verbose=args.verbose,
     )
 
