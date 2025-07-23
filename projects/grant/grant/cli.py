@@ -216,6 +216,48 @@ def stats_command(args):
     print(f"  Chunk size: {stats['chunk_size']} tokens")
 
 
+def check_unindexed_command(args):
+    """Handle the check-unindexed command."""
+    client = OllamaClient(base_url=args.base_url)
+
+    # Check if database exists
+    if not Path(args.db).exists():
+        print(f"Error: Database not found: {args.db}", file=sys.stderr)
+        sys.exit(1)
+
+    # Initialize RAG pipeline
+    rag = RAGPipeline(
+        ollama_client=client,
+        vector_store_path=args.vector_store,
+        db_path=args.db,
+    )
+
+    # Get unindexed transcriptions
+    unindexed = rag.get_unindexed_transcriptions()
+
+    if not unindexed:
+        print("All transcriptions have been indexed! ✓")
+        sys.exit(0)
+
+    # Display summary
+    print(f"Found {len(unindexed)} unindexed transcription(s)")
+    print("=" * 80)
+
+    # Display details
+    for trans in unindexed:
+        print(f"\nID: {trans['id']}")
+        print(f"Title: {trans['title']}")
+        print(f"Feed: {trans['feed_title']}")
+        print(f"Published: {trans['published']}")
+        if trans.get('duration'):
+            print(f"Duration: {trans['duration']} seconds")
+
+    print("\n" + "=" * 80)
+    print(f"Total unindexed: {len(unindexed)}")
+    print("\nTo index these transcriptions, run:")
+    print(f"  grant index --db {args.db} --vector-store {args.vector_store}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Grant - RAG tool using Ollama")
     parser.add_argument(
@@ -324,6 +366,21 @@ def main():
         help="Path to vector store directory",
     )
 
+    # Check-unindexed command
+    check_parser = subparsers.add_parser(
+        "check-unindexed", help="Check for transcriptions not yet indexed"
+    )
+    check_parser.add_argument(
+        "--db",
+        default=DEFAULT_FC_DB,
+        help="Path to transcriptions database",
+    )
+    check_parser.add_argument(
+        "--vector-store",
+        default=DEFAULT_CHROMA_DB,
+        help="Path to vector store directory",
+    )
+
     args = parser.parse_args()
 
     # Setup logging
@@ -348,6 +405,8 @@ def main():
         ask_command(args)
     elif args.command == "stats":
         stats_command(args)
+    elif args.command == "check-unindexed":
+        check_unindexed_command(args)
 
 
 if __name__ == "__main__":

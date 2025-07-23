@@ -363,3 +363,26 @@ Please provide a comprehensive answer based on the context provided. If the cont
             stats["indexed_transcriptions"] = "N/A (no database)"
 
         return stats
+
+    def get_unindexed_transcriptions(self) -> List[Dict[str, Any]]:
+        """Get list of transcriptions that haven't been indexed yet."""
+        if not self.db:
+            return []
+
+        unindexed = []
+        transcriptions = self.db.get_all_transcriptions()
+
+        for trans in transcriptions:
+            if trans.id and not self._is_transcription_indexed(trans.id):
+                unindexed.append({
+                    "id": trans.id,
+                    "title": trans.title or "Untitled",
+                    "feed_title": trans.feed_title or "Unknown Feed",
+                    "published": trans.published.isoformat() if trans.published else "Unknown",
+                    "duration": trans.duration,
+                })
+
+        # Sort by published date (newest first)
+        unindexed.sort(key=lambda x: x["published"], reverse=True)
+
+        return unindexed
