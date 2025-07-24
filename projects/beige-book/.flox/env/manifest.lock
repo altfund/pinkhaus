@@ -36,7 +36,7 @@
       }
     },
     "hook": {
-      "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n  export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n  mkdir -p \"${GOBIN}\"\n  go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\nfi\n# Use python3.13 directly without venv since packages are installed via Nix\n# Set PYTHONPATH to include the project directory and the correct site-packages\nexport PYTHONPATH=\"${FLOX_ENV_PROJECT}:${FLOX_ENV}/lib/python3.13/site-packages:${PYTHONPATH}\"\nalias python=python3.13\nuv venv\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\nuv sync\n"
+      "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n  export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n  mkdir -p \"${GOBIN}\"\n  go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\nfi\nuv python install 3.14\nuv venv\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\nuv sync\n"
     },
     "profile": {},
     "options": {
@@ -1160,23 +1160,13 @@
         },
         "sqlite": {
           "pkg-path": "sqlite"
-        },
-        "uv": {
-          "pkg-path": "uv"
         }
       },
       "hook": {
-        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n  export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n  mkdir -p \"${GOBIN}\"\n  go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\nfi\n# Use python3.13 directly without venv since packages are installed via Nix\n# Set PYTHONPATH to include the project directory and the correct site-packages\nexport PYTHONPATH=\"${FLOX_ENV_PROJECT}:${FLOX_ENV}/lib/python3.13/site-packages:${PYTHONPATH}\"\nalias python=python3.13\nuv venv\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\nuv sync\n"
+        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n  export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n  mkdir -p \"${GOBIN}\"\n  go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\nfi\nuv python install 3.14\nuv venv\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\nuv sync\n"
       },
       "profile": {},
-      "options": {
-        "systems": [
-          "aarch64-darwin",
-          "aarch64-linux",
-          "x86_64-darwin",
-          "x86_64-linux"
-        ]
-      },
+      "options": {},
       "include": {
         "environments": [
           {
@@ -1229,25 +1219,6 @@
         }
       }
     ],
-    "warnings": [
-      {
-        "warning": {
-          "Overriding": [
-            "install",
-            "uv"
-          ]
-        },
-        "higher_priority_name": "Current manifest"
-      },
-      {
-        "warning": {
-          "Overriding": [
-            "options",
-            "systems"
-          ]
-        },
-        "higher_priority_name": "Current manifest"
-      }
-    ]
+    "warnings": []
   }
 }
