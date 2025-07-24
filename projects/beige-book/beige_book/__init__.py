@@ -14,6 +14,6 @@ __all__ = [
     "TranscriptionDatabase",
     "FeedParser",
     "FeedItem",
-    "AudioDownloader"
+    "AudioDownloader",
 ]
 __version__ = "0.1.0"
