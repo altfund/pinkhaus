@@ -18,7 +18,6 @@ version = 1
 ffmpeg.pkg-path = "ffmpeg"
 sqlite.pkg-path = "sqlite"
 just.pkg-path = "just"
-uv.pkg-path = "uv"
 
 ## Environment Variables ---------------------------------------------
 ##  ... available for use in the activated environment
@@ -45,10 +44,7 @@ if [[ ! -z $DEV ]]; then
   go install "github.com/isaacphi/mcp-language-server@latest"
   export PATH="${GOBIN}:${PATH}"
 fi
-# Use python3.13 directly without venv since packages are installed via Nix
-# Set PYTHONPATH to include the project directory and the correct site-packages
-export PYTHONPATH="${FLOX_ENV_PROJECT}:${FLOX_ENV}/lib/python3.13/site-packages:${PYTHONPATH}"
-alias python=python3.13
+uv python install 3.14
 uv venv
 source "${FLOX_ENV_PROJECT}/.venv/bin/activate"
 uv sync
@@ -94,12 +90,6 @@ environments = [
 
 ## Other Environment Options -----------------------------------------
 [options]
-# Systems that environment is compatible with
-systems = [
-  "aarch64-darwin",
-  "aarch64-linux",
-  "x86_64-darwin",
-  "x86_64-linux",
-]
+
 # Uncomment to disable CUDA detection.
 # cuda-detection = false
