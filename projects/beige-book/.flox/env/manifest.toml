@@ -15,19 +15,10 @@ version = 1
 ##  $ flox show gum     <- show all versions of a package
 ## -------------------------------------------------------------------
 [install]
-python313Full.pkg-path = "python313Full"
-numpy.pkg-path = "python313Packages.numpy"
-numpy.version = "<2.3"
-pytest.pkg-path = "python313Packages.pytest"
-toml.pkg-path = "python313Packages.toml"
-tabulate.pkg-path = "python313Packages.tabulate"
-torch.pkg-path = "python313Packages.torch"
-openai-whisper.pkg-path = "python313Packages.openai-whisper"
-#whisper.pkg-path = "openai-whisper"
 ffmpeg.pkg-path = "ffmpeg"
 sqlite.pkg-path = "sqlite"
 just.pkg-path = "just"
-
+uv.pkg-path = "uv"
 
 ## Environment Variables ---------------------------------------------
 ##  ... available for use in the activated environment
@@ -58,6 +49,9 @@ fi
 # Set PYTHONPATH to include the project directory and the correct site-packages
 export PYTHONPATH="${FLOX_ENV_PROJECT}:${FLOX_ENV}/lib/python3.13/site-packages:${PYTHONPATH}"
 alias python=python3.13
+uv venv
+source "${FLOX_ENV_PROJECT}/.venv/bin/activate"
+uv sync
 '''
 
 

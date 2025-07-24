@@ -15,12 +15,12 @@ version = 1
 ##  $ flox show gum     <- show all versions of a package
 ## -------------------------------------------------------------------
 [install]
-hy.pkg-path = "hy"
-python313Full.pkg-path = "python313Full"
-calysto.pkg-path = "python313Packages.calysto"
-jupyter.pkg-path = "python313Packages.jupyter"
-spyder.pkg-path = "python313Packages.spyder"
-spyder.systems = ["aarch64-linux", "x86_64-linux"]
+#hy.pkg-path = "hy"
+#python313Full.pkg-path = "python313Full"
+#calysto.pkg-path = "python313Packages.calysto"
+#jupyter.pkg-path = "python313Packages.jupyter"
+#spyder.pkg-path = "python313Packages.spyder"
+#spyder.systems = ["aarch64-linux", "x86_64-linux"]
 uv.pkg-path = "uv"
 git.pkg-path = "git"
 claude-code.pkg-path = "claude-code"
