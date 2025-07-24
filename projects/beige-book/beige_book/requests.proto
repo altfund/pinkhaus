@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package beige_book;
+
+import "google/protobuf/timestamp.proto";
+import "beige_book/transcription.proto";
+
+// Input Configuration
+message InputConfig {
+  enum InputType {
+    INPUT_TYPE_UNSPECIFIED = 0;
+    INPUT_TYPE_FILE = 1;
+    INPUT_TYPE_FEED = 2;
+  }
+  
+  InputType type = 1;
+  string source = 2;  // File path or TOML path
+}
+
+// Feed processing options
+message FeedOptions {
+  enum Order {
+    ORDER_UNSPECIFIED = 0;
+    ORDER_NEWEST = 1;
+    ORDER_OLDEST = 2;
+  }
+  
+  optional int32 limit = 1;  // Maximum number of feed items to process per feed
+  Order order = 2;
+  int32 max_retries = 3;
+  float initial_delay = 4;  // Initial delay in seconds between retries
+}
+
+// Processing Configuration
+message ProcessingConfig {
+  enum Model {
+    MODEL_UNSPECIFIED = 0;
+    MODEL_TINY = 1;
+    MODEL_BASE = 2;
+    MODEL_SMALL = 3;
+    MODEL_MEDIUM = 4;
+    MODEL_LARGE = 5;
+  }
+  
+  Model model = 1;
+  bool verbose = 2;
+  optional FeedOptions feed_options = 3;
+}
+
+// Database Configuration
+message DatabaseConfig {
+  string db_path = 1;
+  string metadata_table = 2;
+  string segments_table = 3;
+}
+
+// Output Configuration
+message OutputConfig {
+  enum Format {
+    FORMAT_UNSPECIFIED = 0;
+    FORMAT_TEXT = 1;
+    FORMAT_JSON = 2;
+    FORMAT_TABLE = 3;
+    FORMAT_CSV = 4;
+    FORMAT_TOML = 5;
+    FORMAT_SQLITE = 6;
+  }
+  
+  Format format = 1;
+  optional string destination = 2;  // File path or None for stdout
+  optional DatabaseConfig database = 3;
+}
+
+// Main Request Object
+message TranscriptionRequest {
+  InputConfig input = 1;
+  ProcessingConfig processing = 2;
+  OutputConfig output = 3;
+}
+
+// Error information
+message ProcessingError {
+  string source = 1;  // File path or feed URL
+  string error_type = 2;
+  string message = 3;
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+// Summary statistics
+message ProcessingSummary {
+  int32 total_items = 1;
+  int32 processed = 2;
+  int32 skipped = 3;
+  int32 failed = 4;
+  float elapsed_time = 5;
+}
+
+// Response object
+message TranscriptionResponse {
+  bool success = 1;
+  repeated TranscriptionResult results = 2;  // Using TranscriptionResult from transcription.proto
+  repeated ProcessingError errors = 3;
+  optional ProcessingSummary summary = 4;
+}

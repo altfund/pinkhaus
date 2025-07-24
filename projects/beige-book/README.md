@@ -344,6 +344,72 @@ for item in feed_items[:5]:  # Process first 5 items
 
 See `examples/` directory for more usage examples.
 
+## Protocol Buffers Support
+
+The library includes Protocol Buffers support for efficient binary serialization of transcription results.
+
+### Generating Protobuf Python Classes
+
+To regenerate the Python protobuf classes from the `.proto` file:
+
+```bash
+# Using grpcio-tools (already installed)
+uv run python -m grpc_tools.protoc -I=. --python_out=. beige_book/transcription.proto
+
+# Or if you have protoc installed via flox
+flox install protobuf
+protoc -I=beige_book --python_out=beige_book beige_book/transcription.proto
+
+# Note: If you encounter protobuf version mismatches in flox environments,
+# you may need to comment out the version validation in the generated file
+```
+
+### Protocol Buffers Integration
+
+TranscriptionResult now uses Protocol Buffers internally for efficient storage and serialization, while maintaining the same API:
+
+```python
+from beige_book import AudioTranscriber, TranscriptionResult
+
+# Use standard transcriber - it now creates protobuf-based results
+transcriber = AudioTranscriber(model_name="tiny")
+result = transcriber.transcribe_file("audio.wav")
+
+# Direct protobuf serialization (very efficient)
+proto_bytes = result.to_protobuf_bytes()  # Binary format
+restored = TranscriptionResult.from_protobuf_bytes(proto_bytes)
+
+# Base64 encoding for network/text transmission
+encoded = result.to_protobuf_base64()
+restored = TranscriptionResult.from_protobuf_base64(encoded)
+
+# All other formats still work exactly the same
+json_str = result.to_json()
+toml_str = result.to_toml()
+csv_str = result.to_csv()
+table_str = result.to_table()
+
+# Create results programmatically
+result = TranscriptionResult()
+result.filename = "my_audio.wav"
+result.file_hash = "hash123"
+result.language = "en"
+result.full_text = "Hello world"
+result.add_segment(0.0, 2.0, "Hello world")
+```
+
+### Benefits of Protobuf
+
+- **Compact**: Binary format is typically 3-5x smaller than JSON
+- **Fast**: Efficient serialization/deserialization
+- **Type-safe**: Strong typing with generated classes
+- **Language-agnostic**: Can be used with any language that supports protobuf
+- **Zero overhead**: TranscriptionResult now uses protobuf internally, so there's no conversion cost
+
+**Note**: The API remains unchanged - existing code will continue to work. The only difference is that TranscriptionResult now stores data in a protobuf structure internally for better performance and smaller memory footprint.
+
+See `examples/protobuf_usage.py` for complete examples.
+
 ## REST API
 
 The tool includes a REST API server with Swagger/OpenAPI documentation.
