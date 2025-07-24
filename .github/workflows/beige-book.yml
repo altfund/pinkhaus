@@ -26,4 +26,4 @@ jobs:
       - name: "Run pytest with Flox"
         working-directory: ./projects/beige-book/
         run: |
-          flox activate -- python3.13 -m pytest -v
+          flox activate -- pytest
