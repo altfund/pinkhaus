@@ -1,4 +1,4 @@
-name: Build and Test Beige Book Module
+name: Beige Book Build and Test
 
 on:
   push:
