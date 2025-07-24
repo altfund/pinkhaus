@@ -3,6 +3,12 @@
   "manifest": {
     "version": 1,
     "install": {
+      "betterproto": {
+        "pkg-path": "python313Packages.betterproto"
+      },
+      "black": {
+        "pkg-path": "python313Packages.black"
+      },
       "calysto": {
         "pkg-path": "python313Packages.calysto"
       },
@@ -30,6 +36,9 @@
       },
       "openai-whisper": {
         "pkg-path": "python313Packages.openai-whisper"
+      },
+      "protobuf": {
+        "pkg-path": "protobuf"
       },
       "pytest": {
         "pkg-path": "python313Packages.pytest"
@@ -77,6 +86,254 @@
     }
   },
   "packages": [
+    {
+      "attr_path": "python313Packages.betterproto",
+      "broken": false,
+      "derivation": "/nix/store/28lyz5wb1lhzdrnwzd0rlwq40y63qcw4-python3.13-betterproto-2.0.0b6.drv",
+      "description": "Code generator & library for Protobuf 3 and async gRPC",
+      "install_id": "betterproto",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-betterproto-2.0.0b6",
+      "pname": "betterproto",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:34.478244Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.0.0b6",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/rf42p5sgk2kffqb44jsj2vdg2pa5dkp3-python3.13-betterproto-2.0.0b6-dist",
+        "out": "/nix/store/9aafw092g9k3crjfnkqd7p69gnav5dnd-python3.13-betterproto-2.0.0b6"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.betterproto",
+      "broken": false,
+      "derivation": "/nix/store/hl3q6wjsjq6c849s6c0qf9bjca3cgy73-python3.13-betterproto-2.0.0b6.drv",
+      "description": "Code generator & library for Protobuf 3 and async gRPC",
+      "install_id": "betterproto",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-betterproto-2.0.0b6",
+      "pname": "betterproto",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:55:25.477642Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.0.0b6",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/cylqpmy45ggwm7fbcxj8mkk3n34wipmc-python3.13-betterproto-2.0.0b6-dist",
+        "out": "/nix/store/n2f76m19bamrbv0pa6544wkj5bhn0ffa-python3.13-betterproto-2.0.0b6"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.betterproto",
+      "broken": false,
+      "derivation": "/nix/store/j71f7fm6lfxdswhf7vvc9gvs8wfawhr0-python3.13-betterproto-2.0.0b6.drv",
+      "description": "Code generator & library for Protobuf 3 and async gRPC",
+      "install_id": "betterproto",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-betterproto-2.0.0b6",
+      "pname": "betterproto",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:12:42.155363Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.0.0b6",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/dk5blppaxmwjksqd5vd8734m2mc1f755-python3.13-betterproto-2.0.0b6-dist",
+        "out": "/nix/store/imi05qwlpmbqsqpxj5ahxhmnl6v1q3d6-python3.13-betterproto-2.0.0b6"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.betterproto",
+      "broken": false,
+      "derivation": "/nix/store/ljqvz9s3br4qb81dqskzijsf2gd4giiw-python3.13-betterproto-2.0.0b6.drv",
+      "description": "Code generator & library for Protobuf 3 and async gRPC",
+      "install_id": "betterproto",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-betterproto-2.0.0b6",
+      "pname": "betterproto",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:33:09.362702Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "2.0.0b6",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/p5y1cg9glm5pkbwi9dpa32dkz0n9cg41-python3.13-betterproto-2.0.0b6-dist",
+        "out": "/nix/store/0jcjrhq6917ww579vfn89ah6mhzc2ax3-python3.13-betterproto-2.0.0b6"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.black",
+      "broken": false,
+      "derivation": "/nix/store/sgfp4zy9a9gnhwmpd4ijz682i78ik15s-python3.13-black-25.1.0.drv",
+      "description": "Uncompromising Python code formatter",
+      "install_id": "black",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-black-25.1.0",
+      "pname": "black",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:34.525568Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "25.1.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/mag9jj3bzp2vnxp9h44c7dfwblrq7jir-python3.13-black-25.1.0-dist",
+        "out": "/nix/store/93q0l1hsras7k7rjyl0ik9xxbfxj18ic-python3.13-black-25.1.0"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.black",
+      "broken": false,
+      "derivation": "/nix/store/dp64nmd96vzjh9p7frv97fzg9wkycqra-python3.13-black-25.1.0.drv",
+      "description": "Uncompromising Python code formatter",
+      "install_id": "black",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-black-25.1.0",
+      "pname": "black",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:55:25.546784Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "25.1.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/gyqxxqvba72n0j9m1h11hzg2vfm5svv4-python3.13-black-25.1.0-dist",
+        "out": "/nix/store/h14hc9yx6mm4dfccxc3gkfai1a55x1xs-python3.13-black-25.1.0"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.black",
+      "broken": false,
+      "derivation": "/nix/store/y91avsw600nnmlgxd4sl7pd1vj29pypc-python3.13-black-25.1.0.drv",
+      "description": "Uncompromising Python code formatter",
+      "install_id": "black",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-black-25.1.0",
+      "pname": "black",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:12:42.204184Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "25.1.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/qxpw0q9jfcnzlb87xxxkiidvpv5ymf6f-python3.13-black-25.1.0-dist",
+        "out": "/nix/store/nhkgq96rxfqhfvhnyfkq6v2ni5d9q0mh-python3.13-black-25.1.0"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "python313Packages.black",
+      "broken": false,
+      "derivation": "/nix/store/b64syk3q2sdh0d05y9zbl703bi1fyqj8-python3.13-black-25.1.0.drv",
+      "description": "Uncompromising Python code formatter",
+      "install_id": "black",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "python3.13-black-25.1.0",
+      "pname": "black",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:33:09.435897Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "25.1.0",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "dist": "/nix/store/ai6y8s94fw33lki8yv4a9h1bp4fr8m8r-python3.13-black-25.1.0-dist",
+        "out": "/nix/store/7acimrj950zy8n5qq7yc6937bzabmg1w-python3.13-black-25.1.0"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
     {
       "attr_path": "python313Packages.calysto",
       "broken": false,
@@ -1226,6 +1483,126 @@
       "priority": 5
     },
     {
+      "attr_path": "protobuf",
+      "broken": false,
+      "derivation": "/nix/store/jqbsqhn0h79dj1fk6i1s8j0ijyn8xzkg-protobuf-30.2.drv",
+      "description": "Google's data interchange format",
+      "install_id": "protobuf",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "protobuf-30.2",
+      "pname": "protobuf",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:24.781268Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "30.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/8amcpfvr562pk1l3hpbhdl5j68gq919h-protobuf-30.2"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "protobuf",
+      "broken": false,
+      "derivation": "/nix/store/npvrsqanlp2g76k8dd9zfnj3nm3n82m7-protobuf-30.2.drv",
+      "description": "Google's data interchange format",
+      "install_id": "protobuf",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "protobuf-30.2",
+      "pname": "protobuf",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:55:10.434031Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "30.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/45gdbaby7c66h2hna0q3y543c13r3wdm-protobuf-30.2"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "protobuf",
+      "broken": false,
+      "derivation": "/nix/store/wa16kvvrzs47acr5cawkz470mlafd781-protobuf-30.2.drv",
+      "description": "Google's data interchange format",
+      "install_id": "protobuf",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "protobuf-30.2",
+      "pname": "protobuf",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:12:32.294227Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "30.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/ljqlb5y5pvlcvwf2rnbysfvpc8y30l3f-protobuf-30.2"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "protobuf",
+      "broken": false,
+      "derivation": "/nix/store/5zzh164x59p9j46wxcckji5p6gvp3c0h-protobuf-30.2.drv",
+      "description": "Google's data interchange format",
+      "install_id": "protobuf",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "protobuf-30.2",
+      "pname": "protobuf",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:32:53.224534Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "30.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/88ma4lbybcpdg0z8745nw9mvj5anb7mq-protobuf-30.2"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
       "attr_path": "python313Packages.pytest",
       "broken": false,
       "derivation": "/nix/store/5impwd42wnvy6lm4jasd8rq4mrniggwd-python3.13-pytest-8.3.5.drv",
@@ -2316,6 +2693,12 @@
     "composer": {
       "version": 1,
       "install": {
+        "betterproto": {
+          "pkg-path": "python313Packages.betterproto"
+        },
+        "black": {
+          "pkg-path": "python313Packages.black"
+        },
         "fastapi": {
           "pkg-path": "python313Packages.fastapi"
         },
@@ -2334,6 +2717,9 @@
         },
         "openai-whisper": {
           "pkg-path": "python313Packages.openai-whisper"
+        },
+        "protobuf": {
+          "pkg-path": "protobuf"
         },
         "pytest": {
           "pkg-path": "python313Packages.pytest"

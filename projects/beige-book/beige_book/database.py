@@ -155,12 +155,19 @@ class TranscriptionDatabase:
 
             # Insert segments
             for idx, segment in enumerate(result.segments):
-                duration = segment.end - segment.start
+                # Handle both old and new segment formats
+                if hasattr(segment, 'start_ms'):
+                    start = segment.start_ms / 1000.0
+                    end = segment.end_ms / 1000.0
+                else:
+                    start = segment.start
+                    end = segment.end
+                duration = end - start
                 cursor.execute(f"""
                     INSERT INTO {segments_table}
                     (transcription_id, segment_index, start_time, end_time, duration, text)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (transcription_id, idx, segment.start, segment.end,
+                """, (transcription_id, idx, start, end,
                       duration, segment.text.strip()))
 
             return transcription_id

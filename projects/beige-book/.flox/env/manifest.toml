@@ -30,6 +30,9 @@ just.pkg-path = "just"
 uvicorn.pkg-path = "python313Packages.uvicorn"
 fastapi.pkg-path = "python313Packages.fastapi"
 feedparser.pkg-path = "python313Packages.feedparser"
+protobuf.pkg-path = "protobuf"
+betterproto.pkg-path = "python313Packages.betterproto"
+black.pkg-path = "python313Packages.black"
 
 ## Environment Variables ---------------------------------------------
 ##  ... available for use in the activated environment
