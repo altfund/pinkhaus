@@ -29,8 +29,8 @@ def setup_logging(verbose: bool = False):
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
         level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
 
@@ -40,10 +40,7 @@ def process_single_file(args):
     transcriber = AudioTranscriber(model_name=args.model)
 
     # Transcribe the file (verbose only for text format)
-    result = transcriber.transcribe_file(
-        args.filename,
-        verbose=(args.format == "text")
-    )
+    result = transcriber.transcribe_file(args.filename, verbose=(args.format == "text"))
 
     # Handle different output formats
     if args.format == "sqlite":
@@ -54,7 +51,7 @@ def process_single_file(args):
             result,
             model_name=args.model,
             metadata_table=args.metadata_table,
-            segments_table=args.segments_table
+            segments_table=args.segments_table,
         )
         print(f"Transcription saved to database with ID: {transcription_id}")
         print(f"Database: {args.db_path}")
@@ -66,7 +63,7 @@ def process_single_file(args):
 
         # Write to file or stdout
         if args.output:
-            with open(args.output, 'w', encoding='utf-8') as f:
+            with open(args.output, "w", encoding="utf-8") as f:
                 f.write(output)
             print(f"Transcription saved to {args.output}")
         else:
@@ -92,7 +89,9 @@ def process_feeds(args, is_resumable: bool):
 
     # Calculate total items considering limit
     if args.limit:
-        total_items = sum(min(len(items), args.limit) for items in feed_items_dict.values())
+        total_items = sum(
+            min(len(items), args.limit) for items in feed_items_dict.values()
+        )
     else:
         total_items = sum(len(items) for items in feed_items_dict.values())
 
@@ -105,20 +104,26 @@ def process_feeds(args, is_resumable: bool):
         # Sort items based on order preference
         if args.order == "newest":
             # Sort by published date descending (newest first)
-            sorted_items = sorted(items, key=lambda x: x.published or datetime.min, reverse=True)
+            sorted_items = sorted(
+                items, key=lambda x: x.published or datetime.min, reverse=True
+            )
         else:
             # Sort by published date ascending (oldest first)
             sorted_items = sorted(items, key=lambda x: x.published or datetime.min)
 
         # Apply limit if specified
         if args.limit:
-            sorted_items = sorted_items[:args.limit]
+            sorted_items = sorted_items[: args.limit]
             logging.info(f"Limiting to {args.limit} items per feed")
 
         for item in sorted_items:
             # Check if already processed (only if resumable)
-            if is_resumable and db and db.check_feed_item_exists(
-                item.feed_url, item.item_id, args.metadata_table
+            if (
+                is_resumable
+                and db
+                and db.check_feed_item_exists(
+                    item.feed_url, item.item_id, args.metadata_table
+                )
             ):
                 logging.info(f"Skipping already processed: {item.title}")
                 skipped += 1
@@ -132,8 +137,7 @@ def process_feeds(args, is_resumable: bool):
                 try:
                     # Transcribe the downloaded file
                     result = transcriber.transcribe_file(
-                        temp_path,
-                        verbose=(args.format == "text" and not args.output)
+                        temp_path, verbose=(args.format == "text" and not args.output)
                     )
 
                     # Save or output based on format
@@ -147,7 +151,9 @@ def process_feeds(args, is_resumable: bool):
                             feed_url=item.feed_url,
                             feed_item_id=item.item_id,
                             feed_item_title=item.title,
-                            feed_item_published=item.published.isoformat() if item.published else None
+                            feed_item_published=item.published.isoformat()
+                            if item.published
+                            else None,
                         )
                         logging.info(f"Saved to database with ID: {transcription_id}")
                     else:
@@ -156,15 +162,15 @@ def process_feeds(args, is_resumable: bool):
 
                         if args.output:
                             # Append to output file
-                            mode = 'a' if processed > 0 else 'w'
-                            with open(args.output, mode, encoding='utf-8') as f:
+                            mode = "a" if processed > 0 else "w"
+                            with open(args.output, mode, encoding="utf-8") as f:
                                 if processed > 0:
                                     f.write("\n\n")  # Separator between items
                                 f.write(output)
                         else:
                             print(output)
                             if processed < total_items - 1:
-                                print("\n" + "="*80 + "\n")  # Separator
+                                print("\n" + "=" * 80 + "\n")  # Separator
 
                     processed += 1
 
@@ -177,7 +183,7 @@ def process_feeds(args, is_resumable: bool):
                 continue
 
     # Summary
-    print(f"\nProcessing complete:")
+    print("\nProcessing complete:")
     print(f"  Total items: {total_items}")
     print(f"  Processed: {processed}")
     print(f"  Skipped (already processed): {skipped}")
@@ -199,8 +205,9 @@ def format_with_feed_metadata(result, feed_item, format_type: str) -> str:
     elif format_type == "json":
         # Add feed metadata to JSON output
         import json
+
         data = result.to_dict()
-        data['feed_metadata'] = feed_item.to_dict()
+        data["feed_metadata"] = feed_item.to_dict()
         return json.dumps(data, indent=2, ensure_ascii=False)
 
     elif format_type == "toml":
@@ -227,65 +234,55 @@ def format_with_feed_metadata(result, feed_item, format_type: str) -> str:
 def main():
     """Main entry point for the CLI"""
     parser = argparse.ArgumentParser(description="Transcribe audio files with Whisper")
-    parser.add_argument("filename",
-                        type=valid_path,
-                        help="Audio file or TOML feed file to transcribe")
+    parser.add_argument(
+        "filename", type=valid_path, help="Audio file or TOML feed file to transcribe"
+    )
     parser.add_argument(
         "--model",
         default="tiny",
         choices=["tiny", "base", "small", "medium", "large"],
-        help="Whisper model to use"
+        help="Whisper model to use",
     )
     parser.add_argument(
         "--format",
         default="text",
         choices=["text", "json", "table", "csv", "toml", "sqlite"],
-        help="Output format (default: text)"
+        help="Output format (default: text)",
     )
-    parser.add_argument(
-        "--output",
-        "-o",
-        help="Output file (default: stdout)"
-    )
+    parser.add_argument("--output", "-o", help="Output file (default: stdout)")
 
     # Database-specific arguments
     parser.add_argument(
-        "--db-path",
-        help="Path to SQLite database file (required for sqlite format)"
+        "--db-path", help="Path to SQLite database file (required for sqlite format)"
     )
     parser.add_argument(
         "--metadata-table",
         default="transcription_metadata",
-        help="Name of the metadata table (default: transcription_metadata)"
+        help="Name of the metadata table (default: transcription_metadata)",
     )
     parser.add_argument(
         "--segments-table",
         default="transcription_segments",
-        help="Name of the segments table (default: transcription_segments)"
+        help="Name of the segments table (default: transcription_segments)",
     )
 
     # Feed-specific arguments
     parser.add_argument(
         "--feed",
         action="store_true",
-        help="Treat input as a TOML file containing RSS feed URLs"
+        help="Treat input as a TOML file containing RSS feed URLs",
     )
     parser.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Enable verbose logging"
+        "--verbose", "-v", action="store_true", help="Enable verbose logging"
     )
     parser.add_argument(
-        "--limit",
-        type=int,
-        help="Maximum number of feed items to process per feed"
+        "--limit", type=int, help="Maximum number of feed items to process per feed"
     )
     parser.add_argument(
         "--order",
         choices=["newest", "oldest"],
         default="newest",
-        help="Process feed items from newest or oldest first (default: newest)"
+        help="Process feed items from newest or oldest first (default: newest)",
     )
 
     args = parser.parse_args()
@@ -299,8 +296,7 @@ def main():
 
     # Check if resumability is needed
     resumable_formats = {"text", "json", "table", "csv", "toml", "sqlite"}
-    is_resumable = (args.format in resumable_formats and
-                   (args.db_path or args.output))
+    is_resumable = args.format in resumable_formats and (args.db_path or args.output)
 
     try:
         if args.feed:
