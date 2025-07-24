@@ -30,8 +30,8 @@ def setup_logging(verbose: bool = False):
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
         level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
 
@@ -179,65 +179,55 @@ def process_feeds(args, is_resumable: bool):
 def main():
     """Main entry point for the CLI"""
     parser = argparse.ArgumentParser(description="Transcribe audio files with Whisper")
-    parser.add_argument("filename",
-                        type=valid_path,
-                        help="Audio file or TOML feed file to transcribe")
+    parser.add_argument(
+        "filename", type=valid_path, help="Audio file or TOML feed file to transcribe"
+    )
     parser.add_argument(
         "--model",
         default="tiny",
         choices=["tiny", "base", "small", "medium", "large"],
-        help="Whisper model to use"
+        help="Whisper model to use",
     )
     parser.add_argument(
         "--format",
         default="text",
         choices=["text", "json", "table", "csv", "toml", "sqlite"],
-        help="Output format (default: text)"
+        help="Output format (default: text)",
     )
-    parser.add_argument(
-        "--output",
-        "-o",
-        help="Output file (default: stdout)"
-    )
+    parser.add_argument("--output", "-o", help="Output file (default: stdout)")
 
     # Database-specific arguments
     parser.add_argument(
-        "--db-path",
-        help="Path to SQLite database file (required for sqlite format)"
+        "--db-path", help="Path to SQLite database file (required for sqlite format)"
     )
     parser.add_argument(
         "--metadata-table",
         default="transcription_metadata",
-        help="Name of the metadata table (default: transcription_metadata)"
+        help="Name of the metadata table (default: transcription_metadata)",
     )
     parser.add_argument(
         "--segments-table",
         default="transcription_segments",
-        help="Name of the segments table (default: transcription_segments)"
+        help="Name of the segments table (default: transcription_segments)",
     )
 
     # Feed-specific arguments
     parser.add_argument(
         "--feed",
         action="store_true",
-        help="Treat input as a TOML file containing RSS feed URLs"
+        help="Treat input as a TOML file containing RSS feed URLs",
     )
     parser.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Enable verbose logging"
+        "--verbose", "-v", action="store_true", help="Enable verbose logging"
     )
     parser.add_argument(
-        "--limit",
-        type=int,
-        help="Maximum number of feed items to process per feed"
+        "--limit", type=int, help="Maximum number of feed items to process per feed"
     )
     parser.add_argument(
         "--order",
         choices=["newest", "oldest"],
         default="newest",
-        help="Process feed items from newest or oldest first (default: newest)"
+        help="Process feed items from newest or oldest first (default: newest)",
     )
 
     args = parser.parse_args()
@@ -251,8 +241,7 @@ def main():
 
     # Check if resumability is needed
     resumable_formats = {"text", "json", "table", "csv", "toml", "sqlite"}
-    is_resumable = (args.format in resumable_formats and
-                   (args.db_path or args.output))
+    is_resumable = args.format in resumable_formats and (args.db_path or args.output)
 
     try:
         if args.feed:

@@ -6,7 +6,7 @@ import os
 import tempfile
 import requests
 import hashlib
-from typing import Optional, Tuple
+from typing import Tuple
 from pathlib import Path
 import logging
 import time
@@ -28,11 +28,13 @@ class AudioDownloader:
         self.chunk_size = chunk_size
         self.timeout = timeout
         self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'BeigeBook/1.0 (Podcast Transcriber)'
-        })
+        self.session.headers.update(
+            {"User-Agent": "BeigeBook/1.0 (Podcast Transcriber)"}
+        )
 
-    def download_to_temp(self, url: str, prefix: str = "beige_book_") -> Tuple[str, str]:
+    def download_to_temp(
+        self, url: str, prefix: str = "beige_book_"
+    ) -> Tuple[str, str]:
         """
         Download audio file to a temporary location.
 
@@ -56,13 +58,13 @@ class AudioDownloader:
                 response.raise_for_status()
 
                 # Get content length for progress tracking
-                total_size = int(response.headers.get('content-length', 0))
+                total_size = int(response.headers.get("content-length", 0))
                 downloaded = 0
 
                 # Calculate hash while downloading
                 sha256_hash = hashlib.sha256()
 
-                with os.fdopen(fd, 'wb') as f:
+                with os.fdopen(fd, "wb") as f:
                     for chunk in response.iter_content(chunk_size=self.chunk_size):
                         if chunk:
                             f.write(chunk)
@@ -71,7 +73,9 @@ class AudioDownloader:
 
                             if total_size > 0:
                                 progress = (downloaded / total_size) * 100
-                                if downloaded % (self.chunk_size * 100) == 0:  # Log every 100 chunks
+                                if (
+                                    downloaded % (self.chunk_size * 100) == 0
+                                ):  # Log every 100 chunks
                                     logger.debug(f"Download progress: {progress:.1f}%")
 
                 file_hash = sha256_hash.hexdigest()
@@ -80,6 +84,8 @@ class AudioDownloader:
                 return temp_path, file_hash
 
             except Exception as e:
+
+            except Exception:
                 # Clean up temp file on error
                 os.unlink(temp_path)
                 raise
@@ -99,17 +105,19 @@ class AudioDownloader:
             File extension including the dot
         """
         # Try to get extension from URL
-        path = Path(url.split('?')[0])  # Remove query parameters
+        path = Path(url.split("?")[0])  # Remove query parameters
         ext = path.suffix.lower()
 
         # Common audio extensions
         valid_extensions = {'.mp3', '.mp4', '.m4a', '.ogg', '.wav', '.aac'}
 
+        valid_extensions = {".mp3", ".mp4", ".m4a", ".ogg", ".wav", ".aac"}
+
         if ext in valid_extensions:
             return ext
 
         # Default to .mp3
-        return '.mp3'
+        return ".mp3"
 
     def cleanup_temp_file(self, temp_path: str):
         """
@@ -125,7 +133,9 @@ class AudioDownloader:
         except Exception as e:
             logger.warning(f"Failed to clean up temp file {temp_path}: {e}")
 
-    def download_with_retry(self, url: str, max_retries: int = 5, initial_delay: float = 1.0) -> Tuple[str, str]:
+    def download_with_retry(
+        self, url: str, max_retries: int = 5, initial_delay: float = 1.0
+    ) -> Tuple[str, str]:
         """
         Download with retry logic and exponential backoff.
 
@@ -146,13 +156,18 @@ class AudioDownloader:
                 last_error = e
                 if attempt < max_retries - 1:
                     # Calculate exponential backoff with jitter
-                    delay = initial_delay * (2 ** attempt)  # 1s, 2s, 4s, 8s, 16s
+                    delay = initial_delay * (2**attempt)  # 1s, 2s, 4s, 8s, 16s
                     # Add jitter (±20%) to prevent thundering herd
                     import random
+
                     jitter = delay * 0.2 * (2 * random.random() - 1)
                     actual_delay = delay + jitter
 
                     logger.warning(f"Download attempt {attempt + 1} failed, retrying in {actual_delay:.1f}s: {e}")
+
+                    logger.warning(
+                        f"Download attempt {attempt + 1} failed, retrying in {actual_delay:.1f}s: {e}"
+                    )
                     time.sleep(actual_delay)
                 else:
                     logger.error(f"All download attempts failed for: {url}")
