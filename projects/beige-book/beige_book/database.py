@@ -64,6 +64,10 @@ class TranscriptionDatabase:
                     language TEXT NOT NULL,
                     full_text TEXT NOT NULL,
                     model_name TEXT,
+                    feed_url TEXT,
+                    feed_item_id TEXT,
+                    feed_item_title TEXT,
+                    feed_item_published TIMESTAMP,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(file_hash, model_name)
                 )
@@ -86,13 +90,20 @@ class TranscriptionDatabase:
 
             # Create indexes for better query performance
             cursor.execute(f"""
-                CREATE INDEX IF NOT EXISTS idx_{segments_table}_transcription_id 
+                CREATE INDEX IF NOT EXISTS idx_{segments_table}_transcription_id
                 ON {segments_table}(transcription_id)
             """)
 
             cursor.execute(f"""
-                CREATE INDEX IF NOT EXISTS idx_{metadata_table}_file_hash 
+                CREATE INDEX IF NOT EXISTS idx_{metadata_table}_file_hash
                 ON {metadata_table}(file_hash)
+            """)
+
+            # Create index for feed tracking
+            cursor.execute(f"""
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_{metadata_table}_feed_item
+                ON {metadata_table}(feed_url, feed_item_id)
+                WHERE feed_url IS NOT NULL AND feed_item_id IS NOT NULL
             """)
 
     def save_transcription(
@@ -101,6 +112,10 @@ class TranscriptionDatabase:
         model_name: str = "unknown",
         metadata_table: str = "transcription_metadata",
         segments_table: str = "transcription_segments",
+        feed_url: Optional[str] = None,
+        feed_item_id: Optional[str] = None,
+        feed_item_title: Optional[str] = None,
+        feed_item_published: Optional[str] = None,
     ) -> int:
         """
         Save a transcription result to the database.
@@ -110,6 +125,10 @@ class TranscriptionDatabase:
             model_name: Name of the model used for transcription
             metadata_table: Name of the metadata table
             segments_table: Name of the segments table
+            feed_url: URL of the RSS feed (optional)
+            feed_item_id: Unique ID of the feed item (optional)
+            feed_item_title: Title of the feed item (optional)
+            feed_item_published: Publication date of the feed item (optional)
 
         Returns:
             The transcription_id of the saved record
@@ -120,7 +139,7 @@ class TranscriptionDatabase:
             # Check if this transcription already exists
             cursor.execute(
                 f"""
-                SELECT id FROM {metadata_table} 
+                SELECT id FROM {metadata_table}
                 WHERE file_hash = ? AND model_name = ?
             """,
                 (result.file_hash, model_name),
@@ -133,9 +152,10 @@ class TranscriptionDatabase:
             # Insert metadata
             cursor.execute(
                 f"""
-                INSERT INTO {metadata_table} 
-                (filename, file_hash, language, full_text, model_name)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO {metadata_table}
+                (filename, file_hash, language, full_text, model_name,
+                 feed_url, feed_item_id, feed_item_title, feed_item_published)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     result.filename,
@@ -143,6 +163,10 @@ class TranscriptionDatabase:
                     result.language,
                     result.full_text,
                     model_name,
+                    feed_url,
+                    feed_item_id,
+                    feed_item_title,
+                    feed_item_published,
                 ),
             )
 
@@ -204,7 +228,7 @@ class TranscriptionDatabase:
             # Get segments
             cursor.execute(
                 f"""
-                SELECT * FROM {segments_table} 
+                SELECT * FROM {segments_table}
                 WHERE transcription_id = ?
                 ORDER BY segment_index
             """,
@@ -217,6 +241,37 @@ class TranscriptionDatabase:
                 "metadata": dict(metadata),
                 "segments": [dict(seg) for seg in segments],
             }
+
+    def check_feed_item_exists(
+        self,
+        feed_url: str,
+        feed_item_id: str,
+        metadata_table: str = "transcription_metadata",
+    ) -> bool:
+        """
+        Check if a feed item has already been processed.
+
+        Args:
+            feed_url: URL of the RSS feed
+            feed_item_id: Unique ID of the feed item
+            metadata_table: Name of the metadata table
+
+        Returns:
+            True if the feed item exists, False otherwise
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                f"""
+                SELECT COUNT(*) as count FROM {metadata_table}
+                WHERE feed_url = ? AND feed_item_id = ?
+            """,
+                (feed_url, feed_item_id),
+            )
+
+            result = cursor.fetchone()
+            return result["count"] > 0
 
     def find_by_hash(
         self, file_hash: str, metadata_table: str = "transcription_metadata"
@@ -236,7 +291,7 @@ class TranscriptionDatabase:
 
             cursor.execute(
                 f"""
-                SELECT * FROM {metadata_table} 
+                SELECT * FROM {metadata_table}
                 WHERE file_hash = ?
                 ORDER BY created_at DESC
             """,
