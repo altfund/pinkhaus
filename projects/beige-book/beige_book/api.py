@@ -20,8 +20,10 @@ from .models import (
     DatabaseConfig,
 )
 from .proto_models import (
-    InputConfigInputType, ProcessingConfigModel,
-    OutputConfigFormat, FeedOptionsOrder
+    InputConfigInputType,
+    ProcessingConfigModel,
+    OutputConfigFormat,
+    FeedOptionsOrder,
 )
 from .service import TranscriptionService, OutputFormatter
 
@@ -193,7 +195,9 @@ class TranscriptionRequestAPI(BaseModel):
         if self.processing.feed_options:
             feed_options = FeedOptions(
                 limit=self.processing.feed_options.limit or 0,
-                order=order_map.get(self.processing.feed_options.order, FeedOptionsOrder.ORDER_NEWEST),
+                order=order_map.get(
+                    self.processing.feed_options.order, FeedOptionsOrder.ORDER_NEWEST
+                ),
                 max_retries=self.processing.feed_options.max_retries,
                 initial_delay=self.processing.feed_options.initial_delay,
             )
@@ -209,8 +213,7 @@ class TranscriptionRequestAPI(BaseModel):
 
         return TranscriptionRequest(
             input=InputConfig(
-                type=input_type_map[self.input.type],
-                source=self.input.source,
+                type=input_type_map[self.input.type], source=self.input.source
             ),
             processing=ProcessingConfig(
                 model=model_map[self.processing.model],
@@ -221,7 +224,7 @@ class TranscriptionRequestAPI(BaseModel):
                 format=format_map[self.output.format],
                 destination=self.output.destination or "",
                 database=database_config,
-            )
+            ),
         )
 
 
@@ -332,14 +335,19 @@ async def transcribe(request: TranscriptionRequestAPI):
         if request.output.format == "json":
             # Convert response to dict for JSONResponse
             response_data = {
-                'success': response.success,
-                'results': [r.to_dict() if hasattr(r, 'to_dict') else r for r in response.results],
-                'errors': [e.to_dict() if hasattr(e, 'to_dict') else e for e in response.errors],
-                'summary': response.summary.to_dict() if response.summary and hasattr(response.summary, 'to_dict') else None
+                "success": response.success,
+                "results": [
+                    r.to_dict() if hasattr(r, "to_dict") else r
+                    for r in response.results
+                ],
+                "errors": [
+                    e.to_dict() if hasattr(e, "to_dict") else e for e in response.errors
+                ],
+                "summary": response.summary.to_dict()
+                if response.summary and hasattr(response.summary, "to_dict")
+                else None,
             }
-            return JSONResponse(
-                content=response.to_json(), media_type="application/json"
-            )
+            return JSONResponse(content=response_data, media_type="application/json")
 
         elif request.output.format == "sqlite":
             # For SQLite, just return success status
