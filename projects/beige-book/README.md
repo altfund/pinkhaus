@@ -17,21 +17,12 @@ A command-line tool, Python library, and REST API for transcribing audio files u
 
 ## Installation
 
-1. Ensure you have Python 3.10+ installed
-2. Clone the repository
+1. [https://flox.dev/docs/install-flox/install/](Install Flox).
+2. Clone this repository
 3. Install dependencies:
    ```bash
-   cd beige-book/
    flox activate
-   uv pip install -e .
    ```
-
-### API Dependencies
-
-To run the REST API server, install additional dependencies:
-```bash
-uv pip install fastapi uvicorn
-```
 
 ## Command Line Usage
 
@@ -40,6 +31,15 @@ uv pip install fastapi uvicorn
 ```bash
 transcribe /path/to/audio.wav
 ```
+#### Troubleshooting:
+If the above commands do not work run:
+```bash
+uv venv
+sourve .venv/bin/activate
+uv sync
+transcribe /path/to/audio.wav
+```
+
 
 ### Full Command Reference
 
