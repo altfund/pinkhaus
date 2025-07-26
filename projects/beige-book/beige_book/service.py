@@ -10,8 +10,19 @@ import logging
 from typing import List, Optional
 from datetime import datetime
 
-from .models import TranscriptionRequest, TranscriptionResponse, ProcessingSummary
-from .transcriber import AudioTranscriber, TranscriptionResult
+from .models import (
+    TranscriptionRequest,
+    TranscriptionResponse,
+    ProcessingSummary,
+)
+from .proto_models import (
+    InputConfigInputType,
+    ProcessingConfigModel,
+    OutputConfigFormat,
+    FeedOptionsOrder,
+    TranscriptionResult,
+)
+from .transcriber import AudioTranscriber
 from .database import TranscriptionDatabase
 from .feed_parser import FeedParser, FeedItem
 from .downloader import AudioDownloader
@@ -22,6 +33,15 @@ logger = logging.getLogger(__name__)
 
 class TranscriptionService:
     """Main service for handling transcription requests"""
+
+    # Model enum to string mapping
+    MODEL_NAME_MAP = {
+        ProcessingConfigModel.MODEL_TINY: "tiny",
+        ProcessingConfigModel.MODEL_BASE: "base",
+        ProcessingConfigModel.MODEL_SMALL: "small",
+        ProcessingConfigModel.MODEL_MEDIUM: "medium",
+        ProcessingConfigModel.MODEL_LARGE: "large",
+    }
 
     def __init__(self):
         """Initialize the transcription service"""
@@ -45,10 +65,12 @@ class TranscriptionService:
             request.validate()
 
             # Initialize transcriber with requested model
-            self.transcriber = AudioTranscriber(model_name=request.processing.model)
+            # Convert enum to string for AudioTranscriber
+            model_name = self.MODEL_NAME_MAP.get(request.processing.model, "tiny")
+            self.transcriber = AudioTranscriber(model_name=model_name)
 
             # Process based on input type
-            if request.input.type == "file":
+            if request.input.type == InputConfigInputType.INPUT_TYPE_FILE:
                 return self._process_file(request)
             else:
                 return self._process_feeds(request)
@@ -245,9 +267,11 @@ class TranscriptionService:
     ):
         """Save transcription to database with feed metadata"""
         db_config = request.output.database
+        # Convert enum to string for database
+        model_name = self.MODEL_NAME_MAP.get(request.processing.model, "tiny")
         self.database.save_transcription(
             result,
-            model_name=request.processing.model,
+            model_name=model_name,
             metadata_table=db_config.metadata_table
             if db_config
             else "transcription_metadata",
@@ -265,7 +289,7 @@ class TranscriptionService:
     ) -> List[FeedItem]:
         """Sort and limit feed items based on options"""
         # Sort by publication date
-        if feed_options.order == "newest":
+        if feed_options.order == FeedOptionsOrder.ORDER_NEWEST:
             sorted_items = sorted(
                 items, key=lambda x: x.published or datetime.min, reverse=True
             )
@@ -280,7 +304,14 @@ class TranscriptionService:
 
     def _is_resumable(self, request: TranscriptionRequest) -> bool:
         """Check if the request supports resumability"""
-        resumable_formats = {"text", "json", "table", "csv", "toml", "sqlite"}
+        resumable_formats = {
+            OutputConfigFormat.FORMAT_TEXT,
+            OutputConfigFormat.FORMAT_JSON,
+            OutputConfigFormat.FORMAT_TABLE,
+            OutputConfigFormat.FORMAT_CSV,
+            OutputConfigFormat.FORMAT_TOML,
+            OutputConfigFormat.FORMAT_SQLITE,
+        }
         return request.output.format in resumable_formats and (
             request.output.database or request.output.destination
         )
@@ -292,7 +323,7 @@ class TranscriptionService:
         response: TranscriptionResponse,
     ):
         """Handle output formatting and writing"""
-        if request.output.format == "sqlite":
+        if request.output.format == OutputConfigFormat.FORMAT_SQLITE:
             # For SQLite, results are already saved during processing
             if not self.database:
                 # Single file to database
@@ -303,7 +334,9 @@ class TranscriptionService:
                 for result in results:
                     db.save_transcription(
                         result,
-                        model_name=request.processing.model,
+                        model_name=self.MODEL_NAME_MAP.get(
+                            request.processing.model, "tiny"
+                        ),
                         metadata_table=db_config.metadata_table,
                         segments_table=db_config.segments_table,
                     )

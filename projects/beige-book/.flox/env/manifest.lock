@@ -18,6 +18,9 @@
       "just": {
         "pkg-path": "just"
       },
+      "protobuf": {
+        "pkg-path": "protobuf"
+      },
       "python313Full": {
         "pkg-path": "python313Full"
       },
@@ -702,6 +705,126 @@
       "priority": 5
     },
     {
+      "attr_path": "protobuf",
+      "broken": false,
+      "derivation": "/nix/store/jqbsqhn0h79dj1fk6i1s8j0ijyn8xzkg-protobuf-30.2.drv",
+      "description": "Google's data interchange format",
+      "install_id": "protobuf",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "protobuf-30.2",
+      "pname": "protobuf",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:24.781268Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "30.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/8amcpfvr562pk1l3hpbhdl5j68gq919h-protobuf-30.2"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "protobuf",
+      "broken": false,
+      "derivation": "/nix/store/npvrsqanlp2g76k8dd9zfnj3nm3n82m7-protobuf-30.2.drv",
+      "description": "Google's data interchange format",
+      "install_id": "protobuf",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "protobuf-30.2",
+      "pname": "protobuf",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:55:10.434031Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "30.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/45gdbaby7c66h2hna0q3y543c13r3wdm-protobuf-30.2"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "protobuf",
+      "broken": false,
+      "derivation": "/nix/store/wa16kvvrzs47acr5cawkz470mlafd781-protobuf-30.2.drv",
+      "description": "Google's data interchange format",
+      "install_id": "protobuf",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "protobuf-30.2",
+      "pname": "protobuf",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:12:32.294227Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "30.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/ljqlb5y5pvlcvwf2rnbysfvpc8y30l3f-protobuf-30.2"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "protobuf",
+      "broken": false,
+      "derivation": "/nix/store/5zzh164x59p9j46wxcckji5p6gvp3c0h-protobuf-30.2.drv",
+      "description": "Google's data interchange format",
+      "install_id": "protobuf",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "protobuf-30.2",
+      "pname": "protobuf",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:32:53.224534Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "30.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/88ma4lbybcpdg0z8745nw9mvj5anb7mq-protobuf-30.2"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
       "attr_path": "python313Full",
       "broken": false,
       "derivation": "/nix/store/bkj4m5b0n9z8hrcj0gs4p2nsidq04k3j-python3-3.13.3.drv",
@@ -1157,6 +1280,9 @@
         },
         "just": {
           "pkg-path": "just"
+        },
+        "protobuf": {
+          "pkg-path": "protobuf"
         },
         "sqlite": {
           "pkg-path": "sqlite"

@@ -350,19 +350,30 @@ The library includes Protocol Buffers support for efficient binary serialization
 
 ### Generating Protobuf Python Classes
 
-To regenerate the Python protobuf classes from the `.proto` file:
+The project uses betterproto to generate clean Python dataclasses from protobuf definitions. To regenerate the Python classes:
 
 ```bash
-# Using grpcio-tools (already installed)
-uv run python -m grpc_tools.protoc -I=. --python_out=. beige_book/transcription.proto
+# Install betterproto with compiler support
+uv pip install "betterproto[compiler]"
 
-# Or if you have protoc installed via flox
-flox install protobuf
-protoc -I=beige_book --python_out=beige_book beige_book/transcription.proto
+# Generate betterproto dataclasses (requires protoc)
+# If using flox environment:
+PATH="$PWD/.venv/bin:$PATH" .flox/run/aarch64-darwin.beige-book.dev/bin/protoc -I . --python_betterproto_out=. beige_book/transcription.proto beige_book/requests.proto
 
-# Note: If you encounter protobuf version mismatches in flox environments,
-# you may need to comment out the version validation in the generated file
+# Move generated file to package directory
+mv beige_book.py beige_book/proto_models.py
+
+# Alternative: Using grpc_tools protoc (if protoc is not available)
+uv run python -m grpc_tools.protoc -I . --plugin=protoc-gen-python_betterproto=.venv/bin/protoc-gen-python_betterproto --python_betterproto_out=. beige_book/transcription.proto beige_book/requests.proto
 ```
+
+#### Benefits of betterproto
+
+- Generates true Python dataclasses with `@dataclass` decorator
+- Full type hints and IDE completion support  
+- Built-in `to_dict()`, `from_dict()`, `to_json()`, `from_json()` methods
+- Compatible with `dataclasses.asdict()` and other dataclass utilities
+- Cleaner, more Pythonic code than standard protobuf generation
 
 ### Protocol Buffers Integration
 
@@ -376,12 +387,12 @@ transcriber = AudioTranscriber(model_name="tiny")
 result = transcriber.transcribe_file("audio.wav")
 
 # Direct protobuf serialization (very efficient)
-proto_bytes = result.to_protobuf_bytes()  # Binary format
-restored = TranscriptionResult.from_protobuf_bytes(proto_bytes)
+proto_bytes = bytes(result)  # Binary format using betterproto
+restored = TranscriptionResult.parse(proto_bytes)
 
-# Base64 encoding for network/text transmission
-encoded = result.to_protobuf_base64()
-restored = TranscriptionResult.from_protobuf_base64(encoded)
+# String serialization for storage/transmission
+proto_str = result.SerializeToString()
+restored = TranscriptionResult.FromString(proto_str)
 
 # All other formats still work exactly the same
 json_str = result.to_json()
@@ -390,12 +401,17 @@ csv_str = result.to_csv()
 table_str = result.to_table()
 
 # Create results programmatically
-result = TranscriptionResult()
-result.filename = "my_audio.wav"
-result.file_hash = "hash123"
-result.language = "en"
-result.full_text = "Hello world"
-result.add_segment(0.0, 2.0, "Hello world")
+from beige_book.proto_models import TranscriptionResult, Segment
+
+result = TranscriptionResult(
+    filename="my_audio.wav",
+    file_hash="hash123", 
+    language="en",
+    full_text="Hello world",
+    segments=[
+        Segment(start_ms=0, end_ms=2000, text="Hello world")
+    ]
+)
 ```
 
 ### Benefits of Protobuf
@@ -416,18 +432,30 @@ The tool includes a REST API server with Swagger/OpenAPI documentation.
 
 ### Starting the API Server
 
+After installation, you can start the API server using the `beige-book-server` command:
+
 ```bash
 # Basic usage
-uv run python run_api.py
+beige-book-server
 
 # With auto-reload for development
-uv run python run_api.py --reload
+beige-book-server --reload
 
 # Custom host and port
-uv run python run_api.py --host 0.0.0.0 --port 8080
+beige-book-server --host 0.0.0.0 --port 8080
 
 # With debug logging
-uv run python run_api.py --log-level debug
+beige-book-server --log-level debug
+```
+
+Alternatively, you can run it directly:
+
+```bash
+# Using uv
+uv run beige-book-server
+
+# Or using the module
+uv run python -m beige_book.run_api
 ```
 
 ### API Documentation

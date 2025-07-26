@@ -25,7 +25,7 @@ message FeedOptions {
     ORDER_OLDEST = 2;
   }
   
-  optional int32 limit = 1;  // Maximum number of feed items to process per feed
+  int32 limit = 1;  // Maximum number of feed items to process per feed (0 = no limit)
   Order order = 2;
   int32 max_retries = 3;
   float initial_delay = 4;  // Initial delay in seconds between retries
@@ -44,7 +44,7 @@ message ProcessingConfig {
   
   Model model = 1;
   bool verbose = 2;
-  optional FeedOptions feed_options = 3;
+  FeedOptions feed_options = 3;  // Optional in proto3 by default (can be absent)
 }
 
 // Database Configuration
@@ -67,8 +67,8 @@ message OutputConfig {
   }
   
   Format format = 1;
-  optional string destination = 2;  // File path or None for stdout
-  optional DatabaseConfig database = 3;
+  string destination = 2;  // File path or empty for stdout
+  DatabaseConfig database = 3;  // Optional in proto3 by default
 }
 
 // Main Request Object
@@ -100,5 +100,5 @@ message TranscriptionResponse {
   bool success = 1;
   repeated TranscriptionResult results = 2;  // Using TranscriptionResult from transcription.proto
   repeated ProcessingError errors = 3;
-  optional ProcessingSummary summary = 4;
+  ProcessingSummary summary = 4;  // Optional in proto3 by default
 }

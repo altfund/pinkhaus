@@ -31,5 +31,5 @@ message FeedMetadata {
 // Extended result with optional feed metadata
 message ExtendedTranscriptionResult {
   TranscriptionResult transcription = 1;
-  optional FeedMetadata feed_metadata = 2;  // Optional - use proto3 optional syntax
+  FeedMetadata feed_metadata = 2;  // Optional in proto3 by default (can be absent)
 }

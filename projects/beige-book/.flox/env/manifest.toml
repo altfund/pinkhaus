@@ -18,6 +18,7 @@ version = 1
 ffmpeg.pkg-path = "ffmpeg"
 sqlite.pkg-path = "sqlite"
 just.pkg-path = "just"
+protobuf.pkg-path = "protobuf"
 
 ## Environment Variables ---------------------------------------------
 ##  ... available for use in the activated environment
