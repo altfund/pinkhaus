@@ -174,7 +174,10 @@ class TranscriptionDatabase:
 
             # Insert segments
             for idx, segment in enumerate(result.segments):
-                duration = segment.end - segment.start
+                # Convert milliseconds to seconds
+                start_time = segment.start_ms / 1000.0
+                end_time = segment.end_ms / 1000.0
+                duration = end_time - start_time
                 cursor.execute(
                     f"""
                     INSERT INTO {segments_table}
@@ -184,8 +187,8 @@ class TranscriptionDatabase:
                     (
                         transcription_id,
                         idx,
-                        segment.start,
-                        segment.end,
+                        start_time,
+                        end_time,
                         duration,
                         segment.text.strip(),
                     ),
