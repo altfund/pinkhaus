@@ -7,7 +7,7 @@ from typing import Optional, Dict, List, Any
 from pathlib import Path
 from contextlib import contextmanager
 
-from .transcriber import TranscriptionResult, Segment
+from .proto_models import TranscriptionResult, Segment
 
 
 class TranscriptionDatabase:
@@ -394,7 +394,11 @@ class TranscriptionDatabase:
 
         for seg in data["segments"]:
             segments.append(
-                Segment(start=seg["start_time"], end=seg["end_time"], text=seg["text"])
+                Segment(
+                    start_ms=int(seg["start_time"] * 1000),
+                    end_ms=int(seg["end_time"] * 1000),
+                    text=seg["text"]
+                )
             )
 
         return TranscriptionResult(

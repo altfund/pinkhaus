@@ -6,9 +6,9 @@ The beige-book library has been refactored to use a clean request/response archi
 
 ## Architecture Components
 
-### 1. Request/Response Models (`models.py`)
+### 1. Request/Response Models (`proto_models.py` and `models_betterproto.py`)
 
-The system uses dataclass-based models that are fully serializable:
+The system uses betterproto-generated dataclasses from Protocol Buffer definitions that are fully serializable:
 
 - **TranscriptionRequest**: The main request object containing:
   - `InputConfig`: Specifies the input source (file or feed)
