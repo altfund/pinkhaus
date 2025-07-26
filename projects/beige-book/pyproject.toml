@@ -5,18 +5,22 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = "==3.13.5"
 dependencies = [
+    "protobuf",
     "torch",
     "feedparser",
+    "fastapi",
+    "httpx",
     "toml>=0.10.2",
     "openai-whisper",
     "numpy<2.3",
     "pytest>=8.4.1",
     "tabulate>=0.9.0",
-    "protobuf",
+    "betterproto>=1.2.5",
 ]
 
 [project.scripts]
 transcribe = "beige_book.main:main"
+beige-book-server = "beige_book.run_api:main"
 
 [build-system]
 requires = ["hatchling"]
