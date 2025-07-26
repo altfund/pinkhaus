@@ -8,11 +8,15 @@ import argparse
 import os
 import traceback
 import logging
-from datetime import datetime
-from .transcriber import AudioTranscriber
-from .database import TranscriptionDatabase
-from .feed_parser import FeedParser
-from .downloader import AudioDownloader
+from .models import (
+    TranscriptionRequest,
+    InputConfig,
+    ProcessingConfig,
+    OutputConfig,
+    FeedOptions,
+    DatabaseConfig,
+)
+from .service import TranscriptionService, OutputFormatter
 
 
 def valid_path(path):
@@ -34,201 +38,129 @@ def setup_logging(verbose: bool = False):
     )
 
 
-def process_single_file(args):
-    """Process a single audio file"""
-    # Create transcriber with specified model
-    transcriber = AudioTranscriber(model_name=args.model)
+def args_to_request(args) -> TranscriptionRequest:
+    """Convert CLI arguments to TranscriptionRequest"""
+    # Determine input type
+    input_config = InputConfig(
+        type="feed" if args.feed else "file", source=args.filename
+    )
 
-    # Transcribe the file (verbose only for text format)
-    result = transcriber.transcribe_file(args.filename, verbose=(args.format == "text"))
+    # Create feed options if processing feeds
+    feed_options = None
+    if args.feed:
+        feed_options = FeedOptions(limit=args.limit, order=args.order)
 
-    # Handle different output formats
-    if args.format == "sqlite":
-        # Save to SQLite database
-        db = TranscriptionDatabase(args.db_path)
-        db.create_tables(args.metadata_table, args.segments_table)
-        transcription_id = db.save_transcription(
-            result,
-            model_name=args.model,
+    # Create processing config
+    processing_config = ProcessingConfig(
+        model=args.model, verbose=args.verbose, feed_options=feed_options
+    )
+
+    # Create database config if needed
+    database_config = None
+    if args.db_path or args.format == "sqlite":
+        database_config = DatabaseConfig(
+            db_path=args.db_path or "beige_book.db",
             metadata_table=args.metadata_table,
             segments_table=args.segments_table,
         )
-        print(f"Transcription saved to database with ID: {transcription_id}")
-        print(f"Database: {args.db_path}")
-        print(f"Metadata table: {args.metadata_table}")
-        print(f"Segments table: {args.segments_table}")
-    else:
-        # Format output for other formats
-        output = result.format(args.format)
 
-        # Write to file or stdout
-        if args.output:
-            with open(args.output, "w", encoding="utf-8") as f:
-                f.write(output)
-            print(f"Transcription saved to {args.output}")
+    # Create output config
+    output_config = OutputConfig(
+        format=args.format, destination=args.output, database=database_config
+    )
+
+    return TranscriptionRequest(
+        input=input_config, processing=processing_config, output=output_config
+    )
+
+
+def process_single_file(args):
+    """Process a single audio file using the service"""
+    service = TranscriptionService()
+
+    # Convert args to request
+    request = args_to_request(args)
+
+    # Process the request
+    response = service.process(request)
+
+    # Handle output
+    if response.success and response.results:
+        if args.format == "sqlite":
+            # Already saved by service
+            print(f"Saved to database: {args.db_path or 'beige_book.db'}")
         else:
-            print(output)
+            # Format and output
+            formatted = OutputFormatter.format_results(
+                response.results, args.format, include_feed_metadata=False
+            )
+
+            if args.output:
+                with open(args.output, "w", encoding="utf-8") as f:
+                    f.write(formatted)
+                print(f"Output written to: {args.output}")
+            else:
+                print(formatted)
+    else:
+        # Handle errors
+        for error in response.errors:
+            print(f"Error: {error.message}", file=sys.stderr)
+        sys.exit(1)
 
 
 def process_feeds(args, is_resumable: bool):
-    """Process RSS feeds from TOML file"""
-    feed_parser = FeedParser()
-    downloader = AudioDownloader()
-    transcriber = AudioTranscriber(model_name=args.model)
+    """Process RSS feeds using the service"""
+    service = TranscriptionService()
 
-    # Setup database if needed
-    db = None
-    if args.db_path or args.format == "sqlite":
-        db_path = args.db_path or "beige_book_feeds.db"
-        db = TranscriptionDatabase(db_path)
-        db.create_tables(args.metadata_table, args.segments_table)
+    # Convert args to request
+    request = args_to_request(args)
 
-    # Parse feeds from TOML
-    logging.info(f"Parsing feeds from: {args.filename}")
-    feed_items_dict = feed_parser.parse_all_feeds(args.filename)
+    # Process the request
+    response = service.process(request)
 
-    # Calculate total items considering limit
-    if args.limit:
-        total_items = sum(
-            min(len(items), args.limit) for items in feed_items_dict.values()
-        )
+    # Handle output
+    if args.format == "sqlite":
+        # Results already saved by service
+        if response.success:
+            print("\nProcessing complete:")
+            if response.summary:
+                print(f"  Total items: {response.summary.total_items}")
+                print(f"  Processed: {response.summary.processed}")
+                print(f"  Skipped (already processed): {response.summary.skipped}")
+                print(f"  Failed: {response.summary.failed}")
+                print(f"  Time elapsed: {response.summary.elapsed_time:.2f}s")
     else:
-        total_items = sum(len(items) for items in feed_items_dict.values())
-
-    processed = 0
-    skipped = 0
-
-    for feed_url, items in feed_items_dict.items():
-        logging.info(f"Processing feed: {feed_url} with {len(items)} items")
-
-        # Sort items based on order preference
-        if args.order == "newest":
-            # Sort by published date descending (newest first)
-            sorted_items = sorted(
-                items, key=lambda x: x.published or datetime.min, reverse=True
+        # Format and output results
+        if response.results:
+            formatted = OutputFormatter.format_results(
+                response.results, args.format, include_feed_metadata=True
             )
-        else:
-            # Sort by published date ascending (oldest first)
-            sorted_items = sorted(items, key=lambda x: x.published or datetime.min)
 
-        # Apply limit if specified
-        if args.limit:
-            sorted_items = sorted_items[: args.limit]
-            logging.info(f"Limiting to {args.limit} items per feed")
+            if args.output:
+                with open(args.output, "w", encoding="utf-8") as f:
+                    f.write(formatted)
+                print(f"\nOutput written to: {args.output}")
+            else:
+                print(formatted)
 
-        for item in sorted_items:
-            # Check if already processed (only if resumable)
-            if (
-                is_resumable
-                and db
-                and db.check_feed_item_exists(
-                    item.feed_url, item.item_id, args.metadata_table
-                )
-            ):
-                logging.info(f"Skipping already processed: {item.title}")
-                skipped += 1
-                continue
+        # Print summary
+        print("\nProcessing complete:")
+        if response.summary:
+            print(f"  Total items: {response.summary.total_items}")
+            print(f"  Processed: {response.summary.processed}")
+            print(f"  Skipped (already processed): {response.summary.skipped}")
+            print(f"  Failed: {response.summary.failed}")
+            print(f"  Time elapsed: {response.summary.elapsed_time:.2f}s")
 
-            try:
-                # Download audio file
-                logging.info(f"Processing: {item.title}")
-                temp_path, file_hash = downloader.download_with_retry(item.audio_url)
+    # Print errors if any
+    if response.errors:
+        print("\nErrors encountered:")
+        for error in response.errors:
+            print(f"  - {error.source}: {error.message}")
 
-                try:
-                    # Transcribe the downloaded file
-                    result = transcriber.transcribe_file(
-                        temp_path, verbose=(args.format == "text" and not args.output)
-                    )
-
-                    # Save or output based on format
-                    if args.format == "sqlite" or (is_resumable and db):
-                        # Save to database with feed metadata
-                        transcription_id = db.save_transcription(
-                            result,
-                            model_name=args.model,
-                            metadata_table=args.metadata_table,
-                            segments_table=args.segments_table,
-                            feed_url=item.feed_url,
-                            feed_item_id=item.item_id,
-                            feed_item_title=item.title,
-                            feed_item_published=item.published.isoformat()
-                            if item.published
-                            else None,
-                        )
-                        logging.info(f"Saved to database with ID: {transcription_id}")
-                    else:
-                        # Format output with feed metadata
-                        output = format_with_feed_metadata(result, item, args.format)
-
-                        if args.output:
-                            # Append to output file
-                            mode = "a" if processed > 0 else "w"
-                            with open(args.output, mode, encoding="utf-8") as f:
-                                if processed > 0:
-                                    f.write("\n\n")  # Separator between items
-                                f.write(output)
-                        else:
-                            print(output)
-                            if processed < total_items - 1:
-                                print("\n" + "=" * 80 + "\n")  # Separator
-
-                    processed += 1
-
-                finally:
-                    # Clean up temp file
-                    downloader.cleanup_temp_file(temp_path)
-
-            except Exception as e:
-                logging.error(f"Failed to process {item.title}: {e}")
-                continue
-
-    # Summary
-    print("\nProcessing complete:")
-    print(f"  Total items: {total_items}")
-    print(f"  Processed: {processed}")
-    print(f"  Skipped (already processed): {skipped}")
-    print(f"  Failed: {total_items - processed - skipped}")
-
-
-def format_with_feed_metadata(result, feed_item, format_type: str) -> str:
-    """Format transcription output with feed metadata"""
-    if format_type == "text":
-        # For text format, add header with feed info
-        header = f"Feed: {feed_item.feed_url}\n"
-        header += f"Title: {feed_item.title}\n"
-        if feed_item.published:
-            header += f"Published: {feed_item.published}\n"
-        header += f"Audio URL: {feed_item.audio_url}\n"
-        header += "-" * 80 + "\n\n"
-        return header + result.full_text
-
-    elif format_type == "json":
-        # Add feed metadata to JSON output
-        import json
-
-        data = result.to_dict()
-        data["feed_metadata"] = feed_item.to_dict()
-        return json.dumps(data, indent=2, ensure_ascii=False)
-
-    elif format_type == "toml":
-        # Add feed metadata to TOML output
-        output = "[feed_metadata]\n"
-        output += f'feed_url = "{feed_item.feed_url}"\n'
-        output += f'item_id = "{feed_item.item_id}"\n'
-        output += f'title = "{feed_item.title}"\n'
-        output += f'audio_url = "{feed_item.audio_url}"\n'
-        if feed_item.published:
-            output += f'published = "{feed_item.published.isoformat()}"\n'
-        output += "\n" + result.to_toml()
-        return output
-
-    else:
-        # For other formats, prepend a comment with feed info
-        header = f"# Feed: {feed_item.feed_url}\n"
-        header += f"# Title: {feed_item.title}\n"
-        if feed_item.published:
-            header += f"# Published: {feed_item.published}\n"
-        return header + result.format(format_type)
+    # Exit with error code if not successful
+    if not response.success:
+        sys.exit(1)
 
 
 def main():

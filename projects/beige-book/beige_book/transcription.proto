@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package beige_book;
+
+// Segment represents a time-bounded portion of transcribed text
+message Segment {
+  int64 start_ms = 1;  // Start time in milliseconds since start of audio
+  int64 end_ms = 2;    // End time in milliseconds since start of audio
+  string text = 3;     // Transcribed text for this segment
+}
+
+// TranscriptionResult represents a complete transcription with metadata
+message TranscriptionResult {
+  string filename = 1;      // Name of the transcribed file
+  string file_hash = 2;     // SHA256 hash of the file
+  string language = 3;      // Detected language code
+  repeated Segment segments = 4;  // List of transcription segments
+  string full_text = 5;     // Complete transcribed text
+  int64 created_at = 6;     // Unix timestamp (seconds) when transcription was created
+}
+
+// FeedMetadata for RSS feed items (optional)
+message FeedMetadata {
+  string feed_url = 1;
+  string item_id = 2;
+  string title = 3;
+  string audio_url = 4;
+  string published = 5;  // ISO format timestamp
+}
+
+// Extended result with optional feed metadata
+message ExtendedTranscriptionResult {
+  TranscriptionResult transcription = 1;
+  optional FeedMetadata feed_metadata = 2;  // Optional - use proto3 optional syntax
+}

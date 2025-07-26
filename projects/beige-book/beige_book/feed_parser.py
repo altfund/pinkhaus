@@ -218,12 +218,18 @@ class FeedParser:
                 if enclosure.get("type", "").lower() in self.supported_audio_types:
                     return enclosure.get("href", enclosure.get("url"))
 
+                if enclosure.get("type", "").lower() in self.supported_audio_types:
+                    return enclosure.get("href", enclosure.get("url"))
+
         # Check links
         if hasattr(entry, "links"):
             for link in entry.links:
                 if link.get("type", "").lower() in self.supported_audio_types:
                     return link.get("href")
                 # Some feeds use rel="enclosure"
+                if link.get("rel") == "enclosure" and link.get("href"):
+                    return link.get("href")
+
                 if link.get("rel") == "enclosure" and link.get("href"):
                     return link.get("href")
 

@@ -1,6 +1,6 @@
 # Beige Book - Audio Transcription Tool
 
-A command-line tool and Python library for transcribing audio files using OpenAI's Whisper model with support for multiple structured output formats including SQLite database storage. Now with RSS/podcast feed processing capabilities.
+A command-line tool, Python library, and REST API for transcribing audio files using OpenAI's Whisper model with support for multiple structured output formats including SQLite database storage. Now with RSS/podcast feed processing capabilities.
 
 ## Features
 
@@ -12,17 +12,16 @@ A command-line tool and Python library for transcribing audio files using OpenAI
 - Resumable feed processing with duplicate detection
 - Feed item ordering (newest/oldest first) and limiting
 - Python library API for programmatic use
+- REST API with Swagger/OpenAPI documentation
 - Comprehensive test suite
 
 ## Installation
 
-1. Ensure you have Python 3.10+ installed
-2. Clone the repository
+1. [https://flox.dev/docs/install-flox/install/](Install Flox).
+2. Clone this repository
 3. Install dependencies:
    ```bash
-   cd beige-book/
    flox activate
-   uv pip install -e .
    ```
 
 ## Command Line Usage
@@ -32,6 +31,15 @@ A command-line tool and Python library for transcribing audio files using OpenAI
 ```bash
 transcribe /path/to/audio.wav
 ```
+#### Troubleshooting:
+If the above commands do not work run:
+```bash
+uv venv
+sourve .venv/bin/activate
+uv sync
+transcribe /path/to/audio.wav
+```
+
 
 ### Full Command Reference
 
@@ -313,14 +321,14 @@ for item in feed_items[:5]:  # Process first 5 items
     # Check if already processed
     if db.check_feed_item_exists(item.feed_url, item.item_id):
         continue
-    
+
     # Download audio
     temp_path, file_hash = downloader.download_to_temp(item.audio_url)
-    
+
     try:
         # Transcribe
         result = transcriber.transcribe_file(temp_path)
-        
+
         # Save with feed metadata
         db.save_transcription(
             result,
@@ -335,6 +343,148 @@ for item in feed_items[:5]:  # Process first 5 items
 ```
 
 See `examples/` directory for more usage examples.
+
+## Protocol Buffers Support
+
+The library includes Protocol Buffers support for efficient binary serialization of transcription results.
+
+### Generating Protobuf Python Classes
+
+To regenerate the Python protobuf classes from the `.proto` file:
+
+```bash
+# Using grpcio-tools (already installed)
+uv run python -m grpc_tools.protoc -I=. --python_out=. beige_book/transcription.proto
+
+# Or if you have protoc installed via flox
+flox install protobuf
+protoc -I=beige_book --python_out=beige_book beige_book/transcription.proto
+
+# Note: If you encounter protobuf version mismatches in flox environments,
+# you may need to comment out the version validation in the generated file
+```
+
+### Protocol Buffers Integration
+
+TranscriptionResult now uses Protocol Buffers internally for efficient storage and serialization, while maintaining the same API:
+
+```python
+from beige_book import AudioTranscriber, TranscriptionResult
+
+# Use standard transcriber - it now creates protobuf-based results
+transcriber = AudioTranscriber(model_name="tiny")
+result = transcriber.transcribe_file("audio.wav")
+
+# Direct protobuf serialization (very efficient)
+proto_bytes = result.to_protobuf_bytes()  # Binary format
+restored = TranscriptionResult.from_protobuf_bytes(proto_bytes)
+
+# Base64 encoding for network/text transmission
+encoded = result.to_protobuf_base64()
+restored = TranscriptionResult.from_protobuf_base64(encoded)
+
+# All other formats still work exactly the same
+json_str = result.to_json()
+toml_str = result.to_toml()
+csv_str = result.to_csv()
+table_str = result.to_table()
+
+# Create results programmatically
+result = TranscriptionResult()
+result.filename = "my_audio.wav"
+result.file_hash = "hash123"
+result.language = "en"
+result.full_text = "Hello world"
+result.add_segment(0.0, 2.0, "Hello world")
+```
+
+### Benefits of Protobuf
+
+- **Compact**: Binary format is typically 3-5x smaller than JSON
+- **Fast**: Efficient serialization/deserialization
+- **Type-safe**: Strong typing with generated classes
+- **Language-agnostic**: Can be used with any language that supports protobuf
+- **Zero overhead**: TranscriptionResult now uses protobuf internally, so there's no conversion cost
+
+**Note**: The API remains unchanged - existing code will continue to work. The only difference is that TranscriptionResult now stores data in a protobuf structure internally for better performance and smaller memory footprint.
+
+See `examples/protobuf_usage.py` for complete examples.
+
+## REST API
+
+The tool includes a REST API server with Swagger/OpenAPI documentation.
+
+### Starting the API Server
+
+```bash
+# Basic usage
+uv run python run_api.py
+
+# With auto-reload for development
+uv run python run_api.py --reload
+
+# Custom host and port
+uv run python run_api.py --host 0.0.0.0 --port 8080
+
+# With debug logging
+uv run python run_api.py --log-level debug
+```
+
+### API Documentation
+
+Once the server is running, access the documentation at:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+- OpenAPI JSON: http://localhost:8000/openapi.json
+
+### API Usage Example
+
+Transcribe an audio file with curl:
+
+```bash
+curl -X POST http://localhost:8000/transcribe \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": {
+      "type": "file",
+      "source": "/path/to/audio.wav"
+    },
+    "processing": {
+      "model": "medium",
+      "verbose": false
+    },
+    "output": {
+      "format": "json"
+    }
+  }'
+```
+
+Process RSS feeds:
+
+```bash
+curl -X POST http://localhost:8000/transcribe \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": {
+      "type": "feed",
+      "source": "/path/to/feeds.toml"
+    },
+    "processing": {
+      "model": "base",
+      "verbose": true,
+      "feed_options": {
+        "limit": 10,
+        "order": "newest"
+      }
+    },
+    "output": {
+      "format": "sqlite",
+      "database": {
+        "db_path": "/path/to/podcasts.db"
+      }
+    }
+  }'
+```
 
 ## Running Tests
 
