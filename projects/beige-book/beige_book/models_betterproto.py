@@ -21,7 +21,6 @@ from .proto_models import (
     TranscriptionResponse as _TranscriptionResponse,
     ProcessingError as _ProcessingError,
     ProcessingSummary as _ProcessingSummary,
-    TranscriptionResult,
 )
 
 
