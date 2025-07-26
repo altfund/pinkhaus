@@ -2,16 +2,27 @@
 Beige Book - Audio transcription library and CLI tool.
 """
 
-from .transcriber import AudioTranscriber, TranscriptionResult, Segment, create_extended_result
+from .transcriber import (
+    AudioTranscriber,
+    TranscriptionResult,
+    Segment,
+    create_extended_result,
+)
 from .database import TranscriptionDatabase
 from .feed_parser import FeedParser, FeedItem
 from .downloader import AudioDownloader
 from .models import (
-    TranscriptionRequest, TranscriptionResponse,
-    InputConfig, ProcessingConfig, OutputConfig,
-    FeedOptions, DatabaseConfig,
-    ProcessingError, ProcessingSummary,
-    create_file_request, create_feed_request
+    TranscriptionRequest,
+    TranscriptionResponse,
+    InputConfig,
+    ProcessingConfig,
+    OutputConfig,
+    FeedOptions,
+    DatabaseConfig,
+    ProcessingError,
+    ProcessingSummary,
+    create_file_request,
+    create_feed_request,
 )
 from .service import TranscriptionService, OutputFormatter
 
@@ -21,7 +32,7 @@ from .transcription_pb2 import (
     TranscriptionResult as TranscriptionResultProto,
     Segment as SegmentProto,
     FeedMetadata,
-    ExtendedTranscriptionResult
+    ExtendedTranscriptionResult,
 )
 
 __all__ = [
@@ -54,6 +65,6 @@ __all__ = [
     "TranscriptionResultProto",
     "SegmentProto",
     "FeedMetadata",
-    "ExtendedTranscriptionResult"
+    "ExtendedTranscriptionResult",
 ]
 __version__ = "0.1.0"

@@ -2,6 +2,8 @@
 Transcription library using Protocol Buffers as the primary data structure.
 """
 
+# Extended result support
+from .transcription_pb2 import ExtendedTranscriptionResult
 import os
 import json
 import hashlib
@@ -10,14 +12,14 @@ import base64
 import time
 from contextlib import redirect_stdout
 from typing import List, Dict, Any, Optional
-from datetime import timedelta, datetime
+from datetime import timedelta
 from tabulate import tabulate
 import whisper
 import toml
 
 from .transcription_pb2 import (
     TranscriptionResult as TranscriptionResultProto,
-    Segment as SegmentProto
+    Segment as SegmentProto,
 )
 
 
@@ -59,33 +61,33 @@ class TranscriptionResult:
 
     def __init__(self, proto: Optional[TranscriptionResultProto] = None, **kwargs):
         """Initialize with an existing protobuf or create a new one.
-        
+
         For backward compatibility, also accepts keyword arguments.
         """
         self._proto = proto if proto is not None else TranscriptionResultProto()
-        
+
         # Set creation timestamp if creating new
-        if proto is None and 'created_at' not in kwargs:
+        if proto is None and "created_at" not in kwargs:
             self._proto.created_at = int(time.time())
-        
+
         # Handle backward compatibility with keyword arguments
         if kwargs:
-            if 'filename' in kwargs:
-                self.filename = kwargs['filename']
-            if 'file_hash' in kwargs:
-                self.file_hash = kwargs['file_hash']
-            if 'language' in kwargs:
-                self.language = kwargs['language']
-            if 'full_text' in kwargs:
-                self.full_text = kwargs['full_text']
-            if 'segments' in kwargs:
+            if "filename" in kwargs:
+                self.filename = kwargs["filename"]
+            if "file_hash" in kwargs:
+                self.file_hash = kwargs["file_hash"]
+            if "language" in kwargs:
+                self.language = kwargs["language"]
+            if "full_text" in kwargs:
+                self.full_text = kwargs["full_text"]
+            if "segments" in kwargs:
                 # Handle list of Segment objects
-                for seg in kwargs['segments']:
-                    if hasattr(seg, 'start'):
+                for seg in kwargs["segments"]:
+                    if hasattr(seg, "start"):
                         self.add_segment(seg.start, seg.end, seg.text)
                     else:
                         # Handle dict-like segments
-                        self.add_segment(seg['start'], seg['end'], seg['text'])
+                        self.add_segment(seg["start"], seg["end"], seg["text"])
 
     # Properties that map to protobuf fields
     @property
@@ -124,12 +126,12 @@ class TranscriptionResult:
     def segments(self) -> List[SegmentProto]:
         """Return the protobuf segments directly."""
         return self._proto.segments
-    
+
     @property
     def created_at(self) -> int:
         """Get creation timestamp."""
         return self._proto.created_at
-    
+
     @created_at.setter
     def created_at(self, value: int):
         """Set creation timestamp."""
@@ -137,7 +139,7 @@ class TranscriptionResult:
 
     def add_segment(self, start: float, end: float, text: str) -> SegmentProto:
         """Add a segment to the transcription.
-        
+
         Args:
             start: Start time in seconds (will be converted to milliseconds)
             end: End time in seconds (will be converted to milliseconds)
@@ -145,7 +147,7 @@ class TranscriptionResult:
         """
         segment = self._proto.segments.add()
         segment.start_ms = int(start * 1000)  # Convert seconds to milliseconds
-        segment.end_ms = int(end * 1000)      # Convert seconds to milliseconds
+        segment.end_ms = int(end * 1000)  # Convert seconds to milliseconds
         segment.text = text.strip()
         return segment
 
@@ -169,7 +171,7 @@ class TranscriptionResult:
         return self._proto.SerializeToString()
 
     @classmethod
-    def from_protobuf_bytes(cls, data: bytes) -> 'TranscriptionResult':
+    def from_protobuf_bytes(cls, data: bytes) -> "TranscriptionResult":
         """Deserialize from protobuf bytes."""
         proto = TranscriptionResultProto()
         proto.ParseFromString(data)
@@ -177,10 +179,10 @@ class TranscriptionResult:
 
     def to_protobuf_base64(self) -> str:
         """Serialize to base64-encoded protobuf."""
-        return base64.b64encode(self.to_protobuf_bytes()).decode('utf-8')
+        return base64.b64encode(self.to_protobuf_bytes()).decode("utf-8")
 
     @classmethod
-    def from_protobuf_base64(cls, data: str) -> 'TranscriptionResult':
+    def from_protobuf_base64(cls, data: str) -> "TranscriptionResult":
         """Deserialize from base64-encoded protobuf."""
         return cls.from_protobuf_bytes(base64.b64decode(data))
 
@@ -196,12 +198,12 @@ class TranscriptionResult:
                     "start": self.format_time(seg.start_ms / 1000.0),
                     "end": self.format_time(seg.end_ms / 1000.0),
                     "text": seg.text,
-                    "duration": round((seg.end_ms - seg.start_ms) / 1000.0, 2)
+                    "duration": round((seg.end_ms - seg.start_ms) / 1000.0, 2),
                 }
                 for seg in self.segments
             ],
             "full_text": self.full_text,
-            "created_at": self.created_at
+            "created_at": self.created_at,
         }
 
     def to_json(self) -> str:
@@ -229,10 +231,12 @@ class TranscriptionResult:
         """Convert to formatted table."""
         headers = ["Start", "End", "Duration", "Text"]
         rows = [
-            (self.format_time(seg.start_ms / 1000.0),
-             self.format_time(seg.end_ms / 1000.0),
-             round((seg.end_ms - seg.start_ms) / 1000.0, 3),
-             seg.text[:50] + "..." if len(seg.text) > 50 else seg.text)
+            (
+                self.format_time(seg.start_ms / 1000.0),
+                self.format_time(seg.end_ms / 1000.0),
+                round((seg.end_ms - seg.start_ms) / 1000.0, 3),
+                seg.text[:50] + "..." if len(seg.text) > 50 else seg.text,
+            )
             for seg in self.segments
         ]
         table = tabulate(rows, headers=headers, tablefmt="grid")
@@ -281,66 +285,82 @@ class TranscriptionResult:
             raise ValueError(f"Unknown format: {format_type}")
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'TranscriptionResult':
+    def from_dict(cls, data: Dict[str, Any]) -> "TranscriptionResult":
         """Create TranscriptionResult from dictionary."""
         result = cls()
-        result.filename = data['filename']
-        result.file_hash = data['file_hash']
-        result.language = data['language']
-        result.full_text = data['full_text']
+        result.filename = data["filename"]
+        result.file_hash = data["file_hash"]
+        result.language = data["language"]
+        result.full_text = data["full_text"]
 
         # Convert segments
-        for seg_data in data.get('segments', []):
+        for seg_data in data.get("segments", []):
             # Parse time string back to seconds if needed
-            if isinstance(seg_data.get('start'), str):
+            if isinstance(seg_data.get("start"), str):
                 # Parse HH:MM:SS.mmm format
-                time_parts = seg_data['start'].split(':')
-                start = float(time_parts[0]) * 3600 + float(time_parts[1]) * 60 + float(time_parts[2])
-                time_parts = seg_data['end'].split(':')
-                end = float(time_parts[0]) * 3600 + float(time_parts[1]) * 60 + float(time_parts[2])
+                time_parts = seg_data["start"].split(":")
+                start = (
+                    float(time_parts[0]) * 3600
+                    + float(time_parts[1]) * 60
+                    + float(time_parts[2])
+                )
+                time_parts = seg_data["end"].split(":")
+                end = (
+                    float(time_parts[0]) * 3600
+                    + float(time_parts[1]) * 60
+                    + float(time_parts[2])
+                )
             else:
-                start = seg_data['start']
-                end = seg_data['end']
+                start = seg_data["start"]
+                end = seg_data["end"]
 
-            result.add_segment(start, end, seg_data['text'])
+            result.add_segment(start, end, seg_data["text"])
 
         return result
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'TranscriptionResult':
+    def from_json(cls, json_str: str) -> "TranscriptionResult":
         """Create TranscriptionResult from JSON string."""
         data = json.loads(json_str)
         return cls.from_dict(data)
 
     @classmethod
-    def from_toml(cls, toml_str: str) -> 'TranscriptionResult':
+    def from_toml(cls, toml_str: str) -> "TranscriptionResult":
         """Create TranscriptionResult from TOML string."""
         data = toml.loads(toml_str)
 
         # TOML structure is slightly different
-        transcription = data.get('transcription', {})
-        segments_data = data.get('segments', [])
+        transcription = data.get("transcription", {})
+        segments_data = data.get("segments", [])
 
         result = cls()
-        result.filename = transcription['filename']
-        result.file_hash = transcription['file_hash']
-        result.language = transcription['language']
-        result.full_text = transcription['full_text']
+        result.filename = transcription["filename"]
+        result.file_hash = transcription["file_hash"]
+        result.language = transcription["language"]
+        result.full_text = transcription["full_text"]
 
         # Convert TOML segments format
         for seg in segments_data:
             # Parse time string to seconds
-            time_parts = seg['start'].split(':')
-            start = float(time_parts[0]) * 3600 + float(time_parts[1]) * 60 + float(time_parts[2])
-            time_parts = seg['end'].split(':')
-            end = float(time_parts[0]) * 3600 + float(time_parts[1]) * 60 + float(time_parts[2])
+            time_parts = seg["start"].split(":")
+            start = (
+                float(time_parts[0]) * 3600
+                + float(time_parts[1]) * 60
+                + float(time_parts[2])
+            )
+            time_parts = seg["end"].split(":")
+            end = (
+                float(time_parts[0]) * 3600
+                + float(time_parts[1]) * 60
+                + float(time_parts[2])
+            )
 
-            result.add_segment(start, end, seg['text'])
+            result.add_segment(start, end, seg["text"])
 
         return result
 
     @classmethod
-    def from_protobuf(cls, proto: TranscriptionResultProto) -> 'TranscriptionResult':
+    def from_protobuf(cls, proto: TranscriptionResultProto) -> "TranscriptionResult":
         """Create from an existing protobuf object."""
         return cls(proto)
 
@@ -349,14 +369,14 @@ class TranscriptionResult:
         """Get segments as a list of dictionaries for backward compatibility."""
         return [
             {
-                'start': seg.start_ms / 1000.0,
-                'end': seg.end_ms / 1000.0,
-                'text': seg.text,
-                'to_dict': lambda s=seg: {
-                    'start': self.format_time(s.start_ms / 1000.0),
-                    'end': self.format_time(s.end_ms / 1000.0),
-                    'text': s.text
-                }
+                "start": seg.start_ms / 1000.0,
+                "end": seg.end_ms / 1000.0,
+                "text": seg.text,
+                "to_dict": lambda s=seg: {
+                    "start": self.format_time(s.start_ms / 1000.0),
+                    "end": self.format_time(s.end_ms / 1000.0),
+                    "text": s.text,
+                },
             }
             for seg in self.segments
         ]
@@ -389,7 +409,9 @@ class AudioTranscriber:
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
 
-    def transcribe_file(self, filepath: str, verbose: bool = False) -> TranscriptionResult:
+    def transcribe_file(
+        self, filepath: str, verbose: bool = False
+    ) -> TranscriptionResult:
         """
         Transcribe an audio file and return structured result.
 
@@ -421,16 +443,11 @@ class AudioTranscriber:
         # Add segments
         for segment in result.get("segments", []):
             transcription.add_segment(
-                start=segment["start"],
-                end=segment["end"],
-                text=segment["text"]
+                start=segment["start"], end=segment["end"], text=segment["text"]
             )
 
         return transcription
 
-
-# Extended result support
-from .transcription_pb2 import ExtendedTranscriptionResult, FeedMetadata
 
 def create_extended_result(
     result: TranscriptionResult,
@@ -438,7 +455,7 @@ def create_extended_result(
     item_id: Optional[str] = None,
     title: Optional[str] = None,
     audio_url: Optional[str] = None,
-    published: Optional[str] = None
+    published: Optional[str] = None,
 ) -> ExtendedTranscriptionResult:
     """Create an ExtendedTranscriptionResult with optional feed metadata."""
     extended = ExtendedTranscriptionResult()

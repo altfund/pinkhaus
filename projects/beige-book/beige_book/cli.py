@@ -8,10 +8,13 @@ import argparse
 import os
 import traceback
 import logging
-from datetime import datetime
 from .models import (
-    TranscriptionRequest, InputConfig, ProcessingConfig, OutputConfig,
-    FeedOptions, DatabaseConfig
+    TranscriptionRequest,
+    InputConfig,
+    ProcessingConfig,
+    OutputConfig,
+    FeedOptions,
+    DatabaseConfig,
 )
 from .service import TranscriptionService, OutputFormatter
 
@@ -39,23 +42,17 @@ def args_to_request(args) -> TranscriptionRequest:
     """Convert CLI arguments to TranscriptionRequest"""
     # Determine input type
     input_config = InputConfig(
-        type="feed" if args.feed else "file",
-        source=args.filename
+        type="feed" if args.feed else "file", source=args.filename
     )
 
     # Create feed options if processing feeds
     feed_options = None
     if args.feed:
-        feed_options = FeedOptions(
-            limit=args.limit,
-            order=args.order
-        )
+        feed_options = FeedOptions(limit=args.limit, order=args.order)
 
     # Create processing config
     processing_config = ProcessingConfig(
-        model=args.model,
-        verbose=args.verbose,
-        feed_options=feed_options
+        model=args.model, verbose=args.verbose, feed_options=feed_options
     )
 
     # Create database config if needed
@@ -64,20 +61,16 @@ def args_to_request(args) -> TranscriptionRequest:
         database_config = DatabaseConfig(
             db_path=args.db_path or "beige_book.db",
             metadata_table=args.metadata_table,
-            segments_table=args.segments_table
+            segments_table=args.segments_table,
         )
 
     # Create output config
     output_config = OutputConfig(
-        format=args.format,
-        destination=args.output,
-        database=database_config
+        format=args.format, destination=args.output, database=database_config
     )
 
     return TranscriptionRequest(
-        input=input_config,
-        processing=processing_config,
-        output=output_config
+        input=input_config, processing=processing_config, output=output_config
     )
 
 
@@ -93,21 +86,17 @@ def process_single_file(args):
 
     # Handle output
     if response.success and response.results:
-        result = response.results[0]
-
         if args.format == "sqlite":
             # Already saved by service
             print(f"Saved to database: {args.db_path or 'beige_book.db'}")
         else:
             # Format and output
             formatted = OutputFormatter.format_results(
-                response.results,
-                args.format,
-                include_feed_metadata=False
+                response.results, args.format, include_feed_metadata=False
             )
 
             if args.output:
-                with open(args.output, 'w', encoding='utf-8') as f:
+                with open(args.output, "w", encoding="utf-8") as f:
                     f.write(formatted)
                 print(f"Output written to: {args.output}")
             else:
@@ -133,7 +122,7 @@ def process_feeds(args, is_resumable: bool):
     if args.format == "sqlite":
         # Results already saved by service
         if response.success:
-            print(f"\nProcessing complete:")
+            print("\nProcessing complete:")
             if response.summary:
                 print(f"  Total items: {response.summary.total_items}")
                 print(f"  Processed: {response.summary.processed}")
@@ -144,20 +133,18 @@ def process_feeds(args, is_resumable: bool):
         # Format and output results
         if response.results:
             formatted = OutputFormatter.format_results(
-                response.results,
-                args.format,
-                include_feed_metadata=True
+                response.results, args.format, include_feed_metadata=True
             )
 
             if args.output:
-                with open(args.output, 'w', encoding='utf-8') as f:
+                with open(args.output, "w", encoding="utf-8") as f:
                     f.write(formatted)
                 print(f"\nOutput written to: {args.output}")
             else:
                 print(formatted)
 
         # Print summary
-        print(f"\nProcessing complete:")
+        print("\nProcessing complete:")
         if response.summary:
             print(f"  Total items: {response.summary.total_items}")
             print(f"  Processed: {response.summary.processed}")

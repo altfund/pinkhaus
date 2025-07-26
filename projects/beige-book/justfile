@@ -2,6 +2,10 @@
 install:
     uv sync
 
+# Apply those lints which can be fixed automatically.
+fix:
+    uv run ruff check --fix .
+
 # Run linting
 lint:
     uv run ruff check .

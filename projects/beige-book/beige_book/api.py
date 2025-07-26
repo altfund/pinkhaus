@@ -5,16 +5,19 @@ Provides a REST API interface to the same functionality as the CLI.
 """
 
 from fastapi import FastAPI, HTTPException, status
-from fastapi.responses import JSONResponse, PlainTextResponse, Response
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field, validator
-from typing import List, Optional, Literal, Dict, Any
+from typing import Optional, Literal
 from datetime import datetime
 import logging
 
 from .models import (
-    TranscriptionRequest, TranscriptionResponse,
-    InputConfig, ProcessingConfig, OutputConfig,
-    FeedOptions, DatabaseConfig
+    TranscriptionRequest,
+    InputConfig,
+    ProcessingConfig,
+    OutputConfig,
+    FeedOptions,
+    DatabaseConfig,
 )
 from .service import TranscriptionService, OutputFormatter
 
@@ -26,24 +29,33 @@ logger = logging.getLogger(__name__)
 # Pydantic models for API request/response
 class FeedOptionsAPI(BaseModel):
     """Options specific to feed processing"""
-    limit: Optional[int] = Field(None, description="Maximum number of feed items to process per feed")
-    order: Literal["newest", "oldest"] = Field("newest", description="Process feed items from newest or oldest first")
-    max_retries: int = Field(3, description="Maximum number of retries for failed downloads")
-    initial_delay: float = Field(1.0, description="Initial delay in seconds between retries")
 
-    @validator('limit')
+    limit: Optional[int] = Field(
+        None, description="Maximum number of feed items to process per feed"
+    )
+    order: Literal["newest", "oldest"] = Field(
+        "newest", description="Process feed items from newest or oldest first"
+    )
+    max_retries: int = Field(
+        3, description="Maximum number of retries for failed downloads"
+    )
+    initial_delay: float = Field(
+        1.0, description="Initial delay in seconds between retries"
+    )
+
+    @validator("limit")
     def validate_limit(cls, v):
         if v is not None and v < 1:
             raise ValueError("Feed limit must be positive")
         return v
 
-    @validator('max_retries')
+    @validator("max_retries")
     def validate_max_retries(cls, v):
         if v < 0:
             raise ValueError("Max retries cannot be negative")
         return v
 
-    @validator('initial_delay')
+    @validator("initial_delay")
     def validate_initial_delay(cls, v):
         if v < 0:
             raise ValueError("Initial delay cannot be negative")
@@ -52,11 +64,16 @@ class FeedOptionsAPI(BaseModel):
 
 class DatabaseConfigAPI(BaseModel):
     """Database-specific configuration"""
-    db_path: str = Field(..., description="Path to SQLite database file")
-    metadata_table: str = Field("transcription_metadata", description="Name of the metadata table")
-    segments_table: str = Field("transcription_segments", description="Name of the segments table")
 
-    @validator('db_path')
+    db_path: str = Field(..., description="Path to SQLite database file")
+    metadata_table: str = Field(
+        "transcription_metadata", description="Name of the metadata table"
+    )
+    segments_table: str = Field(
+        "transcription_segments", description="Name of the segments table"
+    )
+
+    @validator("db_path")
     def validate_db_path(cls, v):
         if not v:
             raise ValueError("Database path cannot be empty")
@@ -65,10 +82,15 @@ class DatabaseConfigAPI(BaseModel):
 
 class InputConfigAPI(BaseModel):
     """Configuration for input sources"""
-    type: Literal["file", "feed"] = Field(..., description="Input type: single file or RSS feed")
-    source: str = Field(..., description="File path for audio file or TOML path for feeds")
 
-    @validator('source')
+    type: Literal["file", "feed"] = Field(
+        ..., description="Input type: single file or RSS feed"
+    )
+    source: str = Field(
+        ..., description="File path for audio file or TOML path for feeds"
+    )
+
+    @validator("source")
     def validate_source(cls, v):
         if not v:
             raise ValueError("Input source cannot be empty")
@@ -77,32 +99,40 @@ class InputConfigAPI(BaseModel):
 
 class ProcessingConfigAPI(BaseModel):
     """Configuration for processing options"""
+
     model: Literal["tiny", "base", "small", "medium", "large"] = Field(
-        "tiny",
-        description="Whisper model to use for transcription"
+        "tiny", description="Whisper model to use for transcription"
     )
     verbose: bool = Field(False, description="Enable verbose logging")
-    feed_options: Optional[FeedOptionsAPI] = Field(None, description="Options for feed processing (required when input type is 'feed')")
+    feed_options: Optional[FeedOptionsAPI] = Field(
+        None,
+        description="Options for feed processing (required when input type is 'feed')",
+    )
 
 
 class OutputConfigAPI(BaseModel):
     """Configuration for output handling"""
-    format: Literal["text", "json", "table", "csv", "toml", "sqlite"] = Field(
-        "text",
-        description="Output format for transcription results"
-    )
-    destination: Optional[str] = Field(None, description="File path for output (None for response body)")
-    database: Optional[DatabaseConfigAPI] = Field(None, description="Database configuration (required for sqlite format)")
 
-    @validator('database', always=True)
+    format: Literal["text", "json", "table", "csv", "toml", "sqlite"] = Field(
+        "text", description="Output format for transcription results"
+    )
+    destination: Optional[str] = Field(
+        None, description="File path for output (None for response body)"
+    )
+    database: Optional[DatabaseConfigAPI] = Field(
+        None, description="Database configuration (required for sqlite format)"
+    )
+
+    @validator("database", always=True)
     def validate_database(cls, v, values):
-        if values.get('format') == 'sqlite' and not v:
+        if values.get("format") == "sqlite" and not v:
             raise ValueError("SQLite format requires database configuration")
         return v
 
 
 class TranscriptionRequestAPI(BaseModel):
     """Main request object for all transcription operations"""
+
     input: InputConfigAPI = Field(..., description="Input configuration")
     processing: ProcessingConfigAPI = Field(..., description="Processing configuration")
     output: OutputConfigAPI = Field(..., description="Output configuration")
@@ -110,28 +140,19 @@ class TranscriptionRequestAPI(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "input": {
-                    "type": "file",
-                    "source": "/path/to/audio.mp3"
-                },
-                "processing": {
-                    "model": "tiny",
-                    "verbose": False
-                },
-                "output": {
-                    "format": "json",
-                    "destination": None
-                }
+                "input": {"type": "file", "source": "/path/to/audio.mp3"},
+                "processing": {"model": "tiny", "verbose": False},
+                "output": {"format": "json", "destination": None},
             }
         }
 
-    @validator('processing')
+    @validator("processing")
     def validate_processing(cls, v, values):
-        input_config = values.get('input')
+        input_config = values.get("input")
         if input_config:
-            if input_config.type == 'file' and v.feed_options:
+            if input_config.type == "file" and v.feed_options:
                 raise ValueError("Feed options provided for file input")
-            if input_config.type == 'feed' and not v.feed_options:
+            if input_config.type == "feed" and not v.feed_options:
                 # Set default feed options
                 v.feed_options = FeedOptionsAPI()
         return v
@@ -145,7 +166,7 @@ class TranscriptionRequestAPI(BaseModel):
                 limit=self.processing.feed_options.limit,
                 order=self.processing.feed_options.order,
                 max_retries=self.processing.feed_options.max_retries,
-                initial_delay=self.processing.feed_options.initial_delay
+                initial_delay=self.processing.feed_options.initial_delay,
             )
 
         # Convert database config if present
@@ -154,24 +175,21 @@ class TranscriptionRequestAPI(BaseModel):
             database_config = DatabaseConfig(
                 db_path=self.output.database.db_path,
                 metadata_table=self.output.database.metadata_table,
-                segments_table=self.output.database.segments_table
+                segments_table=self.output.database.segments_table,
             )
 
         return TranscriptionRequest(
-            input=InputConfig(
-                type=self.input.type,
-                source=self.input.source
-            ),
+            input=InputConfig(type=self.input.type, source=self.input.source),
             processing=ProcessingConfig(
                 model=self.processing.model,
                 verbose=self.processing.verbose,
-                feed_options=feed_options
+                feed_options=feed_options,
             ),
             output=OutputConfig(
                 format=self.output.format,
                 destination=self.output.destination,
-                database=database_config
-            )
+                database=database_config,
+            ),
         )
 
 
@@ -181,7 +199,7 @@ app = FastAPI(
     description="API for transcribing audio files and RSS feed audio content using Whisper",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 
@@ -204,22 +222,18 @@ app = FastAPI(
                             "processed": 1,
                             "skipped": 0,
                             "failed": 0,
-                            "elapsed_time": 5.2
-                        }
+                            "elapsed_time": 5.2,
+                        },
                     }
                 },
-                "text/plain": {
-                    "example": "Transcribed text content..."
-                },
-                "text/csv": {
-                    "example": "start,end,text\n0.0,5.2,\"Hello world\""
-                }
-            }
+                "text/plain": {"example": "Transcribed text content..."},
+                "text/csv": {"example": 'start,end,text\n0.0,5.2,"Hello world"'},
+            },
         },
         400: {"description": "Invalid request"},
-        500: {"description": "Internal server error"}
+        500: {"description": "Internal server error"},
     },
-    tags=["transcription"]
+    tags=["transcription"],
 )
 async def transcribe(request: TranscriptionRequestAPI):
     """
@@ -285,8 +299,7 @@ async def transcribe(request: TranscriptionRequestAPI):
         # Handle different output formats
         if request.output.format == "json":
             return JSONResponse(
-                content=response.to_json(),
-                media_type="application/json"
+                content=response.to_json(), media_type="application/json"
             )
 
         elif request.output.format == "sqlite":
@@ -296,7 +309,9 @@ async def transcribe(request: TranscriptionRequestAPI):
                     content={
                         "success": True,
                         "message": f"Saved to database: {request.output.database.db_path}",
-                        "summary": response.summary.__dict__ if response.summary else None
+                        "summary": response.summary.__dict__
+                        if response.summary
+                        else None,
                     }
                 )
             else:
@@ -304,8 +319,8 @@ async def transcribe(request: TranscriptionRequestAPI):
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail={
                         "success": False,
-                        "errors": [e.to_dict() for e in response.errors]
-                    }
+                        "errors": [e.to_dict() for e in response.errors],
+                    },
                 )
 
         else:
@@ -314,7 +329,7 @@ async def transcribe(request: TranscriptionRequestAPI):
                 formatted = OutputFormatter.format_results(
                     response.results,
                     request.output.format,
-                    include_feed_metadata=(request.input.type == "feed")
+                    include_feed_metadata=(request.input.type == "feed"),
                 )
 
                 # Determine content type based on format
@@ -322,35 +337,29 @@ async def transcribe(request: TranscriptionRequestAPI):
                     "text": "text/plain",
                     "table": "text/plain",
                     "csv": "text/csv",
-                    "toml": "application/toml"
+                    "toml": "application/toml",
                 }
                 content_type = content_types.get(request.output.format, "text/plain")
 
-                return Response(
-                    content=formatted,
-                    media_type=content_type
-                )
+                return Response(content=formatted, media_type=content_type)
             else:
                 # Handle errors
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail={
                         "success": False,
-                        "errors": [e.to_dict() for e in response.errors]
-                    }
+                        "errors": [e.to_dict() for e in response.errors],
+                    },
                 )
 
     except ValueError as e:
         # Validation errors
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Unexpected error during transcription: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Internal server error: {str(e)}"
+            detail=f"Internal server error: {str(e)}",
         )
 
 
@@ -365,8 +374,8 @@ async def root():
             "transcribe": "/transcribe",
             "docs": "/docs",
             "redoc": "/redoc",
-            "openapi": "/openapi.json"
-        }
+            "openapi": "/openapi.json",
+        },
     }
 
 
@@ -394,14 +403,16 @@ def custom_openapi():
     if "paths" in openapi_schema:
         if "/transcribe" in openapi_schema["paths"]:
             if "post" in openapi_schema["paths"]["/transcribe"]:
-                openapi_schema["paths"]["/transcribe"]["post"]["requestBody"]["content"]["application/json"]["examples"] = {
+                openapi_schema["paths"]["/transcribe"]["post"]["requestBody"][
+                    "content"
+                ]["application/json"]["examples"] = {
                     "single_file": {
                         "summary": "Transcribe single audio file",
                         "value": {
                             "input": {"type": "file", "source": "/path/to/audio.mp3"},
                             "processing": {"model": "tiny", "verbose": False},
-                            "output": {"format": "json"}
-                        }
+                            "output": {"format": "json"},
+                        },
                     },
                     "rss_feeds": {
                         "summary": "Process RSS feeds",
@@ -410,10 +421,10 @@ def custom_openapi():
                             "processing": {
                                 "model": "base",
                                 "verbose": True,
-                                "feed_options": {"limit": 10, "order": "newest"}
+                                "feed_options": {"limit": 10, "order": "newest"},
                             },
-                            "output": {"format": "text"}
-                        }
+                            "output": {"format": "text"},
+                        },
                     },
                     "save_to_database": {
                         "summary": "Save transcriptions to SQLite",
@@ -425,11 +436,11 @@ def custom_openapi():
                                 "database": {
                                     "db_path": "/path/to/transcriptions.db",
                                     "metadata_table": "metadata",
-                                    "segments_table": "segments"
-                                }
-                            }
-                        }
-                    }
+                                    "segments_table": "segments",
+                                },
+                            },
+                        },
+                    },
                 }
 
     app.openapi_schema = openapi_schema
