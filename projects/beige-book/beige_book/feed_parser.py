@@ -73,7 +73,9 @@ class FeedParser:
         elif "rss" in data:
             return data["rss"]
         else:
-            raise ValueError("No RSS feeds found in TOML file. Expected 'feeds.rss' or 'rss' key.")
+            raise ValueError(
+                "No RSS feeds found in TOML file. Expected 'feeds.rss' or 'rss' key."
+            )
 
     def parse_feed_with_retry(
         self, feed_url: str, max_retries: int = 3, initial_delay: float = 1.0
@@ -98,7 +100,7 @@ class FeedParser:
                 last_error = e
                 if attempt < max_retries - 1:
                     # Calculate exponential backoff with jitter
-                    delay = initial_delay * (2 ** attempt)  # 1s, 2s, 4s
+                    delay = initial_delay * (2**attempt)  # 1s, 2s, 4s
                     # Add jitter (±20%) to prevent thundering herd
                     import random
 
@@ -213,8 +215,8 @@ class FeedParser:
         # Check enclosures
         if hasattr(entry, "enclosures"):
             for enclosure in entry.enclosures:
-                if enclosure.get('type', '').lower() in self.supported_audio_types:
-                    return enclosure.get('href', enclosure.get('url'))
+                if enclosure.get("type", "").lower() in self.supported_audio_types:
+                    return enclosure.get("href", enclosure.get("url"))
 
                 if enclosure.get("type", "").lower() in self.supported_audio_types:
                     return enclosure.get("href", enclosure.get("url"))
@@ -225,15 +227,13 @@ class FeedParser:
                 if link.get("type", "").lower() in self.supported_audio_types:
                     return link.get("href")
                 # Some feeds use rel="enclosure"
-                if link.get('rel') == 'enclosure' and link.get('href'):
-                    return link.get('href')
+                if link.get("rel") == "enclosure" and link.get("href"):
+                    return link.get("href")
 
                 if link.get("rel") == "enclosure" and link.get("href"):
                     return link.get("href")
 
         return None
-
-    def parse_all_feeds(self, toml_path: str, max_retries: int = 3) -> Dict[str, List[FeedItem]]:
 
     def parse_all_feeds(
         self, toml_path: str, max_retries: int = 3

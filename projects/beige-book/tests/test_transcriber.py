@@ -64,21 +64,29 @@ class TestAudioTranscriber:
         """Test that segments have proper structure"""
         for i, segment in enumerate(result.segments):
             # Check segment has required attributes (duck typing)
-            assert hasattr(segment, 'start_ms') or hasattr(segment, 'start')
-            assert hasattr(segment, 'end_ms') or hasattr(segment, 'end')
-            assert hasattr(segment, 'text')
-            
+            assert hasattr(segment, "start_ms") or hasattr(segment, "start")
+            assert hasattr(segment, "end_ms") or hasattr(segment, "end")
+            assert hasattr(segment, "text")
+
             # Get start/end in seconds for compatibility
-            start = segment.start_ms / 1000.0 if hasattr(segment, 'start_ms') else segment.start
-            end = segment.end_ms / 1000.0 if hasattr(segment, 'end_ms') else segment.end
-            
+            start = (
+                segment.start_ms / 1000.0
+                if hasattr(segment, "start_ms")
+                else segment.start
+            )
+            end = segment.end_ms / 1000.0 if hasattr(segment, "end_ms") else segment.end
+
             assert start >= 0
             assert end > start
             assert len(segment.text.strip()) > 0
 
             # Check segments are in order
             if i > 0:
-                prev_end = result.segments[i - 1].end_ms / 1000.0 if hasattr(result.segments[i - 1], 'end_ms') else result.segments[i - 1].end
+                prev_end = (
+                    result.segments[i - 1].end_ms / 1000.0
+                    if hasattr(result.segments[i - 1], "end_ms")
+                    else result.segments[i - 1].end
+                )
                 assert start >= prev_end
 
     def test_time_formatting(self):

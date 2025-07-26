@@ -16,7 +16,7 @@ from beige_book import (
     InputConfig,
     ProcessingConfig,
     OutputConfig,
-    DatabaseConfig
+    DatabaseConfig,
 )
 import json
 
@@ -54,9 +54,7 @@ def new_api_simple_example():
 
     # Method 1: Using convenience function
     request = create_file_request(
-        filename="../../../resources/audio/harvard.wav",
-        model="tiny",
-        format="json"
+        filename="../../../resources/audio/harvard.wav", model="tiny", format="json"
     )
 
     # Process the request
@@ -90,9 +88,9 @@ def new_api_advanced_example():
             database=DatabaseConfig(
                 db_path="example_transcriptions.db",
                 metadata_table="transcriptions",
-                segments_table="segments"
-            )
-        )
+                segments_table="segments",
+            ),
+        ),
     )
 
     # Validate request before processing
@@ -131,14 +129,14 @@ def feed_processing_example():
         output_path="feed_transcriptions.json",
         limit=2,  # Only process 2 items per feed
         order="newest",
-        verbose=True
+        verbose=True,
     )
 
     service = TranscriptionService()
     response = service.process(request)
 
     if response.summary:
-        print(f"Feed Processing Summary:")
+        print("Feed Processing Summary:")
         print(f"  Total items found: {response.summary.total_items}")
         print(f"  Successfully processed: {response.summary.processed}")
         print(f"  Skipped (already done): {response.summary.skipped}")
@@ -152,17 +150,9 @@ def api_integration_example():
 
     # Simulate receiving JSON from an API endpoint
     api_request = {
-        "input": {
-            "type": "file",
-            "source": "/path/to/audio.mp3"
-        },
-        "processing": {
-            "model": "base",
-            "verbose": False
-        },
-        "output": {
-            "format": "json"
-        }
+        "input": {"type": "file", "source": "/path/to/audio.mp3"},
+        "processing": {"model": "base", "verbose": False},
+        "output": {"format": "json"},
     }
 
     # Convert to request object

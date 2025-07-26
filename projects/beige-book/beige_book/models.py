@@ -15,6 +15,7 @@ import json
 @dataclass
 class InputConfig:
     """Configuration for input sources"""
+
     type: Literal["file", "feed"]  # Input type
     source: str  # File path or TOML path
 
@@ -30,6 +31,7 @@ class InputConfig:
 @dataclass
 class FeedOptions:
     """Options specific to feed processing"""
+
     limit: Optional[int] = None
     order: Literal["newest", "oldest"] = "newest"
     max_retries: int = 3
@@ -50,6 +52,7 @@ class FeedOptions:
 @dataclass
 class ProcessingConfig:
     """Configuration for processing options"""
+
     model: Literal["tiny", "base", "small", "medium", "large"] = "tiny"
     verbose: bool = False
     feed_options: Optional[FeedOptions] = None
@@ -58,7 +61,9 @@ class ProcessingConfig:
         """Validate processing configuration"""
         valid_models = ["tiny", "base", "small", "medium", "large"]
         if self.model not in valid_models:
-            raise ValueError(f"Invalid model: {self.model}. Must be one of {valid_models}")
+            raise ValueError(
+                f"Invalid model: {self.model}. Must be one of {valid_models}"
+            )
         if self.feed_options:
             self.feed_options.validate()
 
@@ -67,6 +72,7 @@ class ProcessingConfig:
 @dataclass
 class DatabaseConfig:
     """Database-specific configuration"""
+
     db_path: str
     metadata_table: str = "transcription_metadata"
     segments_table: str = "transcription_segments"
@@ -84,6 +90,7 @@ class DatabaseConfig:
 @dataclass
 class OutputConfig:
     """Configuration for output handling"""
+
     format: Literal["text", "json", "table", "csv", "toml", "sqlite"] = "text"
     destination: Optional[str] = None  # File path or None for stdout
     database: Optional[DatabaseConfig] = None
@@ -92,7 +99,9 @@ class OutputConfig:
         """Validate output configuration"""
         valid_formats = ["text", "json", "table", "csv", "toml", "sqlite"]
         if self.format not in valid_formats:
-            raise ValueError(f"Invalid format: {self.format}. Must be one of {valid_formats}")
+            raise ValueError(
+                f"Invalid format: {self.format}. Must be one of {valid_formats}"
+            )
 
         # SQLite format requires database config
         if self.format == "sqlite" and not self.database:
@@ -106,6 +115,7 @@ class OutputConfig:
 @dataclass
 class TranscriptionRequest:
     """Main request object for all transcription operations"""
+
     input: InputConfig
     processing: ProcessingConfig
     output: OutputConfig
@@ -128,34 +138,36 @@ class TranscriptionRequest:
         return json.dumps(asdict(self), indent=2)
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'TranscriptionRequest':
+    def from_json(cls, json_str: str) -> "TranscriptionRequest":
         """Create request from JSON string"""
         data = json.loads(json_str)
 
         # Reconstruct nested objects
-        input_config = InputConfig(**data['input'])
+        input_config = InputConfig(**data["input"])
 
         feed_options = None
-        if data['processing'].get('feed_options'):
-            feed_options = FeedOptions(**data['processing']['feed_options'])
+        if data["processing"].get("feed_options"):
+            feed_options = FeedOptions(**data["processing"]["feed_options"])
 
         processing_config = ProcessingConfig(
-            model=data['processing']['model'],
-            verbose=data['processing']['verbose'],
-            feed_options=feed_options
+            model=data["processing"]["model"],
+            verbose=data["processing"]["verbose"],
+            feed_options=feed_options,
         )
 
         database_config = None
-        if data['output'].get('database'):
-            database_config = DatabaseConfig(**data['output']['database'])
+        if data["output"].get("database"):
+            database_config = DatabaseConfig(**data["output"]["database"])
 
         output_config = OutputConfig(
-            format=data['output']['format'],
-            destination=data['output'].get('destination'),
-            database=database_config
+            format=data["output"]["format"],
+            destination=data["output"].get("destination"),
+            database=database_config,
         )
 
-        return cls(input=input_config, processing=processing_config, output=output_config)
+        return cls(
+            input=input_config, processing=processing_config, output=output_config
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert request to dictionary"""
@@ -166,6 +178,7 @@ class TranscriptionRequest:
 @dataclass
 class ProcessingError:
     """Error information for failed items"""
+
     source: str  # File path or feed URL
     error_type: str
     message: str
@@ -174,13 +187,14 @@ class ProcessingError:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary with ISO timestamp"""
         data = asdict(self)
-        data['timestamp'] = self.timestamp.isoformat()
+        data["timestamp"] = self.timestamp.isoformat()
         return data
 
 
 @dataclass
 class ProcessingSummary:
     """Summary statistics for batch operations"""
+
     total_items: int
     processed: int
     skipped: int
@@ -198,27 +212,30 @@ class ProcessingSummary:
 @dataclass
 class TranscriptionResponse:
     """Response object for transcription operations"""
+
     success: bool
-    results: List[Any] = field(default_factory=list)  # List of TranscriptionResult objects
+    results: List[Any] = field(
+        default_factory=list
+    )  # List of TranscriptionResult objects
     errors: List[ProcessingError] = field(default_factory=list)
     summary: Optional[ProcessingSummary] = None
 
     def add_error(self, source: str, error_type: str, message: str):
         """Add an error to the response"""
-        self.errors.append(ProcessingError(
-            source=source,
-            error_type=error_type,
-            message=message
-        ))
+        self.errors.append(
+            ProcessingError(source=source, error_type=error_type, message=message)
+        )
 
     def to_json(self) -> str:
         """Convert response to JSON string"""
         # Convert results to dicts if they have to_dict method
         data = {
-            'success': self.success,
-            'results': [r.to_dict() if hasattr(r, 'to_dict') else r for r in self.results],
-            'errors': [e.to_dict() for e in self.errors],
-            'summary': asdict(self.summary) if self.summary else None
+            "success": self.success,
+            "results": [
+                r.to_dict() if hasattr(r, "to_dict") else r for r in self.results
+            ],
+            "errors": [e.to_dict() for e in self.errors],
+            "summary": asdict(self.summary) if self.summary else None,
         }
         return json.dumps(data, indent=2)
 
@@ -229,13 +246,13 @@ def create_file_request(
     model: str = "tiny",
     format: str = "text",
     output_path: Optional[str] = None,
-    verbose: bool = False
+    verbose: bool = False,
 ) -> TranscriptionRequest:
     """Create a request for transcribing a single file"""
     return TranscriptionRequest(
         input=InputConfig(type="file", source=filename),
         processing=ProcessingConfig(model=model, verbose=verbose),
-        output=OutputConfig(format=format, destination=output_path)
+        output=OutputConfig(format=format, destination=output_path),
     )
 
 
@@ -247,7 +264,7 @@ def create_feed_request(
     limit: Optional[int] = None,
     order: str = "newest",
     verbose: bool = False,
-    db_path: Optional[str] = None
+    db_path: Optional[str] = None,
 ) -> TranscriptionRequest:
     """Create a request for processing RSS feeds"""
     database_config = None
@@ -259,11 +276,9 @@ def create_feed_request(
         processing=ProcessingConfig(
             model=model,
             verbose=verbose,
-            feed_options=FeedOptions(limit=limit, order=order)
+            feed_options=FeedOptions(limit=limit, order=order),
         ),
         output=OutputConfig(
-            format=format,
-            destination=output_path,
-            database=database_config
-        )
+            format=format, destination=output_path, database=database_config
+        ),
     )

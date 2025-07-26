@@ -83,8 +83,6 @@ class AudioDownloader:
 
                 return temp_path, file_hash
 
-            except Exception as e:
-
             except Exception:
                 # Clean up temp file on error
                 os.unlink(temp_path)
@@ -109,7 +107,7 @@ class AudioDownloader:
         ext = path.suffix.lower()
 
         # Common audio extensions
-        valid_extensions = {'.mp3', '.mp4', '.m4a', '.ogg', '.wav', '.aac'}
+        valid_extensions = {".mp3", ".mp4", ".m4a", ".ogg", ".wav", ".aac"}
 
         valid_extensions = {".mp3", ".mp4", ".m4a", ".ogg", ".wav", ".aac"}
 
@@ -163,7 +161,9 @@ class AudioDownloader:
                     jitter = delay * 0.2 * (2 * random.random() - 1)
                     actual_delay = delay + jitter
 
-                    logger.warning(f"Download attempt {attempt + 1} failed, retrying in {actual_delay:.1f}s: {e}")
+                    logger.warning(
+                        f"Download attempt {attempt + 1} failed, retrying in {actual_delay:.1f}s: {e}"
+                    )
 
                     logger.warning(
                         f"Download attempt {attempt + 1} failed, retrying in {actual_delay:.1f}s: {e}"
