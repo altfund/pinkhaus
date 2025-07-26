@@ -397,7 +397,7 @@ class TranscriptionDatabase:
                 Segment(
                     start_ms=int(seg["start_time"] * 1000),
                     end_ms=int(seg["end_time"] * 1000),
-                    text=seg["text"]
+                    text=seg["text"],
                 )
             )
 

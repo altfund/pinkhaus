@@ -2,6 +2,8 @@
 Transcription library using betterproto-generated Protocol Buffers.
 """
 
+# Extended result support
+from .proto_models import ExtendedTranscriptionResult, FeedMetadata
 import os
 import json
 import hashlib
@@ -9,11 +11,10 @@ import io
 import base64
 import time
 from contextlib import redirect_stdout
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 from datetime import timedelta
 from tabulate import tabulate
 import whisper
-import toml
 
 from .proto_models import TranscriptionResult, Segment
 
@@ -45,7 +46,9 @@ class AudioTranscriber:
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
 
-    def transcribe_file(self, filepath: str, verbose: bool = False) -> TranscriptionResult:
+    def transcribe_file(
+        self, filepath: str, verbose: bool = False
+    ) -> TranscriptionResult:
         """
         Transcribe an audio file and return structured result.
 
@@ -72,7 +75,7 @@ class AudioTranscriber:
             file_hash=file_hash,
             language=result.get("language", "unknown"),
             full_text=result["text"].strip(),
-            created_at=int(time.time())
+            created_at=int(time.time()),
         )
 
         # Add segments
@@ -81,7 +84,7 @@ class AudioTranscriber:
                 Segment(
                     start_ms=int(segment["start"] * 1000),
                     end_ms=int(segment["end"] * 1000),
-                    text=segment["text"].strip()
+                    text=segment["text"].strip(),
                 )
             )
 
@@ -110,12 +113,12 @@ def to_dict(self) -> Dict[str, Any]:
                 "start": format_time(seg.start_ms / 1000.0),
                 "end": format_time(seg.end_ms / 1000.0),
                 "text": seg.text,
-                "duration": round((seg.end_ms - seg.start_ms) / 1000.0, 2)
+                "duration": round((seg.end_ms - seg.start_ms) / 1000.0, 2),
             }
             for seg in self.segments
         ],
         "full_text": self.full_text,
-        "created_at": self.created_at
+        "created_at": self.created_at,
     }
 
 
@@ -146,10 +149,12 @@ def to_table(self) -> str:
     """Convert to formatted table."""
     headers = ["Start", "End", "Duration", "Text"]
     rows = [
-        (format_time(seg.start_ms / 1000.0),
-         format_time(seg.end_ms / 1000.0),
-         round((seg.end_ms - seg.start_ms) / 1000.0, 3),
-         seg.text[:50] + "..." if len(seg.text) > 50 else seg.text)
+        (
+            format_time(seg.start_ms / 1000.0),
+            format_time(seg.end_ms / 1000.0),
+            round((seg.end_ms - seg.start_ms) / 1000.0, 3),
+            seg.text[:50] + "..." if len(seg.text) > 50 else seg.text,
+        )
         for seg in self.segments
     ]
     table = tabulate(rows, headers=headers, tablefmt="grid")
@@ -195,7 +200,7 @@ def format(self, format_type: str) -> str:
     elif format_type == "toml":
         return self.to_toml()
     elif format_type == "protobuf":
-        return base64.b64encode(bytes(self)).decode('utf-8')
+        return base64.b64encode(bytes(self)).decode("utf-8")
     else:
         raise ValueError(f"Unknown format: {format_type}")
 
@@ -209,22 +214,17 @@ TranscriptionResult.to_toml = to_toml
 TranscriptionResult.format = format
 
 
-# Extended result support
-from .proto_models import ExtendedTranscriptionResult, FeedMetadata
-
 def create_extended_result(
     result: TranscriptionResult,
     feed_url: Optional[str] = None,
     item_id: Optional[str] = None,
     title: Optional[str] = None,
     audio_url: Optional[str] = None,
-    published: Optional[str] = None
+    published: Optional[str] = None,
 ) -> ExtendedTranscriptionResult:
     """Create an ExtendedTranscriptionResult with optional feed metadata."""
-    extended = ExtendedTranscriptionResult(
-        transcription=result
-    )
-    
+    extended = ExtendedTranscriptionResult(transcription=result)
+
     if any([feed_url, item_id, title, audio_url, published]):
         if not extended.feed_metadata:
             extended.feed_metadata = FeedMetadata()
@@ -238,9 +238,14 @@ def create_extended_result(
             extended.feed_metadata.audio_url = audio_url
         if published:
             extended.feed_metadata.published = published
-    
+
     return extended
 
 
 # Backward compatibility - provide access to Segment at module level
-__all__ = ['AudioTranscriber', 'TranscriptionResult', 'Segment', 'create_extended_result']
+__all__ = [
+    "AudioTranscriber",
+    "TranscriptionResult",
+    "Segment",
+    "create_extended_result",
+]

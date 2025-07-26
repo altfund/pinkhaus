@@ -5,17 +5,22 @@ This service provides a clean interface for all transcription operations,
 abstracting away the details of file handling, feed processing, and output formatting.
 """
 
-import os
 import time
 import logging
 from typing import List, Optional
 from datetime import datetime
 
 from .models import (
-    TranscriptionRequest, TranscriptionResponse, ProcessingSummary,
-    ProcessingError
+    TranscriptionRequest,
+    TranscriptionResponse,
+    ProcessingSummary,
 )
-from .proto_models import InputConfigInputType, ProcessingConfigModel, OutputConfigFormat, FeedOptionsOrder
+from .proto_models import (
+    InputConfigInputType,
+    ProcessingConfigModel,
+    OutputConfigFormat,
+    FeedOptionsOrder,
+)
 from .transcriber import AudioTranscriber, TranscriptionResult
 from .database import TranscriptionDatabase
 from .feed_parser import FeedParser, FeedItem
@@ -304,10 +309,11 @@ class TranscriptionService:
             OutputConfigFormat.FORMAT_TABLE,
             OutputConfigFormat.FORMAT_CSV,
             OutputConfigFormat.FORMAT_TOML,
-            OutputConfigFormat.FORMAT_SQLITE
+            OutputConfigFormat.FORMAT_SQLITE,
         }
-        return (request.output.format in resumable_formats and
-                (request.output.database or request.output.destination))
+        return request.output.format in resumable_formats and (
+            request.output.database or request.output.destination
+        )
 
     def _handle_output(
         self,
@@ -327,7 +333,9 @@ class TranscriptionService:
                 for result in results:
                     db.save_transcription(
                         result,
-                        model_name=self.MODEL_NAME_MAP.get(request.processing.model, "tiny"),
+                        model_name=self.MODEL_NAME_MAP.get(
+                            request.processing.model, "tiny"
+                        ),
                         metadata_table=db_config.metadata_table,
                         segments_table=db_config.segments_table,
                     )
