@@ -20,8 +20,9 @@ from .proto_models import (
     ProcessingConfigModel,
     OutputConfigFormat,
     FeedOptionsOrder,
+    TranscriptionResult,
 )
-from .transcriber import AudioTranscriber, TranscriptionResult
+from .transcriber import AudioTranscriber
 from .database import TranscriptionDatabase
 from .feed_parser import FeedParser, FeedItem
 from .downloader import AudioDownloader

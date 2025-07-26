@@ -20,7 +20,8 @@ from .proto_models import (
     TranscriptionRequest as _TranscriptionRequest,
     TranscriptionResponse as _TranscriptionResponse,
     ProcessingError as _ProcessingError,
-    ProcessingSummary as _ProcessingSummary,  # Import for type resolution
+    ProcessingSummary as _ProcessingSummary,
+    TranscriptionResult,
 )
 
 
