@@ -10,8 +10,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import Mock, patch
 
 from beige_book.api import app
-from beige_book.models import TranscriptionResult
-from beige_book.proto_models import Segment
+from beige_book.proto_models import Segment, TranscriptionResult
 
 
 # Helper class for creating mock summaries with proper __dict__
