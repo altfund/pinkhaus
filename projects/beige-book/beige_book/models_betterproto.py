@@ -247,7 +247,7 @@ class TranscriptionRequest(_TranscriptionRequest):
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert request to dictionary"""
-        return self.to_dict()
+        return super().to_dict()
 
 
 class ProcessingError(_ProcessingError):
@@ -255,7 +255,8 @@ class ProcessingError(_ProcessingError):
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary with ISO timestamp"""
-        data = self.to_dict()
+        # Use betterproto's to_dict() from parent class
+        data = super().to_dict()
         if isinstance(self.timestamp, datetime):
             data["timestamp"] = self.timestamp.isoformat()
         return data
