@@ -189,7 +189,7 @@ class TranscriptionResult:
     # Format conversion methods
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary format."""
-        return {
+        result = {
             "filename": self.filename,
             "file_hash": self.file_hash,
             "language": self.language,
@@ -199,12 +199,24 @@ class TranscriptionResult:
                     "end": self.format_time(seg.end_ms / 1000.0),
                     "text": seg.text,
                     "duration": round((seg.end_ms - seg.start_ms) / 1000.0, 2),
+                    **({
+                        "speaker": seg.speaker,
+                        "confidence": round(seg.confidence, 3)
+                    } if seg.HasField("speaker") else {})
                 }
                 for seg in self.segments
             ],
             "full_text": self.full_text,
             "created_at": self.created_at,
         }
+        
+        # Add speaker metadata if available
+        if self._proto.HasField("num_speakers"):
+            result["num_speakers"] = self._proto.num_speakers
+        if self._proto.HasField("has_speaker_labels"):
+            result["has_speaker_labels"] = self._proto.has_speaker_labels
+            
+        return result
 
     def to_json(self) -> str:
         """Convert to JSON string."""
@@ -217,32 +229,69 @@ class TranscriptionResult:
         output.write(f"# File: {self.filename}\n")
         output.write(f"# SHA256: {self.file_hash}\n")
         output.write(f"# Language: {self.language}\n")
-        output.write("Start,End,Duration,Text\n")
-        for seg in self.segments:
-            start_fmt = self.format_time(seg.start_ms / 1000.0)
-            end_fmt = self.format_time(seg.end_ms / 1000.0)
-            duration = round((seg.end_ms - seg.start_ms) / 1000.0, 3)
-            # Escape quotes in text
-            text = seg.text.replace('"', '""').strip()
-            output.write(f'{start_fmt},{end_fmt},{duration},"{text}"\n')
+        
+        # Check if we have speaker information
+        has_speakers = any(seg.HasField("speaker") for seg in self.segments)
+        
+        if has_speakers:
+            output.write("Start,End,Duration,Speaker,Text\n")
+            for seg in self.segments:
+                start_fmt = self.format_time(seg.start_ms / 1000.0)
+                end_fmt = self.format_time(seg.end_ms / 1000.0)
+                duration = round((seg.end_ms - seg.start_ms) / 1000.0, 3)
+                speaker = seg.speaker if seg.HasField("speaker") else "UNKNOWN"
+                # Escape quotes in text
+                text = seg.text.replace('"', '""').strip()
+                output.write(f'{start_fmt},{end_fmt},{duration},{speaker},"{text}"\n')
+        else:
+            output.write("Start,End,Duration,Text\n")
+            for seg in self.segments:
+                start_fmt = self.format_time(seg.start_ms / 1000.0)
+                end_fmt = self.format_time(seg.end_ms / 1000.0)
+                duration = round((seg.end_ms - seg.start_ms) / 1000.0, 3)
+                # Escape quotes in text
+                text = seg.text.replace('"', '""').strip()
+                output.write(f'{start_fmt},{end_fmt},{duration},"{text}"\n')
+        
         return output.getvalue()
 
     def to_table(self) -> str:
         """Convert to formatted table."""
-        headers = ["Start", "End", "Duration", "Text"]
-        rows = [
-            (
-                self.format_time(seg.start_ms / 1000.0),
-                self.format_time(seg.end_ms / 1000.0),
-                round((seg.end_ms - seg.start_ms) / 1000.0, 3),
-                seg.text[:50] + "..." if len(seg.text) > 50 else seg.text,
-            )
-            for seg in self.segments
-        ]
+        # Check if we have speaker information
+        has_speakers = any(seg.HasField("speaker") for seg in self.segments)
+        
+        if has_speakers:
+            headers = ["Start", "End", "Duration", "Speaker", "Text"]
+            rows = [
+                (
+                    self.format_time(seg.start_ms / 1000.0),
+                    self.format_time(seg.end_ms / 1000.0),
+                    round((seg.end_ms - seg.start_ms) / 1000.0, 3),
+                    seg.speaker if seg.HasField("speaker") else "UNKNOWN",
+                    seg.text[:40] + "..." if len(seg.text) > 40 else seg.text,
+                )
+                for seg in self.segments
+            ]
+        else:
+            headers = ["Start", "End", "Duration", "Text"]
+            rows = [
+                (
+                    self.format_time(seg.start_ms / 1000.0),
+                    self.format_time(seg.end_ms / 1000.0),
+                    round((seg.end_ms - seg.start_ms) / 1000.0, 3),
+                    seg.text[:50] + "..." if len(seg.text) > 50 else seg.text,
+                )
+                for seg in self.segments
+            ]
+        
         table = tabulate(rows, headers=headers, tablefmt="grid")
 
         # Add file info header
-        header = f"File: {self.filename}\nSHA256: {self.file_hash}\nLanguage: {self.language}\n\n"
+        header = f"File: {self.filename}\nSHA256: {self.file_hash}\nLanguage: {self.language}\n"
+        if self._proto.HasField("num_speakers"):
+            header += f"Speakers: {self._proto.num_speakers}\n"
+        header += "\n"
+        
         return header + table
 
     def to_toml(self) -> str:
@@ -410,7 +459,8 @@ class AudioTranscriber:
         return sha256_hash.hexdigest()
 
     def transcribe_file(
-        self, filepath: str, verbose: bool = False
+        self, filepath: str, verbose: bool = False, 
+        enable_diarization: bool = False, hf_token: str = None
     ) -> TranscriptionResult:
         """
         Transcribe an audio file and return structured result.
@@ -418,6 +468,8 @@ class AudioTranscriber:
         Args:
             filepath: Path to the audio file
             verbose: Unused, kept for backward compatibility
+            enable_diarization: Whether to perform speaker diarization
+            hf_token: Hugging Face token for diarization models
 
         Returns:
             TranscriptionResult with transcription data
@@ -445,6 +497,40 @@ class AudioTranscriber:
             transcription.add_segment(
                 start=segment["start"], end=segment["end"], text=segment["text"]
             )
+
+        # Optionally add speaker diarization
+        if enable_diarization:
+            try:
+                from .speaker_diarizer import SpeakerDiarizer
+                
+                diarizer = SpeakerDiarizer(auth_token=hf_token)
+                # Use mock mode if pyannote not available
+                try:
+                    diarization = diarizer.diarize_file(filepath, use_mock=False)
+                except ImportError:
+                    print("Warning: pyannote-audio not available, using mock diarization")
+                    diarization = diarizer.diarize_file(filepath, use_mock=True)
+                
+                # Align speakers with segments
+                segments_list = transcription.get_segments_list()
+                enhanced_segments = diarizer.align_with_transcription(
+                    diarization, segments_list
+                )
+                
+                # Update protobuf segments with speaker info
+                for i, (seg, enhanced) in enumerate(zip(transcription.segments, enhanced_segments)):
+                    if 'speaker' in enhanced:
+                        seg.speaker = enhanced['speaker']
+                    if 'confidence' in enhanced:
+                        seg.confidence = enhanced.get('confidence', 1.0)
+                
+                # Update metadata
+                transcription._proto.num_speakers = diarization.num_speakers
+                transcription._proto.has_speaker_labels = True
+                
+            except Exception as e:
+                print(f"Warning: Speaker diarization failed: {e}")
+                # Continue without diarization
 
         return transcription
 

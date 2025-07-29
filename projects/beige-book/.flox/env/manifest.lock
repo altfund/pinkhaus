@@ -18,8 +18,14 @@
       "just": {
         "pkg-path": "just"
       },
+      "protobuf": {
+        "pkg-path": "protobuf"
+      },
       "python313Full": {
         "pkg-path": "python313Full"
+      },
+      "sentencepiece": {
+        "pkg-path": "sentencepiece"
       },
       "spyder": {
         "pkg-path": "python313Packages.spyder",
@@ -702,6 +708,126 @@
       "priority": 5
     },
     {
+      "attr_path": "protobuf",
+      "broken": false,
+      "derivation": "/nix/store/jqbsqhn0h79dj1fk6i1s8j0ijyn8xzkg-protobuf-30.2.drv",
+      "description": "Google's data interchange format",
+      "install_id": "protobuf",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "protobuf-30.2",
+      "pname": "protobuf",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:24.781268Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "30.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/8amcpfvr562pk1l3hpbhdl5j68gq919h-protobuf-30.2"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "protobuf",
+      "broken": false,
+      "derivation": "/nix/store/npvrsqanlp2g76k8dd9zfnj3nm3n82m7-protobuf-30.2.drv",
+      "description": "Google's data interchange format",
+      "install_id": "protobuf",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "protobuf-30.2",
+      "pname": "protobuf",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:55:10.434031Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "30.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/45gdbaby7c66h2hna0q3y543c13r3wdm-protobuf-30.2"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "protobuf",
+      "broken": false,
+      "derivation": "/nix/store/wa16kvvrzs47acr5cawkz470mlafd781-protobuf-30.2.drv",
+      "description": "Google's data interchange format",
+      "install_id": "protobuf",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "protobuf-30.2",
+      "pname": "protobuf",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:12:32.294227Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "30.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/ljqlb5y5pvlcvwf2rnbysfvpc8y30l3f-protobuf-30.2"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "protobuf",
+      "broken": false,
+      "derivation": "/nix/store/5zzh164x59p9j46wxcckji5p6gvp3c0h-protobuf-30.2.drv",
+      "description": "Google's data interchange format",
+      "install_id": "protobuf",
+      "license": "BSD-3-Clause",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "protobuf-30.2",
+      "pname": "protobuf",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:32:53.224534Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "30.2",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/88ma4lbybcpdg0z8745nw9mvj5anb7mq-protobuf-30.2"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
       "attr_path": "python313Full",
       "broken": false,
       "derivation": "/nix/store/bkj4m5b0n9z8hrcj0gs4p2nsidq04k3j-python3-3.13.3.drv",
@@ -818,6 +944,134 @@
       "outputs": {
         "debug": "/nix/store/z6636nvsbq9rrc19vnqbk8lcig4zhc3c-python3-3.13.3-debug",
         "out": "/nix/store/pskwi0ysw5x6mf4k2bxv6rhrs0x6s4m6-python3-3.13.3"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "sentencepiece",
+      "broken": false,
+      "derivation": "/nix/store/8y08m9lnspx8qrwl3xdnym2r7smx482b-sentencepiece-0.2.0.drv",
+      "description": "Unsupervised text tokenizer for Neural Network-based text generation",
+      "install_id": "sentencepiece",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "sentencepiece-0.2.0",
+      "pname": "sentencepiece",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:56.399058Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.2.0",
+      "outputs_to_install": [
+        "bin"
+      ],
+      "outputs": {
+        "bin": "/nix/store/dm5rvrk80ayd7kbmidm1ycph1i9cbg28-sentencepiece-0.2.0-bin",
+        "dev": "/nix/store/300lrnrnzf18x5ggnwc8nzrzbczmybqr-sentencepiece-0.2.0-dev",
+        "out": "/nix/store/4j85i936jh9jk8y15d4swzxk59fj8gqf-sentencepiece-0.2.0"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "sentencepiece",
+      "broken": false,
+      "derivation": "/nix/store/lvpxyszc0psc4gpsvj6r75bxi38sxr4j-sentencepiece-0.2.0.drv",
+      "description": "Unsupervised text tokenizer for Neural Network-based text generation",
+      "install_id": "sentencepiece",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "sentencepiece-0.2.0",
+      "pname": "sentencepiece",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:55:56.525764Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.2.0",
+      "outputs_to_install": [
+        "bin"
+      ],
+      "outputs": {
+        "bin": "/nix/store/4w6xs3j8r2zbc48pscw2171nw3a59ch7-sentencepiece-0.2.0-bin",
+        "dev": "/nix/store/6hjfgcr8h5klixlwij0byzn17bq1bark-sentencepiece-0.2.0-dev",
+        "out": "/nix/store/3sdfv975g1nmj79p9ymj5wj0h8c7rnwr-sentencepiece-0.2.0"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "sentencepiece",
+      "broken": false,
+      "derivation": "/nix/store/qqj79y22ybdbcsp4db44nrf17rxld9q1-sentencepiece-0.2.0.drv",
+      "description": "Unsupervised text tokenizer for Neural Network-based text generation",
+      "install_id": "sentencepiece",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "sentencepiece-0.2.0",
+      "pname": "sentencepiece",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:13:04.664463Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.2.0",
+      "outputs_to_install": [
+        "bin"
+      ],
+      "outputs": {
+        "bin": "/nix/store/k1jgvwhvgsfbfxk7cgni57j82qbh2dg1-sentencepiece-0.2.0-bin",
+        "dev": "/nix/store/ygf4vswxw80pvnqnv88hq3jxzl77pnfd-sentencepiece-0.2.0-dev",
+        "out": "/nix/store/w0y46ly08c3hb0qjcqhfy4swq66zi5y3-sentencepiece-0.2.0"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "sentencepiece",
+      "broken": false,
+      "derivation": "/nix/store/2bc7k504mk817i9avhcj5wdyysy67haz-sentencepiece-0.2.0.drv",
+      "description": "Unsupervised text tokenizer for Neural Network-based text generation",
+      "install_id": "sentencepiece",
+      "license": "Apache-2.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "sentencepiece-0.2.0",
+      "pname": "sentencepiece",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:33:42.632250Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.2.0",
+      "outputs_to_install": [
+        "bin"
+      ],
+      "outputs": {
+        "bin": "/nix/store/zksvpyz66qi9vkg5q3699zr3x4x5q46p-sentencepiece-0.2.0-bin",
+        "dev": "/nix/store/2vxlcr8f29jlx1djl3y85hx0hj6miidd-sentencepiece-0.2.0-dev",
+        "out": "/nix/store/lfd104wfnfzpzgpg2adcvrkkfyy1kchd-sentencepiece-0.2.0"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -1157,6 +1411,12 @@
         },
         "just": {
           "pkg-path": "just"
+        },
+        "protobuf": {
+          "pkg-path": "protobuf"
+        },
+        "sentencepiece": {
+          "pkg-path": "sentencepiece"
         },
         "sqlite": {
           "pkg-path": "sqlite"
