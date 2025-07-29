@@ -7,6 +7,8 @@ message Segment {
   int64 start_ms = 1;  // Start time in milliseconds since start of audio
   int64 end_ms = 2;    // End time in milliseconds since start of audio
   string text = 3;     // Transcribed text for this segment
+  optional string speaker = 4;  // Speaker label (e.g., "SPEAKER_0", "SPEAKER_1")
+  optional float confidence = 5;  // Speaker assignment confidence (0.0-1.0)
 }
 
 // TranscriptionResult represents a complete transcription with metadata
@@ -17,6 +19,8 @@ message TranscriptionResult {
   repeated Segment segments = 4;  // List of transcription segments
   string full_text = 5;     // Complete transcribed text
   int64 created_at = 6;     // Unix timestamp (seconds) when transcription was created
+  optional int32 num_speakers = 7;  // Number of distinct speakers detected
+  optional bool has_speaker_labels = 8;  // Whether speaker diarization was performed
 }
 
 // FeedMetadata for RSS feed items (optional)
