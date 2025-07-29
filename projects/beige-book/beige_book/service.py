@@ -7,6 +7,7 @@ abstracting away the details of file handling, feed processing, and output forma
 
 import time
 import logging
+import os
 from typing import List, Optional
 from datetime import datetime
 
@@ -89,9 +90,13 @@ class TranscriptionService:
         response = TranscriptionResponse(success=True)
 
         try:
+            # Expand path (handle ~ and relative paths)
+            file_path = os.path.expanduser(request.input.source)
+            file_path = os.path.abspath(file_path)
+
             # Transcribe the file
             result = self.transcriber.transcribe_file(
-                request.input.source, verbose=request.processing.verbose
+                file_path, verbose=request.processing.verbose
             )
             response.results.append(result)
 
