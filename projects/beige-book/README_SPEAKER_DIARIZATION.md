@@ -4,10 +4,12 @@ This document explains how to use pyannote-audio for speaker diarization (identi
 
 ## Current Status
 
-Due to dependency conflicts with Python 3.13 (specifically the `sentencepiece` package), the full pyannote-audio integration cannot be installed directly. However, the infrastructure is ready and can be used in two ways:
+✅ **pyannote-audio is now fully integrated and working with Python 3.11!**
 
-1. **Mock Mode**: For testing and development (works with Python 3.13)
-2. **Full Mode**: With pyannote-audio installed (requires Python 3.11 or resolution of dependency issues)
+The project has been configured to use Python 3.11 to avoid dependency issues with newer Python versions. Speaker diarization is available in two modes:
+
+1. **Real Mode**: Full pyannote-audio speaker diarization (requires HF token)
+2. **Mock Mode**: For testing and development (no token needed)
 
 ## What's Been Implemented
 
@@ -85,26 +87,32 @@ for segment in diarization_result.segments:
 
 ## Installation Requirements
 
-### For Mock Mode (Works Now)
-No additional requirements - uses existing dependencies.
+The project now uses Python 3.11, which fully supports pyannote-audio. Everything is already installed and ready to use!
 
-### For Full pyannote-audio Support
+### Quick Start
 
-1. **Option 1**: Use Python 3.11
+1. **Activate the environment:**
    ```bash
-   # Create Python 3.11 environment
-   python3.11 -m venv venv-py311
-   source venv-py311/bin/activate
-   pip install pyannote.audio speechbrain
+   flox activate
+   source .venv/bin/activate
    ```
 
-2. **Option 2**: Wait for dependency updates
-   - The issue is with `sentencepiece` package not building correctly for Python 3.13
-   - Monitor pyannote-audio and speechbrain projects for updates
+2. **Set up Hugging Face token (for real diarization):**
+   ```bash
+   # Create account at https://huggingface.co
+   # Accept model conditions at https://huggingface.co/pyannote/speaker-diarization-3.1
+   # Generate token at https://huggingface.co/settings/tokens
+   export HF_TOKEN='your-token-here'
+   ```
 
-3. **Option 3**: Use Docker
-   - Create a container with Python 3.11 and all dependencies
-   - Run the transcription service in the container
+3. **Run transcription with diarization:**
+   ```bash
+   # Using the CLI (once implemented)
+   transcribe podcast.wav --enable-diarization
+   
+   # Or using Python
+   python demo_diarization.py
+   ```
 
 ## Hugging Face Setup
 
