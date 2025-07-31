@@ -19,6 +19,9 @@ ffmpeg.pkg-path = "ffmpeg"
 sqlite.pkg-path = "sqlite"
 just.pkg-path = "just"
 
+# Install pinkhaus-models from local flake
+pinkhaus-models.flake = "path:../pinkhaus-models"
+
 ## Environment Variables ---------------------------------------------
 ##  ... available for use in the activated environment
 ##      as well as [hook], [profile] scripts and [services] below.
@@ -38,16 +41,21 @@ on-activate = '''
   #      - FLOX_ENV_PROJECT=/home/user/example
   #      - FLOX_ENV=/home/user/example/.flox/run
   #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache
-if [[ ! -z $DEV ]]; then
-  export GOBIN="${FLOX_ENV_CACHE}/go/bin/"
-  mkdir -p "${GOBIN}"
-  go install "github.com/isaacphi/mcp-language-server@latest"
-  export PATH="${GOBIN}:${PATH}"
-fi
-uv python install 3.13
-uv venv
-source "${FLOX_ENV_PROJECT}/.venv/bin/activate"
-uv sync
+  
+  if [[ ! -z $DEV ]]; then
+    export GOBIN="${FLOX_ENV_CACHE}/go/bin/"
+    mkdir -p "${GOBIN}"
+    go install "github.com/isaacphi/mcp-language-server@latest"
+    export PATH="${GOBIN}:${PATH}"
+  fi
+  
+  uv python install 3.13
+  uv venv
+  source "${FLOX_ENV_PROJECT}/.venv/bin/activate"
+  uv sync
+  
+  echo "Beige-book environment activated"
+  echo "pinkhaus-models is available via flox"
 '''
 
 

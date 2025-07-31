@@ -18,6 +18,9 @@
       "just": {
         "pkg-path": "just"
       },
+      "pinkhaus-models": {
+        "flake": "path:../pinkhaus-models"
+      },
       "python313Full": {
         "pkg-path": "python313Full"
       },
@@ -36,7 +39,7 @@
       }
     },
     "hook": {
-      "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n  export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n  mkdir -p \"${GOBIN}\"\n  go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\nfi\nuv python install 3.13\nuv venv\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\nuv sync\n"
+      "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Beige-book environment activated\"\n  echo \"pinkhaus-models is available via flox\"\n"
     },
     "profile": {},
     "options": {
@@ -1146,6 +1149,130 @@
       "system": "x86_64-linux",
       "group": "toplevel",
       "priority": 5
+    },
+    {
+      "install_id": "pinkhaus-models",
+      "locked-url": "path:../pinkhaus-models?lastModified=1753889200&narHash=sha256-Um2GTlSN%2ByYL3TAfloy1Qo9X9jtH2qq8btdFl8C2wPs%3D",
+      "flake-description": "Pinkhaus Models - Shared database models and schemas",
+      "locked-flake-attr-path": "packages.aarch64-darwin.default",
+      "derivation": "/nix/store/2y5jmnkxnc9qx4qiyd27vm5v4i917cpf-python3.13-pinkhaus-models-0.1.0.drv",
+      "outputs": {
+        "dist": "/nix/store/zayhv0xinbhx6g8xdqp66z3kx99jdxhm-python3.13-pinkhaus-models-0.1.0-dist",
+        "out": "/nix/store/3fsdrgvraxw51c11kh8m05ny2l7093pm-python3.13-pinkhaus-models-0.1.0"
+      },
+      "output-names": [
+        "out",
+        "dist"
+      ],
+      "outputs-to-install": [
+        "out"
+      ],
+      "requested-outputs-to-install": [],
+      "package-system": "aarch64-darwin",
+      "system": "aarch64-darwin",
+      "name": "python3.13-pinkhaus-models-0.1.0",
+      "pname": "pinkhaus-models",
+      "version": "0.1.0",
+      "description": "Shared database models and schemas for pinkhaus projects",
+      "licenses": [
+        "MIT"
+      ],
+      "broken": false,
+      "unfree": false,
+      "priority": 5
+    },
+    {
+      "install_id": "pinkhaus-models",
+      "locked-url": "path:../pinkhaus-models?lastModified=1753889200&narHash=sha256-Um2GTlSN%2ByYL3TAfloy1Qo9X9jtH2qq8btdFl8C2wPs%3D",
+      "flake-description": "Pinkhaus Models - Shared database models and schemas",
+      "locked-flake-attr-path": "packages.aarch64-linux.default",
+      "derivation": "/nix/store/gj3272di8l6sblmq8s86d1m4flmvzvc8-python3.13-pinkhaus-models-0.1.0.drv",
+      "outputs": {
+        "dist": "/nix/store/is0q45yv5i3if45x1np5g2rmbj4632gm-python3.13-pinkhaus-models-0.1.0-dist",
+        "out": "/nix/store/2blh9m8ziim47dqg4vj40ha2y9s3m6ca-python3.13-pinkhaus-models-0.1.0"
+      },
+      "output-names": [
+        "out",
+        "dist"
+      ],
+      "outputs-to-install": [
+        "out"
+      ],
+      "requested-outputs-to-install": [],
+      "package-system": "aarch64-linux",
+      "system": "aarch64-linux",
+      "name": "python3.13-pinkhaus-models-0.1.0",
+      "pname": "pinkhaus-models",
+      "version": "0.1.0",
+      "description": "Shared database models and schemas for pinkhaus projects",
+      "licenses": [
+        "MIT"
+      ],
+      "broken": false,
+      "unfree": false,
+      "priority": 5
+    },
+    {
+      "install_id": "pinkhaus-models",
+      "locked-url": "path:../pinkhaus-models?lastModified=1753889200&narHash=sha256-Um2GTlSN%2ByYL3TAfloy1Qo9X9jtH2qq8btdFl8C2wPs%3D",
+      "flake-description": "Pinkhaus Models - Shared database models and schemas",
+      "locked-flake-attr-path": "packages.x86_64-darwin.default",
+      "derivation": "/nix/store/gnyl1jhpjkhb9ksx1kgznhkr49a4s31d-python3.13-pinkhaus-models-0.1.0.drv",
+      "outputs": {
+        "dist": "/nix/store/4cqr4k1jixki8047qlqxhnd39lbc30cg-python3.13-pinkhaus-models-0.1.0-dist",
+        "out": "/nix/store/k41xnlxar48rxp3xwfgxvzn812b7x751-python3.13-pinkhaus-models-0.1.0"
+      },
+      "output-names": [
+        "out",
+        "dist"
+      ],
+      "outputs-to-install": [
+        "out"
+      ],
+      "requested-outputs-to-install": [],
+      "package-system": "x86_64-darwin",
+      "system": "x86_64-darwin",
+      "name": "python3.13-pinkhaus-models-0.1.0",
+      "pname": "pinkhaus-models",
+      "version": "0.1.0",
+      "description": "Shared database models and schemas for pinkhaus projects",
+      "licenses": [
+        "MIT"
+      ],
+      "broken": false,
+      "unfree": false,
+      "priority": 5
+    },
+    {
+      "install_id": "pinkhaus-models",
+      "locked-url": "path:../pinkhaus-models?lastModified=1753889200&narHash=sha256-Um2GTlSN%2ByYL3TAfloy1Qo9X9jtH2qq8btdFl8C2wPs%3D",
+      "flake-description": "Pinkhaus Models - Shared database models and schemas",
+      "locked-flake-attr-path": "packages.x86_64-linux.default",
+      "derivation": "/nix/store/vk6rwz9h9ic6alawnw8fl0xxnia3m9fp-python3.13-pinkhaus-models-0.1.0.drv",
+      "outputs": {
+        "dist": "/nix/store/y97p7jyjmq0nrlq66q3vv178djcvjbpb-python3.13-pinkhaus-models-0.1.0-dist",
+        "out": "/nix/store/5nz14yis8jhm52nsa3l4in2dpn7dkzr0-python3.13-pinkhaus-models-0.1.0"
+      },
+      "output-names": [
+        "out",
+        "dist"
+      ],
+      "outputs-to-install": [
+        "out"
+      ],
+      "requested-outputs-to-install": [],
+      "package-system": "x86_64-linux",
+      "system": "x86_64-linux",
+      "name": "python3.13-pinkhaus-models-0.1.0",
+      "pname": "pinkhaus-models",
+      "version": "0.1.0",
+      "description": "Shared database models and schemas for pinkhaus projects",
+      "licenses": [
+        "MIT"
+      ],
+      "broken": false,
+      "unfree": false,
+      "priority": 5
     }
   ],
   "compose": {
@@ -1158,12 +1285,15 @@
         "just": {
           "pkg-path": "just"
         },
+        "pinkhaus-models": {
+          "flake": "path:../pinkhaus-models"
+        },
         "sqlite": {
           "pkg-path": "sqlite"
         }
       },
       "hook": {
-        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\nif [[ ! -z $DEV ]]; then\n  export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n  mkdir -p \"${GOBIN}\"\n  go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\nfi\nuv python install 3.13\nuv venv\nsource \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\nuv sync\n"
+        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Beige-book environment activated\"\n  echo \"pinkhaus-models is available via flox\"\n"
       },
       "profile": {},
       "options": {},

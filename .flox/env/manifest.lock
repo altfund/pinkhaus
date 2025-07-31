@@ -12,6 +12,9 @@
       "go": {
         "pkg-path": "go"
       },
+      "ollama": {
+        "pkg-path": "ollama"
+      },
       "pyright": {
         "pkg-path": "pyright"
       },
@@ -382,6 +385,122 @@
       ],
       "outputs": {
         "out": "/nix/store/xrzqlk92h7z5mz9mlc4a9dyy91n5b68i-go-1.24.4"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ollama",
+      "broken": false,
+      "derivation": "/nix/store/9k5xw2cxhiark7fwhfa0h1lsn3ibidaj-ollama-0.9.6.drv",
+      "description": "Get up and running with large language models locally",
+      "install_id": "ollama",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "name": "ollama-0.9.6",
+      "pname": "ollama",
+      "rev": "6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "rev_count": 831064,
+      "rev_date": "2025-07-16T17:35:22Z",
+      "scrape_date": "2025-07-19T00:32:27.975766Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.9.6",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/lw5dhd09v2gfn540qhm3636vgpcx9x0i-ollama-0.9.6"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ollama",
+      "broken": false,
+      "derivation": "/nix/store/fdgnvza4ag5dq0xprz050cr7mhkvqrk8-ollama-0.9.6.drv",
+      "description": "Get up and running with large language models locally",
+      "install_id": "ollama",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "name": "ollama-0.9.6",
+      "pname": "ollama",
+      "rev": "6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "rev_count": 831064,
+      "rev_date": "2025-07-16T17:35:22Z",
+      "scrape_date": "2025-07-19T00:58:14.659250Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.9.6",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/j7m16skf27wxcjz1g2rmvyn5rg6hykgz-ollama-0.9.6"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ollama",
+      "broken": false,
+      "derivation": "/nix/store/ln4sc7rq7q3cpah0xivkc5hrvmrnhdw6-ollama-0.9.6.drv",
+      "description": "Get up and running with large language models locally",
+      "install_id": "ollama",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "name": "ollama-0.9.6",
+      "pname": "ollama",
+      "rev": "6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "rev_count": 831064,
+      "rev_date": "2025-07-16T17:35:22Z",
+      "scrape_date": "2025-07-19T01:21:15.726186Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.9.6",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/z43ipc5mxc9dgdvj3jsyhnsdwrh1478d-ollama-0.9.6"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ollama",
+      "broken": false,
+      "derivation": "/nix/store/1bvl4y8cdw03fcchymgbpwzck6pwfwsa-ollama-0.9.6.drv",
+      "description": "Get up and running with large language models locally",
+      "install_id": "ollama",
+      "license": "MIT",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "name": "ollama-0.9.6",
+      "pname": "ollama",
+      "rev": "6e987485eb2c77e5dcc5af4e3c70843711ef9251",
+      "rev_count": 831064,
+      "rev_date": "2025-07-16T17:35:22Z",
+      "scrape_date": "2025-07-19T01:48:36.893559Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.9.6",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/cxjqisk8pnda2bycvk1aci6j512qkgzz-ollama-0.9.6"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
