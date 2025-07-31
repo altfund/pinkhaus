@@ -1,7 +1,7 @@
 [project]
 name = "beige-book"
 version = "0.1.0"
-description = "Add your description here"
+description = "Collect audio data from feeds"
 readme = "README.md"
 requires-python = "==3.13.5"
 dependencies = [

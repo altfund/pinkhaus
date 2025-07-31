@@ -1,4 +1,4 @@
-name: Matrix Python Projects Build and Test
+name: Pinkhaus Models Build and Test
 
 on:
   push:
@@ -10,9 +10,6 @@ jobs:
   build:
     name: "Build and test"
     runs-on: "ubuntu-latest"
-    strategy:
-      matrix:
-        dirs: ["./projects/grant", "./projects/beige-book/", "./projects/pinkhaus-models"]
     steps:
       - name: "Checkout"
         uses: "actions/checkout@v4"
@@ -21,12 +18,13 @@ jobs:
         uses: "flox/install-flox-action@v2"
 
       - name: "Activate Flox and run lint/format"
-        working-directory: ${{ matrix.dirs }}
+        working-directory: ./projects/pinkhaus-models
         run: |
           flox activate -- just install
           flox activate -- just check
 
-      - name: "Run pytest with Flox"
-        working-directory:  ${{ matrix.dirs }}
-        run: |
-          flox activate -- pytest
+# these tests depend on ollama which we're not going to go through the trouble of making work in CI presently.
+#      - name: "Run pytest with Flox"
+#        working-directory: ./projects/pinkhaus-models
+#        run: |
+#          flox activate -- pytest

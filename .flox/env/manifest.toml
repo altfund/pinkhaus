@@ -27,6 +27,7 @@ git.pkg-path = "git"
 claude-code.pkg-path = "claude-code"
 go.pkg-path = "go"
 pyright.pkg-path = "pyright"
+just.pkg-path = "just"
 
 ## Environment Variables ---------------------------------------------
 ##  ... available for use in the activated environment

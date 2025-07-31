@@ -12,14 +12,8 @@
       "go": {
         "pkg-path": "go"
       },
-      "just": {
-        "pkg-path": "just"
-      },
       "ollama": {
         "pkg-path": "ollama"
-      },
-      "pinkhaus-models": {
-        "flake": "path:../pinkhaus-models"
       },
       "pyright": {
         "pkg-path": "pyright"
@@ -32,7 +26,7 @@
       }
     },
     "hook": {
-      "on-activate": "if [[ ! -z $DEV ]]; then\n\texport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n\tmkdir -p \"${GOBIN}\"\n\tgo install \"github.com/isaacphi/mcp-language-server@latest\"\n\texport PATH=\"${GOBIN}:${PATH}\"\nfi\nuv sync\necho \"RUN \"\necho \"source \\\"${FLOX_ENV_PROJECT}/.venv/bin/activate\\\"\"\n\n  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Grant RAG environment activated\"\n  echo \"pinkhaus-models is available via flox\"\n  echo \"Make sure Ollama is running: 'ollama serve'\"\n"
+      "on-activate": "if [[ ! -z $DEV ]]; then\n\texport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n\tmkdir -p \"${GOBIN}\"\n\tgo install \"github.com/isaacphi/mcp-language-server@latest\"\n\texport PATH=\"${GOBIN}:${PATH}\"\nfi\nuv sync\necho \"RUN \"\necho \"source \\\"${FLOX_ENV_PROJECT}/.venv/bin/activate\\\"\"\n\n  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Grant RAG environment activated\"\n  echo \"\"\n  echo \"To start Ollama service:\"\n  echo \"  flox services start ollama\"\n  echo \"\"\n  echo \"Or start all services with:\"\n  echo \"  flox services start\"\n  echo \"\"\n  echo \"Check service status with:\"\n  echo \"  flox services status\"\n"
     },
     "profile": {},
     "options": {
@@ -42,34 +36,42 @@
         "x86_64-darwin",
         "x86_64-linux"
       ]
+    },
+    "services": {
+      "ollama": {
+        "command": "ollama serve",
+        "is-daemon": true,
+        "shutdown": {
+          "command": "pkill ollama"
+        }
+      }
     }
   },
   "packages": [
     {
       "attr_path": "claude-code",
       "broken": false,
-      "derivation": "/nix/store/5di3nhwgqzlzphhs1izm8pq2vr6l483v-claude-code-1.0.57.drv",
+      "derivation": "/nix/store/r43aqxgcy5cqhs40cy643972vl15g9p2-claude-code-1.0.61.drv",
       "description": "Agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster",
       "install_id": "claude-code",
       "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "claude-code-1.0.57",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "claude-code-1.0.61",
       "pname": "claude-code",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:29:03.893826Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:28:04.987120Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": true,
-      "version": "1.0.57",
+      "version": "1.0.61",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/8wv51vr7cnp4ad7c5cw3qyvk7r8fxznx-claude-code-1.0.57"
+        "out": "/nix/store/fkvhfn800hr0qjp71w21d5zvg04400r7-claude-code-1.0.61"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -78,28 +80,27 @@
     {
       "attr_path": "claude-code",
       "broken": false,
-      "derivation": "/nix/store/2l3y88xwcxg1rfjl500wyfqn9x31h01j-claude-code-1.0.57.drv",
+      "derivation": "/nix/store/l0ck2m453g656f03mkh3mnd0a23yqgyq-claude-code-1.0.61.drv",
       "description": "Agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster",
       "install_id": "claude-code",
       "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "claude-code-1.0.57",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "claude-code-1.0.61",
       "pname": "claude-code",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:52:20.739453Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:47:40.570845Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": true,
-      "version": "1.0.57",
+      "version": "1.0.61",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/igqn41m0d69mzlxkzdh9ckf33if0cabz-claude-code-1.0.57"
+        "out": "/nix/store/g70rd2ghc45nlmigfn5i6kc24d30c3kp-claude-code-1.0.61"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -108,28 +109,27 @@
     {
       "attr_path": "claude-code",
       "broken": false,
-      "derivation": "/nix/store/4pqi9mhnmd5qbvxv8l4mk2yi4n3r2nyz-claude-code-1.0.57.drv",
+      "derivation": "/nix/store/l88rvhr9kjbg4ywy5c0f945fqpbxww3v-claude-code-1.0.61.drv",
       "description": "Agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster",
       "install_id": "claude-code",
       "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "claude-code-1.0.57",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "claude-code-1.0.61",
       "pname": "claude-code",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:11:39.099967Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:07:25.297496Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": true,
-      "version": "1.0.57",
+      "version": "1.0.61",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/x3lx4jcy538j1cixvx8065lpqpyfv228-claude-code-1.0.57"
+        "out": "/nix/store/lshl7xm8rnx7gc63s7g6wvkrbh1401gj-claude-code-1.0.61"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -138,28 +138,27 @@
     {
       "attr_path": "claude-code",
       "broken": false,
-      "derivation": "/nix/store/az55li0ddbsgr1ghyfl2wv3l823mbqa0-claude-code-1.0.57.drv",
+      "derivation": "/nix/store/48sdbfbbhf7cgjs4brrs7qjqdrw6nnq4-claude-code-1.0.61.drv",
       "description": "Agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster",
       "install_id": "claude-code",
       "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "claude-code-1.0.57",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "claude-code-1.0.61",
       "pname": "claude-code",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:36:31.654050Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:31:20.452798Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": true,
-      "version": "1.0.57",
+      "version": "1.0.61",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/mwhq5527wm3r2ry0ynm2gidbdc9hff7n-claude-code-1.0.57"
+        "out": "/nix/store/0zcsmzpnxz30zj225ddbdgxv1p8ml524-claude-code-1.0.61"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -168,29 +167,28 @@
     {
       "attr_path": "git",
       "broken": false,
-      "derivation": "/nix/store/2ma10yyivb5rckm4s7xmkykwn6gy70v2-git-2.50.0.drv",
+      "derivation": "/nix/store/s3gdhywmj56ff88ncbignyd3562mdn0z-git-2.50.1.drv",
       "description": "Distributed version control system",
       "install_id": "git",
       "license": "GPL-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "git-2.50.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "git-2.50.1",
       "pname": "git",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:29:04.455476Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:28:05.538108Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "2.50.0",
+      "version": "2.50.1",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "doc": "/nix/store/wfg8mczayhr7k13bq6fjl1h7rxg5f6p8-git-2.50.0-doc",
-        "out": "/nix/store/2jwgd7jj1dil1b73h8hnh0xj928416jp-git-2.50.0"
+        "doc": "/nix/store/j8djmq64ckbah7bl6jv1y6arrjr0shmv-git-2.50.1-doc",
+        "out": "/nix/store/jn9byxgdjndngf0d2by0djg8gcdll7xc-git-2.50.1"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -199,30 +197,29 @@
     {
       "attr_path": "git",
       "broken": false,
-      "derivation": "/nix/store/dzgks8idhssygmabz70xzg18j5w7np40-git-2.50.0.drv",
+      "derivation": "/nix/store/83l24nm6fi8rq7qngz6xd6npw3l2swgk-git-2.50.1.drv",
       "description": "Distributed version control system",
       "install_id": "git",
       "license": "GPL-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "git-2.50.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "git-2.50.1",
       "pname": "git",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:52:21.696726Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:47:41.527135Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "2.50.0",
+      "version": "2.50.1",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "debug": "/nix/store/dajrhy2l14ghs5awaag5n8yj62lwsyg9-git-2.50.0-debug",
-        "doc": "/nix/store/kj8r3acr12x0hkxs0hyrpd8wknvvwhd2-git-2.50.0-doc",
-        "out": "/nix/store/7mp9n7lbilhk56s842rigrjclbr5ipdj-git-2.50.0"
+        "debug": "/nix/store/rpxnrnsn4nbx8wm9d2vrgj0fr5xzz5lg-git-2.50.1-debug",
+        "doc": "/nix/store/q8sicpx16gyzxnp3345a46lj4cz9wd09-git-2.50.1-doc",
+        "out": "/nix/store/h4pvvix6pvnvys9a6y1xj2442r1ajdhl-git-2.50.1"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -231,29 +228,28 @@
     {
       "attr_path": "git",
       "broken": false,
-      "derivation": "/nix/store/326ij3hajkcfrw9gnb3vjrx0nrjvxl57-git-2.50.0.drv",
+      "derivation": "/nix/store/qd5nss6zs4mh7fj2rsi6hk8hp57nwynd-git-2.50.1.drv",
       "description": "Distributed version control system",
       "install_id": "git",
       "license": "GPL-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "git-2.50.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "git-2.50.1",
       "pname": "git",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:11:39.658246Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:07:25.854540Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "2.50.0",
+      "version": "2.50.1",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "doc": "/nix/store/kc1k9n4im10nlm6csp16jg3052vdmifa-git-2.50.0-doc",
-        "out": "/nix/store/wy5g4i1fr1vrg2drjflbsd75rq7j9rh9-git-2.50.0"
+        "doc": "/nix/store/yn9cvbs7jz4dfdb17qralgr0ybi5rmjf-git-2.50.1-doc",
+        "out": "/nix/store/8d1n8cvi5x1j0v61459lvhqs26vmcqbl-git-2.50.1"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -262,30 +258,29 @@
     {
       "attr_path": "git",
       "broken": false,
-      "derivation": "/nix/store/14ai6w6g91ljp2x1ziq39mnkryi635lm-git-2.50.0.drv",
+      "derivation": "/nix/store/8fazx3a2bf05p38crpcy2lxip8gcks44-git-2.50.1.drv",
       "description": "Distributed version control system",
       "install_id": "git",
       "license": "GPL-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "git-2.50.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "git-2.50.1",
       "pname": "git",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:36:32.760013Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:31:21.515818Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "2.50.0",
+      "version": "2.50.1",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "debug": "/nix/store/h29apnv0hcp0w03whsh03izhq7ln1jyw-git-2.50.0-debug",
-        "doc": "/nix/store/fypvhmxqj3583rkzxvmwakw10yri2i23-git-2.50.0-doc",
-        "out": "/nix/store/khdq35xh67vw7j7k9y4q9l0svxznhx1b-git-2.50.0"
+        "debug": "/nix/store/l46kpjpcwwp8l7kzzr1s2dlk646r73z2-git-2.50.1-debug",
+        "doc": "/nix/store/d2lhlzkdziwmijik8nszfwp8srbkskb9-git-2.50.1-doc",
+        "out": "/nix/store/5i8zvall945kypmwgqd0y47f02pldwp4-git-2.50.1"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -294,28 +289,27 @@
     {
       "attr_path": "go",
       "broken": false,
-      "derivation": "/nix/store/vf13hnw59hq35zp259704grh3c1l4y1b-go-1.24.4.drv",
+      "derivation": "/nix/store/64rdsj50y7y019hy08vjn9bbkqs4xv94-go-1.24.5.drv",
       "description": "Go Programming language",
       "install_id": "go",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "go-1.24.4",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "go-1.24.5",
       "pname": "go",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:29:04.542780Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:28:05.624816Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "1.24.4",
+      "version": "1.24.5",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/f4a0g1p943l61wfvqnpdr73v9bsyfhf2-go-1.24.4"
+        "out": "/nix/store/kw1vd98s15vj700m3gx2x2xca2z477i3-go-1.24.5"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -324,28 +318,27 @@
     {
       "attr_path": "go",
       "broken": false,
-      "derivation": "/nix/store/1wsvwqfx9ykw1g3iqr8srbcnhvakck1g-go-1.24.4.drv",
+      "derivation": "/nix/store/w5wx665g669d26ms6q6wyl7ga4vqqfbh-go-1.24.5.drv",
       "description": "Go Programming language",
       "install_id": "go",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "go-1.24.4",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "go-1.24.5",
       "pname": "go",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:52:22.119175Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:47:41.947414Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "1.24.4",
+      "version": "1.24.5",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/mdyik6amglpjs533vk927f9w1qmyw239-go-1.24.4"
+        "out": "/nix/store/5bzlaj0c4mqw9p0zrcx5g9vz16vd45dl-go-1.24.5"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -354,28 +347,27 @@
     {
       "attr_path": "go",
       "broken": false,
-      "derivation": "/nix/store/45v9gv1mb6dyz76iykhdy2l4dqvzix8s-go-1.24.4.drv",
+      "derivation": "/nix/store/sblxqar4xfxgxy55z3h3mdfgrp7vm1lj-go-1.24.5.drv",
       "description": "Go Programming language",
       "install_id": "go",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "go-1.24.4",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "go-1.24.5",
       "pname": "go",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:11:39.780604Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:07:25.976298Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "1.24.4",
+      "version": "1.24.5",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/b56ngr9p7x6z368w8m7ps95r3x8gdfv7-go-1.24.4"
+        "out": "/nix/store/b72n20ixzl5ja9vciwahkr30bhmsn5jc-go-1.24.5"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -384,160 +376,27 @@
     {
       "attr_path": "go",
       "broken": false,
-      "derivation": "/nix/store/vr80y821hq8cdv49l1arkhgkpzbywb1h-go-1.24.4.drv",
+      "derivation": "/nix/store/n3ggn80wfjjbrgnlh0q8zrmfmdlcmd0b-go-1.24.5.drv",
       "description": "Go Programming language",
       "install_id": "go",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "go-1.24.4",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "go-1.24.5",
       "pname": "go",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:36:33.240394Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:31:21.989538Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "1.24.4",
+      "version": "1.24.5",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/xrzqlk92h7z5mz9mlc4a9dyy91n5b68i-go-1.24.4"
-      },
-      "system": "x86_64-linux",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "just",
-      "broken": false,
-      "derivation": "/nix/store/0y7342xkcryzzmmqlh87h5bhvdjl9d9w-just-1.42.3.drv",
-      "description": "Handy way to save and run project-specific commands",
-      "install_id": "just",
-      "license": "CC0-1.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "just-1.42.3",
-      "pname": "just",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:29:05.054329Z",
-      "stabilities": [
-        "staging",
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "1.42.3",
-      "outputs_to_install": [
-        "man",
-        "out"
-      ],
-      "outputs": {
-        "doc": "/nix/store/pl0myl0h4agf3d6pd2sw62lpk2d8jhw6-just-1.42.3-doc",
-        "man": "/nix/store/vb8qjsp7p5cy4hwadd84xjn79yriq4nr-just-1.42.3-man",
-        "out": "/nix/store/50n81h7r3mp2v8ybjc7qrjx5igrcghmc-just-1.42.3"
-      },
-      "system": "aarch64-darwin",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "just",
-      "broken": false,
-      "derivation": "/nix/store/5a7dv1a5w4rw6y35myzv76xjyphiykf4-just-1.42.3.drv",
-      "description": "Handy way to save and run project-specific commands",
-      "install_id": "just",
-      "license": "CC0-1.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "just-1.42.3",
-      "pname": "just",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:52:23.573943Z",
-      "stabilities": [
-        "staging",
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "1.42.3",
-      "outputs_to_install": [
-        "man",
-        "out"
-      ],
-      "outputs": {
-        "doc": "/nix/store/iij4an8ml6k9xyld4804w8agh7fz82yg-just-1.42.3-doc",
-        "man": "/nix/store/glgpbzf3pi2yyqg7l4w0a5i61z1xg9a2-just-1.42.3-man",
-        "out": "/nix/store/hix0b7qz3pj1694780zjswqw0amrhcym-just-1.42.3"
-      },
-      "system": "aarch64-linux",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "just",
-      "broken": false,
-      "derivation": "/nix/store/w0a50m5pjyh76ivbflwqypw44sxkbv4f-just-1.42.3.drv",
-      "description": "Handy way to save and run project-specific commands",
-      "install_id": "just",
-      "license": "CC0-1.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "just-1.42.3",
-      "pname": "just",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:11:40.296055Z",
-      "stabilities": [
-        "staging",
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "1.42.3",
-      "outputs_to_install": [
-        "man",
-        "out"
-      ],
-      "outputs": {
-        "doc": "/nix/store/mw9m0drwcbf57vhd7byihgjhgd4jcwdy-just-1.42.3-doc",
-        "man": "/nix/store/k3yh6rslb7pb6prj8rhjnrd14bz38d4h-just-1.42.3-man",
-        "out": "/nix/store/3mylgzm4mmcw1qj8wcbkc0d6c3111rrk-just-1.42.3"
-      },
-      "system": "x86_64-darwin",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "just",
-      "broken": false,
-      "derivation": "/nix/store/avib143m6pv9799bfxp66ksp1m9ym7wr-just-1.42.3.drv",
-      "description": "Handy way to save and run project-specific commands",
-      "install_id": "just",
-      "license": "CC0-1.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "just-1.42.3",
-      "pname": "just",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:36:34.755192Z",
-      "stabilities": [
-        "staging",
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "1.42.3",
-      "outputs_to_install": [
-        "man",
-        "out"
-      ],
-      "outputs": {
-        "doc": "/nix/store/km91d3nml1phlgwhnfhzj1m5mvc8hndp-just-1.42.3-doc",
-        "man": "/nix/store/1wlil6wgfqip1s0cx5mfv1gm2nla2ngv-just-1.42.3-man",
-        "out": "/nix/store/d6mqkpggmqq2mvb34n3s34n09rxsmw8j-just-1.42.3"
+        "out": "/nix/store/y4awwzp30ka130wmjrpaqjmjdf9p010w-go-1.24.5"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -546,19 +405,18 @@
     {
       "attr_path": "ollama",
       "broken": false,
-      "derivation": "/nix/store/hw95ya6w2x6jajqlnbkixlx3x347hss0-ollama-0.9.6.drv",
+      "derivation": "/nix/store/pz2fv992khrif4nazlqkm87jxb2d09r3-ollama-0.9.6.drv",
       "description": "Get up and running with large language models locally",
       "install_id": "ollama",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "ollama-0.9.6",
       "pname": "ollama",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:29:07.994004Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:28:08.907478Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -567,7 +425,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/lw5dhd09v2gfn540qhm3636vgpcx9x0i-ollama-0.9.6"
+        "out": "/nix/store/59gspzvfr4g1ihzlp7rl7jn1bwvaqyv7-ollama-0.9.6"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -576,19 +434,18 @@
     {
       "attr_path": "ollama",
       "broken": false,
-      "derivation": "/nix/store/k04c3xg7fzi2s4l4s05r5i4qmy4q9pca-ollama-0.9.6.drv",
+      "derivation": "/nix/store/g230q9vrp6mnqzwrdn13yzwgz2ggnr55-ollama-0.9.6.drv",
       "description": "Get up and running with large language models locally",
       "install_id": "ollama",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "ollama-0.9.6",
       "pname": "ollama",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:52:32.588855Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:47:52.276829Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -597,7 +454,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/j7m16skf27wxcjz1g2rmvyn5rg6hykgz-ollama-0.9.6"
+        "out": "/nix/store/ziaib9yzgig87l6l6gkrw9xb3hsala19-ollama-0.9.6"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -606,19 +463,18 @@
     {
       "attr_path": "ollama",
       "broken": false,
-      "derivation": "/nix/store/ffp00mxaxhligb7g51l9gd37lnzfzz0d-ollama-0.9.6.drv",
+      "derivation": "/nix/store/8329yfkh33z76bm165ia6wscjq9472n0-ollama-0.9.6.drv",
       "description": "Get up and running with large language models locally",
       "install_id": "ollama",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "ollama-0.9.6",
       "pname": "ollama",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:11:43.162165Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:07:29.327733Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -627,7 +483,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/z43ipc5mxc9dgdvj3jsyhnsdwrh1478d-ollama-0.9.6"
+        "out": "/nix/store/fbm3n9vjrlkd69n5sf9gwnlgkggpwpr5-ollama-0.9.6"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -636,19 +492,18 @@
     {
       "attr_path": "ollama",
       "broken": false,
-      "derivation": "/nix/store/qcxkmlsn5d9qwb89aig4ki2w9jsji42i-ollama-0.9.6.drv",
+      "derivation": "/nix/store/wnr9p857id8himm339vy41qyg0w7sx6z-ollama-0.9.6.drv",
       "description": "Get up and running with large language models locally",
       "install_id": "ollama",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "ollama-0.9.6",
       "pname": "ollama",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:36:45.483096Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:31:34.031429Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -657,7 +512,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/cxjqisk8pnda2bycvk1aci6j512qkgzz-ollama-0.9.6"
+        "out": "/nix/store/w86p582dnava6qmwg0m3mw6qzxf52v9s-ollama-0.9.6"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -666,19 +521,18 @@
     {
       "attr_path": "pyright",
       "broken": false,
-      "derivation": "/nix/store/5s47ibc5pcw5i9vqn1gl6i5js3x5hwyw-pyright-1.1.402.drv",
+      "derivation": "/nix/store/957mrvni6ni85gxzycf6vva79ph7vklr-pyright-1.1.402.drv",
       "description": "Type checker for the Python language",
       "install_id": "pyright",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "pyright-1.1.402",
       "pname": "pyright",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:29:13.389506Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:28:14.239870Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -687,7 +541,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/q5s0f990zh6jb30hi1xh203xiqn1avqr-pyright-1.1.402"
+        "out": "/nix/store/42g1wx6n1g3sda4k7nag7fg1r6y51fbw-pyright-1.1.402"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -696,19 +550,18 @@
     {
       "attr_path": "pyright",
       "broken": false,
-      "derivation": "/nix/store/7g26bzy22abwshyylm4wj8vi8cp8ppp8-pyright-1.1.402.drv",
+      "derivation": "/nix/store/hgb9g7rrnv4s4kqfsbxnislq41r4ia60-pyright-1.1.402.drv",
       "description": "Type checker for the Python language",
       "install_id": "pyright",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "pyright-1.1.402",
       "pname": "pyright",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:52:42.344815Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:48:01.944362Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -717,7 +570,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/mqbcrc3fj71vlrjj85cgs0dcd1455mqg-pyright-1.1.402"
+        "out": "/nix/store/vv3ma42nrs7x0v1621r18jy9fii8qgnx-pyright-1.1.402"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -726,19 +579,18 @@
     {
       "attr_path": "pyright",
       "broken": false,
-      "derivation": "/nix/store/mll35wl25ha3z62vkq4wcd6m9jhfcva0-pyright-1.1.402.drv",
+      "derivation": "/nix/store/1qirixyxdmhyc0yvc6mn0fiw3v2plb4m-pyright-1.1.402.drv",
       "description": "Type checker for the Python language",
       "install_id": "pyright",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "pyright-1.1.402",
       "pname": "pyright",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:11:48.609856Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:07:34.721390Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -747,7 +599,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/1lhic1li6yvgsf8lqi035k8m97n1kgz7-pyright-1.1.402"
+        "out": "/nix/store/g6cikfdjykm1cc1djrigy3qzyf5kak2l-pyright-1.1.402"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -756,19 +608,18 @@
     {
       "attr_path": "pyright",
       "broken": false,
-      "derivation": "/nix/store/6chhz8l7ai1ss5bqqjyjnk9n7hmbdp8x-pyright-1.1.402.drv",
+      "derivation": "/nix/store/jbdcm3wjsyqg2ig9nzzdinnsjzvyycr6-pyright-1.1.402.drv",
       "description": "Type checker for the Python language",
       "install_id": "pyright",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "pyright-1.1.402",
       "pname": "pyright",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:36:56.034671Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:31:44.395472Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -777,7 +628,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/z3fjbsxnn9036igv1i4brvc6pdh0q3vz-pyright-1.1.402"
+        "out": "/nix/store/9f8c0rh102sdqh4ckk3p7r1a70kvp2l1-pyright-1.1.402"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -786,33 +637,32 @@
     {
       "attr_path": "sqlite",
       "broken": false,
-      "derivation": "/nix/store/4fgxlniz6b9kvxpdfbrwya6w2hgr5qqv-sqlite-3.50.1.drv",
+      "derivation": "/nix/store/gm0hd0ws14agsdvwb7vdhzhlivl0b6n5-sqlite-3.50.2.drv",
       "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
       "install_id": "sqlite",
       "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "sqlite-3.50.1",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "sqlite-3.50.2",
       "pname": "sqlite",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:29:47.712895Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:28:47.155850Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "3.50.1",
+      "version": "3.50.2",
       "outputs_to_install": [
         "bin",
         "man"
       ],
       "outputs": {
-        "bin": "/nix/store/l7chhr5r0c8bhs2wmafwrqhig8vim07n-sqlite-3.50.1-bin",
-        "dev": "/nix/store/0m05b5ayb58qafz1nq5wpwk0na13f06k-sqlite-3.50.1-dev",
-        "doc": "/nix/store/lwy2zn4n9bf0mnn666abc0kcl8k3nj3f-sqlite-3.50.1-doc",
-        "man": "/nix/store/54h7il33ilc3623p3wjhrqafdad42h6x-sqlite-3.50.1-man",
-        "out": "/nix/store/fl7yc0rdc0kihjaka3hib1wiyhq5bpzv-sqlite-3.50.1"
+        "bin": "/nix/store/35z7rb3gd23yfcgfssy8g7qw3dpd7q9p-sqlite-3.50.2-bin",
+        "dev": "/nix/store/fnwnbb72xsrx67hlq995yrsliwpl08pl-sqlite-3.50.2-dev",
+        "doc": "/nix/store/bbg63w1qynzsvvlzhl7rig9409vvrdqq-sqlite-3.50.2-doc",
+        "man": "/nix/store/fvl0bgzn40x7qlzmhb148aqmr9k3inx3-sqlite-3.50.2-man",
+        "out": "/nix/store/73iiazjcn1qscb8m0l5f3jg56vjgwxbj-sqlite-3.50.2"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -821,34 +671,33 @@
     {
       "attr_path": "sqlite",
       "broken": false,
-      "derivation": "/nix/store/hgpqwr225jxyl6zcqxrc4i9gpvlh3748-sqlite-3.50.1.drv",
+      "derivation": "/nix/store/5l0yswsw9dx61zqkpj9idk74ga1iz4yq-sqlite-3.50.2.drv",
       "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
       "install_id": "sqlite",
       "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "sqlite-3.50.1",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "sqlite-3.50.2",
       "pname": "sqlite",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:53:29.227833Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:48:48.791451Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "3.50.1",
+      "version": "3.50.2",
       "outputs_to_install": [
         "bin",
         "man"
       ],
       "outputs": {
-        "bin": "/nix/store/ar9l973xgs8qbzclmskghmxpp95qik29-sqlite-3.50.1-bin",
-        "debug": "/nix/store/bjs6p00rn4pqv4qknn4jg899by4ikn5p-sqlite-3.50.1-debug",
-        "dev": "/nix/store/ip76ynzibrjnash787blxq5szwfiy6r9-sqlite-3.50.1-dev",
-        "doc": "/nix/store/qhy5wkqfmdp8cyj51nznn332022cwblw-sqlite-3.50.1-doc",
-        "man": "/nix/store/b2bw8si0fc0xaiwjbywvpyhzv8z5nmbc-sqlite-3.50.1-man",
-        "out": "/nix/store/cb98f6y0zxvp6c8kr76vm1i322faca4v-sqlite-3.50.1"
+        "bin": "/nix/store/xra4yp1wl7kk5yrql2ksa28pyhgv05bh-sqlite-3.50.2-bin",
+        "debug": "/nix/store/y78vmjc4dvqg52gy2y03yy43kmm4l5xy-sqlite-3.50.2-debug",
+        "dev": "/nix/store/bllx9j696dahs4xz2942lmbab7bain1w-sqlite-3.50.2-dev",
+        "doc": "/nix/store/hdb7kzmd4d3arn8qc3n02zb2afhz01bk-sqlite-3.50.2-doc",
+        "man": "/nix/store/f434igy35argvb4ia067612g8lgamj9h-sqlite-3.50.2-man",
+        "out": "/nix/store/hkapr9yav6nx45h1gizasd80gkqv3rqd-sqlite-3.50.2"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -857,33 +706,32 @@
     {
       "attr_path": "sqlite",
       "broken": false,
-      "derivation": "/nix/store/wjwsy7iv0ib3v6k4q4qpgqmygshfimgc-sqlite-3.50.1.drv",
+      "derivation": "/nix/store/b5s9q3zamrgppgrgf4svcy4w918njhbz-sqlite-3.50.2.drv",
       "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
       "install_id": "sqlite",
       "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "sqlite-3.50.1",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "sqlite-3.50.2",
       "pname": "sqlite",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:12:22.034278Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:08:07.702575Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "3.50.1",
+      "version": "3.50.2",
       "outputs_to_install": [
         "bin",
         "man"
       ],
       "outputs": {
-        "bin": "/nix/store/rkxm6vmm39rg1xkmvxmwcb2xv3q28hp5-sqlite-3.50.1-bin",
-        "dev": "/nix/store/8p3nxq9s0qbr2cbj1wga0z2qqhrr1bzg-sqlite-3.50.1-dev",
-        "doc": "/nix/store/akywsz6ynkxrb795vpl1nscwiwg47amk-sqlite-3.50.1-doc",
-        "man": "/nix/store/91l44h5bf3nil0l6567w13hx0mqh0dwh-sqlite-3.50.1-man",
-        "out": "/nix/store/0pmm08m8id9kgbx55rl3kii8904d3137-sqlite-3.50.1"
+        "bin": "/nix/store/5wm8hlhk48q6yliym7nfgpa1ijfphs2l-sqlite-3.50.2-bin",
+        "dev": "/nix/store/fi2fi6q7yqpgwa6z14xnqx00pq9s6h92-sqlite-3.50.2-dev",
+        "doc": "/nix/store/3y1wdididszk73lxk2d2h753llrl18ns-sqlite-3.50.2-doc",
+        "man": "/nix/store/zra5y09sdp0vvsynaj0mv6pl0n9x3kil-sqlite-3.50.2-man",
+        "out": "/nix/store/qgbjr35s6r2mr4i37qpkb70wqfiwslh3-sqlite-3.50.2"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -892,34 +740,33 @@
     {
       "attr_path": "sqlite",
       "broken": false,
-      "derivation": "/nix/store/9ilfwsj6wclbj2w1alr7xa09c07ic0ns-sqlite-3.50.1.drv",
+      "derivation": "/nix/store/z7qk86z6ivqgk3gn38jswycyflvc500w-sqlite-3.50.2.drv",
       "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
       "install_id": "sqlite",
       "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "sqlite-3.50.1",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "sqlite-3.50.2",
       "pname": "sqlite",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:37:45.984650Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:32:33.826719Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "3.50.1",
+      "version": "3.50.2",
       "outputs_to_install": [
         "bin",
         "man"
       ],
       "outputs": {
-        "bin": "/nix/store/9r3s1a6c152f527lfhc9w2n5r21l2h2f-sqlite-3.50.1-bin",
-        "debug": "/nix/store/mh4hpwckhxi6x94cfwj3biq6pl3rz84m-sqlite-3.50.1-debug",
-        "dev": "/nix/store/v3j55hawjfrv8ffmf43dhkjfykl0pwc3-sqlite-3.50.1-dev",
-        "doc": "/nix/store/hlbs392qds3h9r4wgp0vy5y35w2c6y09-sqlite-3.50.1-doc",
-        "man": "/nix/store/c6zqz5s9lb6w0qf8xhqmlkf2iyayhj5g-sqlite-3.50.1-man",
-        "out": "/nix/store/5x3inxk2l78ygb75kbhim3g2w67fra2r-sqlite-3.50.1"
+        "bin": "/nix/store/davps0p09b6kswdnjm3mscfk5g25cvaf-sqlite-3.50.2-bin",
+        "debug": "/nix/store/18l20nnx9pfixq0w29alajkgncvlz8qw-sqlite-3.50.2-debug",
+        "dev": "/nix/store/jmqk9474xmakj7s663kbinp7bn959kr1-sqlite-3.50.2-dev",
+        "doc": "/nix/store/fanxdjifxzjrs8zhi0qg9ifd0mqir4rf-sqlite-3.50.2-doc",
+        "man": "/nix/store/p0pcmmzd168kdpl01lnp3qi17m7y2iwv-sqlite-3.50.2-man",
+        "out": "/nix/store/yd47pmkv6iv58gs5v5jgyblvkw87pqx3-sqlite-3.50.2"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -928,28 +775,27 @@
     {
       "attr_path": "uv",
       "broken": false,
-      "derivation": "/nix/store/z29ygaa1d0w51qxmmxdazh6fsxsy09xf-uv-0.8.0.drv",
+      "derivation": "/nix/store/rhn7jhy9gmg19rqsphqj644hz6ybdnjq-uv-0.8.2.drv",
       "description": "Extremely fast Python package installer and resolver, written in Rust",
       "install_id": "uv",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "uv-0.8.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "uv-0.8.2",
       "pname": "uv",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:30:04.382440Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:29:03.525700Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "0.8.0",
+      "version": "0.8.2",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/pz9ry96b924n8a9j74ib28xz2qg2js8a-uv-0.8.0"
+        "out": "/nix/store/db9y1b002zlnyjgpsnbl9hvlwsiqajl4-uv-0.8.2"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -958,28 +804,27 @@
     {
       "attr_path": "uv",
       "broken": false,
-      "derivation": "/nix/store/m6jhkiswlh8fdvs8i6j50b0y4cjvq71w-uv-0.8.0.drv",
+      "derivation": "/nix/store/knnv1wc9r7slfyx367sdlyyz8r4sy7r6-uv-0.8.2.drv",
       "description": "Extremely fast Python package installer and resolver, written in Rust",
       "install_id": "uv",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "uv-0.8.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "uv-0.8.2",
       "pname": "uv",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T00:53:51.298738Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:49:10.863162Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "0.8.0",
+      "version": "0.8.2",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/3qwh7ia24v2ldmhq8n5jmhsksml5xzai-uv-0.8.0"
+        "out": "/nix/store/bdps6h2gn2rysavc3cq2slqnjlsyyk03-uv-0.8.2"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -988,28 +833,27 @@
     {
       "attr_path": "uv",
       "broken": false,
-      "derivation": "/nix/store/06yz2fa9n7m6nqs72j7mcc318pfcgi5n-uv-0.8.0.drv",
+      "derivation": "/nix/store/50fr7pg0vf9s8x360ddk5pv5hkr1j17i-uv-0.8.2.drv",
       "description": "Extremely fast Python package installer and resolver, written in Rust",
       "install_id": "uv",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "uv-0.8.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "uv-0.8.2",
       "pname": "uv",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:12:38.710931Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:08:24.142702Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "0.8.0",
+      "version": "0.8.2",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/nyx4zdpr7q3qxnkibdp5cqws4ydyx3rm-uv-0.8.0"
+        "out": "/nix/store/91g6383zq1wbiik2an7g6yfrj294c19v-uv-0.8.2"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -1018,155 +862,30 @@
     {
       "attr_path": "uv",
       "broken": false,
-      "derivation": "/nix/store/rkvx8s9933jhsqxq6nz2ww3nyrmccm8n-uv-0.8.0.drv",
+      "derivation": "/nix/store/z5cy5l307s6b8wsmf4l3fmlp0lxigd8f-uv-0.8.2.drv",
       "description": "Extremely fast Python package installer and resolver, written in Rust",
       "install_id": "uv",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "name": "uv-0.8.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "uv-0.8.2",
       "pname": "uv",
-      "rev": "fc02ee70efb805d3b2865908a13ddd4474557ecf",
-      "rev_count": 833752,
-      "rev_date": "2025-07-23T06:00:50Z",
-      "scrape_date": "2025-07-25T01:38:09.227259Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:32:56.820354Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "0.8.0",
+      "version": "0.8.2",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/0r159gl834ha4s98qywb1l05jr6c6bdi-uv-0.8.0"
+        "out": "/nix/store/swq8qrr7n5gkc1b4940q62a3ll52prgl-uv-0.8.2"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "install_id": "pinkhaus-models",
-      "locked-url": "path:../pinkhaus-models?lastModified=1753889200&narHash=sha256-Um2GTlSN%2ByYL3TAfloy1Qo9X9jtH2qq8btdFl8C2wPs%3D",
-      "flake-description": "Pinkhaus Models - Shared database models and schemas",
-      "locked-flake-attr-path": "packages.aarch64-darwin.default",
-      "derivation": "/nix/store/2y5jmnkxnc9qx4qiyd27vm5v4i917cpf-python3.13-pinkhaus-models-0.1.0.drv",
-      "outputs": {
-        "dist": "/nix/store/zayhv0xinbhx6g8xdqp66z3kx99jdxhm-python3.13-pinkhaus-models-0.1.0-dist",
-        "out": "/nix/store/3fsdrgvraxw51c11kh8m05ny2l7093pm-python3.13-pinkhaus-models-0.1.0"
-      },
-      "output-names": [
-        "out",
-        "dist"
-      ],
-      "outputs-to-install": [
-        "out"
-      ],
-      "requested-outputs-to-install": [],
-      "package-system": "aarch64-darwin",
-      "system": "aarch64-darwin",
-      "name": "python3.13-pinkhaus-models-0.1.0",
-      "pname": "pinkhaus-models",
-      "version": "0.1.0",
-      "description": "Shared database models and schemas for pinkhaus projects",
-      "licenses": [
-        "MIT"
-      ],
-      "broken": false,
-      "unfree": false,
-      "priority": 5
-    },
-    {
-      "install_id": "pinkhaus-models",
-      "locked-url": "path:../pinkhaus-models?lastModified=1753889200&narHash=sha256-Um2GTlSN%2ByYL3TAfloy1Qo9X9jtH2qq8btdFl8C2wPs%3D",
-      "flake-description": "Pinkhaus Models - Shared database models and schemas",
-      "locked-flake-attr-path": "packages.aarch64-linux.default",
-      "derivation": "/nix/store/gj3272di8l6sblmq8s86d1m4flmvzvc8-python3.13-pinkhaus-models-0.1.0.drv",
-      "outputs": {
-        "dist": "/nix/store/is0q45yv5i3if45x1np5g2rmbj4632gm-python3.13-pinkhaus-models-0.1.0-dist",
-        "out": "/nix/store/2blh9m8ziim47dqg4vj40ha2y9s3m6ca-python3.13-pinkhaus-models-0.1.0"
-      },
-      "output-names": [
-        "out",
-        "dist"
-      ],
-      "outputs-to-install": [
-        "out"
-      ],
-      "requested-outputs-to-install": [],
-      "package-system": "aarch64-linux",
-      "system": "aarch64-linux",
-      "name": "python3.13-pinkhaus-models-0.1.0",
-      "pname": "pinkhaus-models",
-      "version": "0.1.0",
-      "description": "Shared database models and schemas for pinkhaus projects",
-      "licenses": [
-        "MIT"
-      ],
-      "broken": false,
-      "unfree": false,
-      "priority": 5
-    },
-    {
-      "install_id": "pinkhaus-models",
-      "locked-url": "path:../pinkhaus-models?lastModified=1753889200&narHash=sha256-Um2GTlSN%2ByYL3TAfloy1Qo9X9jtH2qq8btdFl8C2wPs%3D",
-      "flake-description": "Pinkhaus Models - Shared database models and schemas",
-      "locked-flake-attr-path": "packages.x86_64-darwin.default",
-      "derivation": "/nix/store/gnyl1jhpjkhb9ksx1kgznhkr49a4s31d-python3.13-pinkhaus-models-0.1.0.drv",
-      "outputs": {
-        "dist": "/nix/store/4cqr4k1jixki8047qlqxhnd39lbc30cg-python3.13-pinkhaus-models-0.1.0-dist",
-        "out": "/nix/store/k41xnlxar48rxp3xwfgxvzn812b7x751-python3.13-pinkhaus-models-0.1.0"
-      },
-      "output-names": [
-        "out",
-        "dist"
-      ],
-      "outputs-to-install": [
-        "out"
-      ],
-      "requested-outputs-to-install": [],
-      "package-system": "x86_64-darwin",
-      "system": "x86_64-darwin",
-      "name": "python3.13-pinkhaus-models-0.1.0",
-      "pname": "pinkhaus-models",
-      "version": "0.1.0",
-      "description": "Shared database models and schemas for pinkhaus projects",
-      "licenses": [
-        "MIT"
-      ],
-      "broken": false,
-      "unfree": false,
-      "priority": 5
-    },
-    {
-      "install_id": "pinkhaus-models",
-      "locked-url": "path:../pinkhaus-models?lastModified=1753889200&narHash=sha256-Um2GTlSN%2ByYL3TAfloy1Qo9X9jtH2qq8btdFl8C2wPs%3D",
-      "flake-description": "Pinkhaus Models - Shared database models and schemas",
-      "locked-flake-attr-path": "packages.x86_64-linux.default",
-      "derivation": "/nix/store/vk6rwz9h9ic6alawnw8fl0xxnia3m9fp-python3.13-pinkhaus-models-0.1.0.drv",
-      "outputs": {
-        "dist": "/nix/store/y97p7jyjmq0nrlq66q3vv178djcvjbpb-python3.13-pinkhaus-models-0.1.0-dist",
-        "out": "/nix/store/5nz14yis8jhm52nsa3l4in2dpn7dkzr0-python3.13-pinkhaus-models-0.1.0"
-      },
-      "output-names": [
-        "out",
-        "dist"
-      ],
-      "outputs-to-install": [
-        "out"
-      ],
-      "requested-outputs-to-install": [],
-      "package-system": "x86_64-linux",
-      "system": "x86_64-linux",
-      "name": "python3.13-pinkhaus-models-0.1.0",
-      "pname": "pinkhaus-models",
-      "version": "0.1.0",
-      "description": "Shared database models and schemas for pinkhaus projects",
-      "licenses": [
-        "MIT"
-      ],
-      "broken": false,
-      "unfree": false,
       "priority": 5
     }
   ],
@@ -1174,24 +893,27 @@
     "composer": {
       "version": 1,
       "install": {
-        "just": {
-          "pkg-path": "just"
-        },
         "ollama": {
           "pkg-path": "ollama"
-        },
-        "pinkhaus-models": {
-          "flake": "path:../pinkhaus-models"
         },
         "sqlite": {
           "pkg-path": "sqlite"
         }
       },
       "hook": {
-        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Grant RAG environment activated\"\n  echo \"pinkhaus-models is available via flox\"\n  echo \"Make sure Ollama is running: 'ollama serve'\"\n"
+        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Grant RAG environment activated\"\n  echo \"\"\n  echo \"To start Ollama service:\"\n  echo \"  flox services start ollama\"\n  echo \"\"\n  echo \"Or start all services with:\"\n  echo \"  flox services start\"\n  echo \"\"\n  echo \"Check service status with:\"\n  echo \"  flox services status\"\n"
       },
       "profile": {},
       "options": {},
+      "services": {
+        "ollama": {
+          "command": "ollama serve",
+          "is-daemon": true,
+          "shutdown": {
+            "command": "pkill ollama"
+          }
+        }
+      },
       "include": {
         "environments": [
           {

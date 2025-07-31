@@ -15,17 +15,13 @@ Grant is a Retrieval-Augmented Generation (RAG) tool that uses Ollama to answer 
 
 ### Prerequisites
 
-1. **Ollama**: Install from [ollama.ai](https://ollama.ai)
-   ```bash
-   # Start Ollama server
-   ollama serve
-   ```
-
-2. **Python 3.13**: Required for the project
-
-3. **Flox** (recommended): For environment management
-   - The project includes a parent environment (../../) that provides ollama
+1. **Flox** (recommended): For environment management
+   - Provides all dependencies including Ollama
    - See CLAUDE.md for project-specific conventions
+
+2. **Alternative**: If not using Flox, you'll need:
+   - **Ollama**: Install from [ollama.ai](https://ollama.ai)
+   - **Python 3.13**: Required for the project
 
 ### Setup
 
@@ -43,6 +39,18 @@ Grant is a Retrieval-Augmented Generation (RAG) tool that uses Ollama to answer 
    - Create and activate a virtual environment
    - Install all Python dependencies
    - Add pinkhaus-models to your Python path
+
+2. Start the Ollama service:
+   ```bash
+   # Start just ollama
+   flox services start ollama
+   
+   # Or start all services
+   flox services start
+   
+   # Check service status
+   flox services status
+   ```
 
 #### Option 2: Manual Setup
 
@@ -75,10 +83,9 @@ Grant is a Retrieval-Augmented Generation (RAG) tool that uses Ollama to answer 
 ```bash
 # 1. Activate environment and install
 flox activate
-# (or manually: uv sync)
 
-# 2. Start Ollama (in another terminal)
-ollama serve
+# 2. Start Ollama service
+flox services start ollama
 
 # 3. Pull required models
 uv run grant pull nomic-embed-text

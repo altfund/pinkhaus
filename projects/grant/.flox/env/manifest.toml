@@ -16,7 +16,6 @@ version = 1
 ## -------------------------------------------------------------------
 [install]
 sqlite.pkg-path = "sqlite"
-just.pkg-path = "just"
 ollama.pkg-path = "ollama"
 
 ## Environment Variables ---------------------------------------------
@@ -52,7 +51,15 @@ on-activate = '''
   uv sync
   
   echo "Grant RAG environment activated"
-  echo "Make sure Ollama is running: 'ollama serve'"
+  echo ""
+  echo "To start Ollama service:"
+  echo "  flox services start ollama"
+  echo ""
+  echo "Or start all services with:"
+  echo "  flox services start"
+  echo ""
+  echo "Check service status with:"
+  echo "  flox services status"
 '''
 
 
@@ -79,6 +86,9 @@ on-activate = '''
 ## -------------------------------------------------------------------
 [services]
 # myservice.command = "python3 -m http.server"
+ollama.command = "ollama serve"
+ollama.is-daemon = true
+ollama.shutdown.command = "pkill ollama"
 
 
 ## Include ----------------------------------------------------------
