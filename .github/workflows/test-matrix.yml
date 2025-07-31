@@ -1,4 +1,4 @@
-name: Grant Build and Test
+name: Matrix Python Projects Build and Test
 
 on:
   push:

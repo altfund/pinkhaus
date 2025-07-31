@@ -6,8 +6,8 @@ from .vector_store import PodcastVectorStore
 
 __version__ = "0.1.0"
 __all__ = [
-    "OllamaClient", 
-    "OllamaMessage", 
+    "OllamaClient",
+    "OllamaMessage",
     "OllamaResponse",
     "RAGPipeline",
     "RAGConfig",
