@@ -12,7 +12,7 @@ from datetime import datetime
 
 from .models import TranscriptionRequest, TranscriptionResponse, ProcessingSummary
 from .transcriber import AudioTranscriber, TranscriptionResult
-from .database import TranscriptionDatabase
+from pinkhaus_models import TranscriptionDatabase
 from .feed_parser import FeedParser, FeedItem
 from .downloader import AudioDownloader
 

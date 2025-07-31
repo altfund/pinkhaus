@@ -17,7 +17,7 @@ A command-line tool, Python library, and REST API for transcribing audio files u
 
 ## Installation
 
-1. [https://flox.dev/docs/install-flox/install/](Install Flox).
+1. [Install Flox](https://flox.dev/docs/install-flox/install/)
 2. Clone this repository
 3. Install dependencies:
    ```bash
@@ -35,7 +35,7 @@ transcribe /path/to/audio.wav
 If the above commands do not work run:
 ```bash
 uv venv
-sourve .venv/bin/activate
+source .venv/bin/activate
 uv sync
 transcribe /path/to/audio.wav
 ```
@@ -353,7 +353,10 @@ The library includes Protocol Buffers support for efficient binary serialization
 To regenerate the Python protobuf classes from the `.proto` file:
 
 ```bash
-# Using grpcio-tools (already installed)
+# Install grpcio-tools if needed (for protobuf compilation)
+uv add --dev grpcio-tools
+
+# Using grpcio-tools
 uv run python -m grpc_tools.protoc -I=. --python_out=. beige_book/transcription.proto
 
 # Or if you have protoc installed via flox
@@ -413,6 +416,15 @@ See `examples/protobuf_usage.py` for complete examples.
 ## REST API
 
 The tool includes a REST API server with Swagger/OpenAPI documentation.
+
+### Installing API Dependencies
+
+The REST API requires additional dependencies that are not included in the base installation:
+
+```bash
+# Install API dependencies
+uv add fastapi uvicorn[standard]
+```
 
 ### Starting the API Server
 
@@ -550,6 +562,95 @@ The table includes a unique index on `(feed_url, feed_item_id)` to prevent dupli
 - `end_time` - End time in seconds
 - `duration` - Duration in seconds
 - `text` - Segment text
+
+## Database Export/Import
+
+The tool supports exporting database transcriptions to JSON/TOML files and importing them back, preserving all metadata including feed information.
+
+### Export Database
+
+```bash
+# Export all transcriptions to JSON
+uv run python -m beige_book.cli_db_io export --db transcriptions.db --output backup.json
+
+# Export to TOML
+uv run python -m beige_book.cli_db_io export --db transcriptions.db --output backup.toml
+
+# Export a single transcription by ID
+uv run python -m beige_book.cli_db_io export --db transcriptions.db --output single.json --id 42
+```
+
+### Import Database
+
+```bash
+# Import from JSON (skips duplicates by default)
+uv run python -m beige_book.cli_db_io import --db new.db --input backup.json
+
+# Import from TOML
+uv run python -m beige_book.cli_db_io import --db new.db --input backup.toml
+
+# Force import of duplicates
+uv run python -m beige_book.cli_db_io import --db new.db --input backup.json --force
+```
+
+### Library Usage for Export/Import
+
+```python
+from beige_book import DatabaseIO
+
+# Initialize with database path
+io = DatabaseIO("transcriptions.db")
+
+# Export all to JSON
+count = io.export_all_to_json("backup.json")
+print(f"Exported {count} transcriptions")
+
+# Export single transcription
+success = io.export_transcription_to_json(transcription_id=5, output_path="single.json")
+
+# Import from JSON
+result = io.import_from_json("backup.json")
+print(f"Imported: {result['imported']}, Skipped: {result['skipped']}")
+
+# Export to TOML
+io.export_all_to_toml("backup.toml")
+
+# Import from TOML
+result = io.import_from_toml("backup.toml", skip_duplicates=False)
+```
+
+### Export File Format
+
+The exported JSON/TOML files contain:
+- Complete transcription data (filename, hash, language, text, segments)
+- All metadata (model used, feed information, timestamps)
+- Version information for compatibility
+
+Example JSON structure:
+```json
+{
+  "version": "1.0",
+  "transcriptions": [
+    {
+      "transcription": {
+        "filename": "episode.mp3",
+        "file_hash": "sha256_hash",
+        "language": "en",
+        "full_text": "...",
+        "segments": [...]
+      },
+      "metadata": {
+        "model_name": "base",
+        "feed_url": "https://example.com/feed.xml",
+        "feed_item_id": "guid-123",
+        "feed_item_title": "Episode Title",
+        "feed_item_published": "2025-07-01T10:00:00",
+        "created_at": "2025-07-01T12:00:00"
+      }
+    }
+  ]
+}
+```
 
 ## Troubleshooting
 

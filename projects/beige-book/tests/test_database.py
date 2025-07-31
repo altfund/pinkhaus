@@ -8,8 +8,8 @@ import tempfile
 import pytest
 from pathlib import Path
 
-from beige_book import AudioTranscriber, TranscriptionDatabase
-from beige_book.transcriber import TranscriptionResult, Segment
+from beige_book import AudioTranscriber
+from pinkhaus_models import TranscriptionDatabase, TranscriptionResult, Segment
 
 
 class TestTranscriptionDatabase:

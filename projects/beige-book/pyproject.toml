@@ -13,6 +13,7 @@ dependencies = [
     "pytest>=8.4.1",
     "tabulate>=0.9.0",
     "protobuf",
+    "pinkhaus-models @ file:///Users/price/development/ai-projects/pinkhaus/projects/pinkhaus-models",
 ]
 
 [project.scripts]
@@ -24,6 +25,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["beige_book"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.uv.sources]
 ask-human-mcp = { git = "https://github.com/Masony817/ask-human-mcp", rev = "24793b6362e000c12418cae7be5b8caa93cd371a" }

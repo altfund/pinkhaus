@@ -21,6 +21,7 @@ version = 1
 #jupyter.pkg-path = "python313Packages.jupyter"
 #spyder.pkg-path = "python313Packages.spyder"
 #spyder.systems = ["aarch64-linux", "x86_64-linux"]
+ollama.pkg-path = "ollama"
 uv.pkg-path = "uv"
 git.pkg-path = "git"
 claude-code.pkg-path = "claude-code"
