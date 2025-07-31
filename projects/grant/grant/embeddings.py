@@ -134,10 +134,21 @@ class EmbeddingService:
                 with open(cache_file, "r") as f:
                     data = json.load(f)
                     return data["embedding"]
-            except:
-                # Invalid cache file, ignore
-                pass
-
+            except FileNotFoundError:
+                # Cache miss - this is normal
+                return None
+            except (PermissionError, OSError) as e:
+                # Log the error but continue without cache
+                print(f"Warning: Unable to read cache file {cache_file}: {e}")
+                return None
+            except (json.JSONDecodeError, KeyError) as e:
+                # Corrupted cache - might want to delete it
+                print(f"Warning: Invalid cache file {cache_file}: {e}")
+                try:
+                    cache_file.unlink()  # Delete corrupted cache
+                except FileNotFoundError:
+                    pass
+            return None
         return None
 
     def _cache_embedding(self, text: str, embedding: List[float]):
@@ -174,7 +185,13 @@ class EmbeddingService:
                     return True
 
             return False
-        except:
+        except (ConnectionError, OSError) as e:
+            # Network or connection issues
+            print(f"Warning: Unable to connect to Ollama: {e}")
+            return False
+        except Exception as e:
+            # Other unexpected errors
+            print(f"Warning: Error checking model availability: {e}")
             return False
 
     def pull_model(self):
