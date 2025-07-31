@@ -19,6 +19,12 @@ from .models import (
     FeedOptions,
     DatabaseConfig,
 )
+from .proto_models import (
+    InputConfigInputType,
+    ProcessingConfigModel,
+    OutputConfigFormat,
+    FeedOptionsOrder,
+)
 from .service import TranscriptionService, OutputFormatter
 
 
@@ -159,12 +165,39 @@ class TranscriptionRequestAPI(BaseModel):
 
     def to_internal_request(self) -> TranscriptionRequest:
         """Convert API request to internal request model"""
+        # Map string enums to protobuf enums
+        input_type_map = {
+            "file": InputConfigInputType.INPUT_TYPE_FILE,
+            "feed": InputConfigInputType.INPUT_TYPE_FEED,
+        }
+        model_map = {
+            "tiny": ProcessingConfigModel.MODEL_TINY,
+            "base": ProcessingConfigModel.MODEL_BASE,
+            "small": ProcessingConfigModel.MODEL_SMALL,
+            "medium": ProcessingConfigModel.MODEL_MEDIUM,
+            "large": ProcessingConfigModel.MODEL_LARGE,
+        }
+        format_map = {
+            "text": OutputConfigFormat.FORMAT_TEXT,
+            "json": OutputConfigFormat.FORMAT_JSON,
+            "table": OutputConfigFormat.FORMAT_TABLE,
+            "csv": OutputConfigFormat.FORMAT_CSV,
+            "toml": OutputConfigFormat.FORMAT_TOML,
+            "sqlite": OutputConfigFormat.FORMAT_SQLITE,
+        }
+        order_map = {
+            "newest": FeedOptionsOrder.ORDER_NEWEST,
+            "oldest": FeedOptionsOrder.ORDER_OLDEST,
+        }
+
         # Convert feed options if present
         feed_options = None
         if self.processing.feed_options:
             feed_options = FeedOptions(
-                limit=self.processing.feed_options.limit,
-                order=self.processing.feed_options.order,
+                limit=self.processing.feed_options.limit or 0,
+                order=order_map.get(
+                    self.processing.feed_options.order, FeedOptionsOrder.ORDER_NEWEST
+                ),
                 max_retries=self.processing.feed_options.max_retries,
                 initial_delay=self.processing.feed_options.initial_delay,
             )
@@ -179,15 +212,17 @@ class TranscriptionRequestAPI(BaseModel):
             )
 
         return TranscriptionRequest(
-            input=InputConfig(type=self.input.type, source=self.input.source),
+            input=InputConfig(
+                type=input_type_map[self.input.type], source=self.input.source
+            ),
             processing=ProcessingConfig(
-                model=self.processing.model,
+                model=model_map[self.processing.model],
                 verbose=self.processing.verbose,
                 feed_options=feed_options,
             ),
             output=OutputConfig(
-                format=self.output.format,
-                destination=self.output.destination,
+                format=format_map[self.output.format],
+                destination=self.output.destination or "",
                 database=database_config,
             ),
         )
@@ -298,9 +333,21 @@ async def transcribe(request: TranscriptionRequestAPI):
 
         # Handle different output formats
         if request.output.format == "json":
-            return JSONResponse(
-                content=response.to_json(), media_type="application/json"
-            )
+            # Convert response to dict for JSONResponse
+            response_data = {
+                "success": response.success,
+                "results": [
+                    r.to_dict() if hasattr(r, "to_dict") else r
+                    for r in response.results
+                ],
+                "errors": [
+                    e.to_dict() if hasattr(e, "to_dict") else e for e in response.errors
+                ],
+                "summary": response.summary.to_dict()
+                if response.summary and hasattr(response.summary, "to_dict")
+                else None,
+            }
+            return JSONResponse(content=response_data, media_type="application/json")
 
         elif request.output.format == "sqlite":
             # For SQLite, just return success status
