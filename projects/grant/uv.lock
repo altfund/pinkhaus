@@ -332,7 +332,7 @@ requires-dist = [
     { name = "chromadb", specifier = ">=0.5.0" },
     { name = "click", specifier = ">=8.1.0" },
     { name = "httpx", specifier = ">=0.27.0" },
-    { name = "pinkhaus-models", directory = "../pinkhaus-models" },
+    { name = "pinkhaus-models", editable = "../pinkhaus-models" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "rich", specifier = ">=13.0.0" },
     { name = "tiktoken", specifier = ">=0.8.0" },
@@ -794,7 +794,7 @@ wheels = [
 [[package]]
 name = "pinkhaus-models"
 version = "0.1.0"
-source = { directory = "../pinkhaus-models" }
+source = { editable = "../pinkhaus-models" }
 dependencies = [
     { name = "aiosqlite" },
     { name = "pydantic" },

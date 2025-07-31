@@ -49,7 +49,7 @@ requires-dist = [
     { name = "feedparser" },
     { name = "numpy", specifier = "<2.3" },
     { name = "openai-whisper" },
-    { name = "pinkhaus-models", directory = "../pinkhaus-models" },
+    { name = "pinkhaus-models", editable = "../pinkhaus-models" },
     { name = "protobuf" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "tabulate", specifier = ">=0.9.0" },
@@ -433,7 +433,7 @@ wheels = [
 [[package]]
 name = "pinkhaus-models"
 version = "0.1.0"
-source = { directory = "../pinkhaus-models" }
+source = { editable = "../pinkhaus-models" }
 dependencies = [
     { name = "aiosqlite" },
     { name = "pydantic" },

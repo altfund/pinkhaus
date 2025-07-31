@@ -19,9 +19,6 @@ sqlite.pkg-path = "sqlite"
 just.pkg-path = "just"
 ollama.pkg-path = "ollama"
 
-# Install pinkhaus-models from local flake
-pinkhaus-models.flake = "path:../pinkhaus-models"
-
 ## Environment Variables ---------------------------------------------
 ##  ... available for use in the activated environment
 ##      as well as [hook], [profile] scripts and [services] below.
@@ -55,7 +52,6 @@ on-activate = '''
   uv sync
   
   echo "Grant RAG environment activated"
-  echo "pinkhaus-models is available via flox"
   echo "Make sure Ollama is running: 'ollama serve'"
 '''
 
