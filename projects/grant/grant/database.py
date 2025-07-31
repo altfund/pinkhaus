@@ -44,60 +44,65 @@ class TextChunk:
 class PodcastDatabase:
     def __init__(self, db_path: str):
         self.db_path = db_path
-        
+
     def get_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
-    
+
     async def get_async_connection(self) -> aiosqlite.Connection:
         conn = await aiosqlite.connect(self.db_path)
         conn.row_factory = aiosqlite.Row
         return conn
-    
+
     def get_all_transcriptions(self) -> List[PodcastTranscription]:
         conn = self.get_connection()
         cursor = conn.execute("""
             SELECT * FROM transcription_metadata
             ORDER BY feed_item_published DESC
         """)
-        
+
         transcriptions = []
         for row in cursor:
             transcriptions.append(self._row_to_transcription(row))
-        
+
         conn.close()
         return transcriptions
-    
+
     async def get_all_transcriptions_async(self) -> List[PodcastTranscription]:
         conn = await self.get_async_connection()
         cursor = await conn.execute("""
             SELECT * FROM transcription_metadata
             ORDER BY feed_item_published DESC
         """)
-        
+
         transcriptions = []
         async for row in cursor:
             transcriptions.append(self._row_to_transcription(row))
-        
+
         await conn.close()
         return transcriptions
-    
-    def get_segments_for_transcription(self, transcription_id: int) -> List[TranscriptionSegment]:
+
+    def get_segments_for_transcription(
+        self, transcription_id: int
+    ) -> List[TranscriptionSegment]:
         conn = self.get_connection()
-        cursor = conn.execute("""
+        cursor = conn.execute(
+            """
             SELECT * FROM transcription_segments
             WHERE transcription_id = ?
             ORDER BY segment_index
-        """, (transcription_id,))
-        
+        """,
+            (transcription_id,),
+        )
+
         segments = []
         for row in cursor:
             segments.append(self._row_to_segment(row))
-        
+
         conn.close()
         return segments
-    
+
     def _row_to_transcription(self, row: sqlite3.Row) -> PodcastTranscription:
         return PodcastTranscription(
             id=row["id"],
@@ -109,10 +114,12 @@ class PodcastDatabase:
             feed_url=row["feed_url"],
             feed_item_id=row["feed_item_id"],
             feed_item_title=row["feed_item_title"],
-            feed_item_published=datetime.fromisoformat(row["feed_item_published"]) if row["feed_item_published"] else None,
-            created_at=datetime.fromisoformat(row["created_at"])
+            feed_item_published=datetime.fromisoformat(row["feed_item_published"])
+            if row["feed_item_published"]
+            else None,
+            created_at=datetime.fromisoformat(row["created_at"]),
         )
-    
+
     def _row_to_segment(self, row: sqlite3.Row) -> TranscriptionSegment:
         return TranscriptionSegment(
             id=row["id"],
@@ -121,7 +128,7 @@ class PodcastDatabase:
             start_time=row["start_time"],
             end_time=row["end_time"],
             duration=row["duration"],
-            text=row["text"]
+            text=row["text"],
         )
 
 
@@ -129,7 +136,7 @@ class VectorStore:
     def __init__(self, db_path: str = "grant_vectors.db"):
         self.db_path = db_path
         self._init_db()
-    
+
     def _init_db(self):
         conn = sqlite3.connect(self.db_path)
         conn.execute("""
@@ -147,80 +154,92 @@ class VectorStore:
         """)
         conn.commit()
         conn.close()
-    
+
     def add_chunk(self, chunk: TextChunk):
         conn = sqlite3.connect(self.db_path)
-        embedding_blob = chunk.embedding.tobytes() if chunk.embedding is not None else None
-        
-        conn.execute("""
+        embedding_blob = (
+            chunk.embedding.tobytes() if chunk.embedding is not None else None
+        )
+
+        conn.execute(
+            """
             INSERT OR REPLACE INTO text_chunks (id, text, metadata, embedding)
             VALUES (?, ?, ?, ?)
-        """, (chunk.id, chunk.text, json.dumps(chunk.metadata), embedding_blob))
-        
+        """,
+            (chunk.id, chunk.text, json.dumps(chunk.metadata), embedding_blob),
+        )
+
         conn.commit()
         conn.close()
-    
+
     def add_chunks(self, chunks: List[TextChunk]):
         conn = sqlite3.connect(self.db_path)
-        
+
         data = [
             (
                 chunk.id,
                 chunk.text,
                 json.dumps(chunk.metadata),
-                chunk.embedding.tobytes() if chunk.embedding is not None else None
+                chunk.embedding.tobytes() if chunk.embedding is not None else None,
             )
             for chunk in chunks
         ]
-        
-        conn.executemany("""
+
+        conn.executemany(
+            """
             INSERT OR REPLACE INTO text_chunks (id, text, metadata, embedding)
             VALUES (?, ?, ?, ?)
-        """, data)
-        
+        """,
+            data,
+        )
+
         conn.commit()
         conn.close()
-    
+
     def get_all_chunks(self, with_embeddings: bool = True) -> List[TextChunk]:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.execute("SELECT * FROM text_chunks")
-        
+
         chunks = []
         for row in cursor:
             embedding = None
             if with_embeddings and row[3] is not None:
                 embedding = np.frombuffer(row[3], dtype=np.float32)
-            
-            chunks.append(TextChunk(
-                id=row[0],
-                text=row[1],
-                metadata=json.loads(row[2]),
-                embedding=embedding
-            ))
-        
+
+            chunks.append(
+                TextChunk(
+                    id=row[0],
+                    text=row[1],
+                    metadata=json.loads(row[2]),
+                    embedding=embedding,
+                )
+            )
+
         conn.close()
         return chunks
-    
-    def search_similar(self, query_embedding: np.ndarray, top_k: int = 5) -> List[Tuple[TextChunk, float]]:
+
+    def search_similar(
+        self, query_embedding: np.ndarray, top_k: int = 5
+    ) -> List[Tuple[TextChunk, float]]:
         chunks = self.get_all_chunks(with_embeddings=True)
-        
+
         if not chunks or chunks[0].embedding is None:
             return []
-        
+
         # Calculate cosine similarity
         similarities = []
         query_norm = query_embedding / np.linalg.norm(query_embedding)
-        
+
         for chunk in chunks:
             if chunk.embedding is not None:
                 chunk_norm = chunk.embedding / np.linalg.norm(chunk.embedding)
                 similarity = np.dot(query_norm, chunk_norm)
                 similarities.append((chunk, float(similarity)))
-        
+
         # Sort by similarity and return top k
         similarities.sort(key=lambda x: x[1], reverse=True)
         return similarities[:top_k]
-    
+
     def chunk_exists(self, chunk_id: str) -> bool:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.execute("SELECT 1 FROM text_chunks WHERE id = ?", (chunk_id,))
