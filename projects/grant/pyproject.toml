@@ -12,7 +12,7 @@ dependencies = [
     "tiktoken>=0.8.0",
     "rich>=13.0.0",
     "click>=8.1.0",
-    "pinkhaus-models @ file:///Users/price/development/ai-projects/pinkhaus/projects/pinkhaus-models",
+    "pinkhaus-models",
 ]
 
 [project.scripts]
@@ -27,6 +27,9 @@ packages = ["grant"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
+
+[tool.uv.sources]
+pinkhaus-models = { path = "../pinkhaus-models", editable = true }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

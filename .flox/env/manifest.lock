@@ -23,7 +23,7 @@
       }
     },
     "hook": {
-      "on-activate": "if [[ ! -z $DEV ]]; then\n\texport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n\tmkdir -p \"${GOBIN}\"\n\tgo install \"github.com/isaacphi/mcp-language-server@latest\"\n\texport PATH=\"${GOBIN}:${PATH}\"\nfi\nuv sync\necho \"RUN \"\necho \"source \\\"${FLOX_ENV_PROJECT}/.venv/bin/activate\\\"\"\n"
+      "on-activate": "if [[ ! -z $DEV ]]; then\n\texport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n\tmkdir -p \"${GOBIN}\"\n\tgo install \"github.com/isaacphi/mcp-language-server@latest\"\n\texport PATH=\"${GOBIN}:${PATH}\"\nfi\nuv venv\necho \"RUN \"\necho \"source \\\"${FLOX_ENV_PROJECT}/.venv/bin/activate\\\"\"\nuv sync\n"
     },
     "profile": {},
     "options": {

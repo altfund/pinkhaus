@@ -47,9 +47,10 @@ if [[ ! -z $DEV ]]; then
 	go install "github.com/isaacphi/mcp-language-server@latest"
 	export PATH="${GOBIN}:${PATH}"
 fi
-uv sync
+uv venv
 echo "RUN "
 echo "source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\""
+uv sync
 '''
 
 #export PATH=${PATH}:${FLOX_ENV_CACHE}/go/bin

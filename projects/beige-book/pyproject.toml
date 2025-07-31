@@ -13,7 +13,7 @@ dependencies = [
     "pytest>=8.4.1",
     "tabulate>=0.9.0",
     "protobuf",
-    "pinkhaus-models @ file:///Users/price/development/ai-projects/pinkhaus/projects/pinkhaus-models",
+    "pinkhaus-models",
 ]
 
 [project.scripts]
@@ -30,6 +30,7 @@ packages = ["beige_book"]
 allow-direct-references = true
 
 [tool.uv.sources]
+pinkhaus-models = { path = "../pinkhaus-models", editable = true }
 ask-human-mcp = { git = "https://github.com/Masony817/ask-human-mcp", rev = "24793b6362e000c12418cae7be5b8caa93cd371a" }
 
 [dependency-groups]
