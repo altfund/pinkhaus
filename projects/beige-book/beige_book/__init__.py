@@ -8,7 +8,7 @@ from .transcriber import (
     Segment,
     create_extended_result,
 )
-from .database import TranscriptionDatabase
+from pinkhaus_models import TranscriptionDatabase
 from .feed_parser import FeedParser, FeedItem
 from .downloader import AudioDownloader
 from .models import (
@@ -25,6 +25,7 @@ from .models import (
     create_feed_request,
 )
 from .service import TranscriptionService, OutputFormatter
+from .database_io import DatabaseIO
 
 # Protobuf support is now built into TranscriptionResult
 # Import generated protobuf classes
@@ -57,6 +58,8 @@ __all__ = [
     # Service layer
     "TranscriptionService",
     "OutputFormatter",
+    # Database IO
+    "DatabaseIO",
     # Convenience functions
     "create_file_request",
     "create_feed_request",
