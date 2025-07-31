@@ -7,12 +7,12 @@ on:
     branches: [ main ]
 
 jobs:
-  strategy:
-    matrix:
-      dirs: ["./projects/grant", "./projects/beige-book/", "./projects/pinkhaus-models"]
   build:
     name: "Build and test"
     runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        dirs: ["./projects/grant", "./projects/beige-book/", "./projects/pinkhaus-models"]
     steps:
       - name: "Checkout"
         uses: "actions/checkout@v4"
