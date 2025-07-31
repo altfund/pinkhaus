@@ -18,15 +18,12 @@
       "pyright": {
         "pkg-path": "pyright"
       },
-      "sqlite": {
-        "pkg-path": "sqlite"
-      },
       "uv": {
         "pkg-path": "uv"
       }
     },
     "hook": {
-      "on-activate": "if [[ ! -z $DEV ]]; then\n\texport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n\tmkdir -p \"${GOBIN}\"\n\tgo install \"github.com/isaacphi/mcp-language-server@latest\"\n\texport PATH=\"${GOBIN}:${PATH}\"\nfi\nuv sync\necho \"RUN \"\necho \"source \\\"${FLOX_ENV_PROJECT}/.venv/bin/activate\\\"\"\n\n  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Grant RAG environment activated\"\n  echo \"\"\n  echo \"To start Ollama service:\"\n  echo \"  flox services start ollama\"\n  echo \"\"\n  echo \"Or start all services with:\"\n  echo \"  flox services start\"\n  echo \"\"\n  echo \"Check service status with:\"\n  echo \"  flox services status\"\n"
+      "on-activate": "if [[ ! -z $DEV ]]; then\n\texport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n\tmkdir -p \"${GOBIN}\"\n\tgo install \"github.com/isaacphi/mcp-language-server@latest\"\n\texport PATH=\"${GOBIN}:${PATH}\"\nfi\nuv venv\necho \"RUN \"\necho \"source \\\"${FLOX_ENV_PROJECT}/.venv/bin/activate\\\"\"\nuv sync\n\n#   # -> Set variables, create files and directories\n#   # -> Perform initialization steps, e.g. create a python venv\n#   # -> Useful environment variables:\n#   #      - FLOX_ENV_PROJECT=/home/user/example\n#   #      - FLOX_ENV=/home/user/example/.flox/run\n#   #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n\n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\n  fi\n\n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n\n  echo \"pinkhaus-models environment activated\"\n"
     },
     "profile": {},
     "options": {
@@ -36,15 +33,6 @@
         "x86_64-darwin",
         "x86_64-linux"
       ]
-    },
-    "services": {
-      "ollama": {
-        "command": "ollama serve",
-        "is-daemon": true,
-        "shutdown": {
-          "command": "pkill ollama"
-        }
-      }
     }
   },
   "packages": [
@@ -635,144 +623,6 @@
       "priority": 5
     },
     {
-      "attr_path": "sqlite",
-      "broken": false,
-      "derivation": "/nix/store/gm0hd0ws14agsdvwb7vdhzhlivl0b6n5-sqlite-3.50.2.drv",
-      "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
-      "install_id": "sqlite",
-      "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "name": "sqlite-3.50.2",
-      "pname": "sqlite",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:28:47.155850Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "3.50.2",
-      "outputs_to_install": [
-        "bin",
-        "man"
-      ],
-      "outputs": {
-        "bin": "/nix/store/35z7rb3gd23yfcgfssy8g7qw3dpd7q9p-sqlite-3.50.2-bin",
-        "dev": "/nix/store/fnwnbb72xsrx67hlq995yrsliwpl08pl-sqlite-3.50.2-dev",
-        "doc": "/nix/store/bbg63w1qynzsvvlzhl7rig9409vvrdqq-sqlite-3.50.2-doc",
-        "man": "/nix/store/fvl0bgzn40x7qlzmhb148aqmr9k3inx3-sqlite-3.50.2-man",
-        "out": "/nix/store/73iiazjcn1qscb8m0l5f3jg56vjgwxbj-sqlite-3.50.2"
-      },
-      "system": "aarch64-darwin",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "sqlite",
-      "broken": false,
-      "derivation": "/nix/store/5l0yswsw9dx61zqkpj9idk74ga1iz4yq-sqlite-3.50.2.drv",
-      "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
-      "install_id": "sqlite",
-      "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "name": "sqlite-3.50.2",
-      "pname": "sqlite",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:48:48.791451Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "3.50.2",
-      "outputs_to_install": [
-        "bin",
-        "man"
-      ],
-      "outputs": {
-        "bin": "/nix/store/xra4yp1wl7kk5yrql2ksa28pyhgv05bh-sqlite-3.50.2-bin",
-        "debug": "/nix/store/y78vmjc4dvqg52gy2y03yy43kmm4l5xy-sqlite-3.50.2-debug",
-        "dev": "/nix/store/bllx9j696dahs4xz2942lmbab7bain1w-sqlite-3.50.2-dev",
-        "doc": "/nix/store/hdb7kzmd4d3arn8qc3n02zb2afhz01bk-sqlite-3.50.2-doc",
-        "man": "/nix/store/f434igy35argvb4ia067612g8lgamj9h-sqlite-3.50.2-man",
-        "out": "/nix/store/hkapr9yav6nx45h1gizasd80gkqv3rqd-sqlite-3.50.2"
-      },
-      "system": "aarch64-linux",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "sqlite",
-      "broken": false,
-      "derivation": "/nix/store/b5s9q3zamrgppgrgf4svcy4w918njhbz-sqlite-3.50.2.drv",
-      "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
-      "install_id": "sqlite",
-      "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "name": "sqlite-3.50.2",
-      "pname": "sqlite",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:08:07.702575Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "3.50.2",
-      "outputs_to_install": [
-        "bin",
-        "man"
-      ],
-      "outputs": {
-        "bin": "/nix/store/5wm8hlhk48q6yliym7nfgpa1ijfphs2l-sqlite-3.50.2-bin",
-        "dev": "/nix/store/fi2fi6q7yqpgwa6z14xnqx00pq9s6h92-sqlite-3.50.2-dev",
-        "doc": "/nix/store/3y1wdididszk73lxk2d2h753llrl18ns-sqlite-3.50.2-doc",
-        "man": "/nix/store/zra5y09sdp0vvsynaj0mv6pl0n9x3kil-sqlite-3.50.2-man",
-        "out": "/nix/store/qgbjr35s6r2mr4i37qpkb70wqfiwslh3-sqlite-3.50.2"
-      },
-      "system": "x86_64-darwin",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "sqlite",
-      "broken": false,
-      "derivation": "/nix/store/z7qk86z6ivqgk3gn38jswycyflvc500w-sqlite-3.50.2.drv",
-      "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
-      "install_id": "sqlite",
-      "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "name": "sqlite-3.50.2",
-      "pname": "sqlite",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:32:33.826719Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "3.50.2",
-      "outputs_to_install": [
-        "bin",
-        "man"
-      ],
-      "outputs": {
-        "bin": "/nix/store/davps0p09b6kswdnjm3mscfk5g25cvaf-sqlite-3.50.2-bin",
-        "debug": "/nix/store/18l20nnx9pfixq0w29alajkgncvlz8qw-sqlite-3.50.2-debug",
-        "dev": "/nix/store/jmqk9474xmakj7s663kbinp7bn959kr1-sqlite-3.50.2-dev",
-        "doc": "/nix/store/fanxdjifxzjrs8zhi0qg9ifd0mqir4rf-sqlite-3.50.2-doc",
-        "man": "/nix/store/p0pcmmzd168kdpl01lnp3qi17m7y2iwv-sqlite-3.50.2-man",
-        "out": "/nix/store/yd47pmkv6iv58gs5v5jgyblvkw87pqx3-sqlite-3.50.2"
-      },
-      "system": "x86_64-linux",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
       "attr_path": "uv",
       "broken": false,
       "derivation": "/nix/store/rhn7jhy9gmg19rqsphqj644hz6ybdnjq-uv-0.8.2.drv",
@@ -892,27 +742,17 @@
   "compose": {
     "composer": {
       "version": 1,
-      "install": {
-        "ollama": {
-          "pkg-path": "ollama"
-        },
-        "sqlite": {
-          "pkg-path": "sqlite"
-        }
-      },
       "hook": {
-        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Grant RAG environment activated\"\n  echo \"\"\n  echo \"To start Ollama service:\"\n  echo \"  flox services start ollama\"\n  echo \"\"\n  echo \"Or start all services with:\"\n  echo \"  flox services start\"\n  echo \"\"\n  echo \"Check service status with:\"\n  echo \"  flox services status\"\n"
+        "on-activate": "#   # -> Set variables, create files and directories\n#   # -> Perform initialization steps, e.g. create a python venv\n#   # -> Useful environment variables:\n#   #      - FLOX_ENV_PROJECT=/home/user/example\n#   #      - FLOX_ENV=/home/user/example/.flox/run\n#   #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n\n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n  export PATH=\"${GOBIN}:${PATH}\"\n  fi\n\n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n\n  echo \"pinkhaus-models environment activated\"\n"
       },
       "profile": {},
-      "options": {},
-      "services": {
-        "ollama": {
-          "command": "ollama serve",
-          "is-daemon": true,
-          "shutdown": {
-            "command": "pkill ollama"
-          }
-        }
+      "options": {
+        "systems": [
+          "aarch64-darwin",
+          "aarch64-linux",
+          "x86_64-darwin",
+          "x86_64-linux"
+        ]
       },
       "include": {
         "environments": [
@@ -936,6 +776,9 @@
             "go": {
               "pkg-path": "go"
             },
+            "ollama": {
+              "pkg-path": "ollama"
+            },
             "pyright": {
               "pkg-path": "pyright"
             },
@@ -944,7 +787,7 @@
             }
           },
           "hook": {
-            "on-activate": "if [[ ! -z $DEV ]]; then\n\texport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n\tmkdir -p \"${GOBIN}\"\n\tgo install \"github.com/isaacphi/mcp-language-server@latest\"\n\texport PATH=\"${GOBIN}:${PATH}\"\nfi\nuv sync\necho \"RUN \"\necho \"source \\\"${FLOX_ENV_PROJECT}/.venv/bin/activate\\\"\"\n"
+            "on-activate": "if [[ ! -z $DEV ]]; then\n\texport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n\tmkdir -p \"${GOBIN}\"\n\tgo install \"github.com/isaacphi/mcp-language-server@latest\"\n\texport PATH=\"${GOBIN}:${PATH}\"\nfi\nuv venv\necho \"RUN \"\necho \"source \\\"${FLOX_ENV_PROJECT}/.venv/bin/activate\\\"\"\nuv sync\n"
           },
           "profile": {},
           "options": {
@@ -962,6 +805,16 @@
         }
       }
     ],
-    "warnings": []
+    "warnings": [
+      {
+        "warning": {
+          "Overriding": [
+            "options",
+            "systems"
+          ]
+        },
+        "higher_priority_name": "Current manifest"
+      }
+    ]
   }
 }

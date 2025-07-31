@@ -15,12 +15,6 @@
       "jupyter": {
         "pkg-path": "python313Packages.jupyter"
       },
-      "just": {
-        "pkg-path": "just"
-      },
-      "pinkhaus-models": {
-        "flake": "path:../pinkhaus-models"
-      },
       "python313Full": {
         "pkg-path": "python313Full"
       },
@@ -39,7 +33,7 @@
       }
     },
     "hook": {
-      "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Beige-book environment activated\"\n  echo \"pinkhaus-models is available via flox\"\n"
+      "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Beige-book environment activated\"\n"
     },
     "profile": {},
     "options": {
@@ -55,19 +49,18 @@
     {
       "attr_path": "python313Packages.calysto",
       "broken": false,
-      "derivation": "/nix/store/ld0hmy6jcn1hpp6sr5hqgd5f926hasxb-python3.13-calysto-1.0.6.drv",
+      "derivation": "/nix/store/51iymcahn2v1fb4szcfyzkm114x1ccdr-python3.13-calysto-1.0.6.drv",
       "description": "Tools for Jupyter and Python",
       "install_id": "calysto",
       "license": "BSD-2-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "python3.13-calysto-1.0.6",
       "pname": "calysto",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:36:34.673360Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:28:24.081272Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -76,8 +69,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/3b1w4q5x5nsx0jvlyaa0didj3c3afs14-python3.13-calysto-1.0.6-dist",
-        "out": "/nix/store/pvgb0ilsv7gd3azfdv3ga1vyghn9yx20-python3.13-calysto-1.0.6"
+        "dist": "/nix/store/ijh5sqcxykv5hmqrp3zp08ydqvii7b73-python3.13-calysto-1.0.6-dist",
+        "out": "/nix/store/s4c50qyb4bav5flndv7mxmh3babkrf49-python3.13-calysto-1.0.6"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -86,19 +79,18 @@
     {
       "attr_path": "python313Packages.calysto",
       "broken": false,
-      "derivation": "/nix/store/9xklsmmdgp777rkrjqph1rd8cvgg7kh9-python3.13-calysto-1.0.6.drv",
+      "derivation": "/nix/store/4sh6d0mcvscyz8wbh7y8spqmjdpz0gvd-python3.13-calysto-1.0.6.drv",
       "description": "Tools for Jupyter and Python",
       "install_id": "calysto",
       "license": "BSD-2-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "python3.13-calysto-1.0.6",
       "pname": "calysto",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:55:25.788356Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:48:16.636332Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -107,8 +99,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/nf9cl4nz8fcnfqpqs8zxw9pikif9j2p5-python3.13-calysto-1.0.6-dist",
-        "out": "/nix/store/vl3wfbabq4agz0b3rd9zw0h5l7zj789w-python3.13-calysto-1.0.6"
+        "dist": "/nix/store/zzdb2cpks01x7rwv7z6ap3rdivkwczrn-python3.13-calysto-1.0.6-dist",
+        "out": "/nix/store/99lf8wmqmas4yj7q0sia8g1yvdj4kr26-python3.13-calysto-1.0.6"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -117,19 +109,18 @@
     {
       "attr_path": "python313Packages.calysto",
       "broken": false,
-      "derivation": "/nix/store/krcb18jra616cmg8cjxi54v0s2c1mrxy-python3.13-calysto-1.0.6.drv",
+      "derivation": "/nix/store/k201xz6zp4jq5qldaa3pbdrprl01jqkd-python3.13-calysto-1.0.6.drv",
       "description": "Tools for Jupyter and Python",
       "install_id": "calysto",
       "license": "BSD-2-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "python3.13-calysto-1.0.6",
       "pname": "calysto",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:12:42.355742Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:07:44.543662Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -138,8 +129,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/6ydihidr5anzmkcibfcvhgfmwzzi6wrq-python3.13-calysto-1.0.6-dist",
-        "out": "/nix/store/4k5df8wpdmiz6k0dvaw821fpfmgyvvzp-python3.13-calysto-1.0.6"
+        "dist": "/nix/store/qjwiadzrb6zi8kkj49q8ix6sml4ad7lj-python3.13-calysto-1.0.6-dist",
+        "out": "/nix/store/xv5am79griyrfw7hfwxkangwvzsf8l5s-python3.13-calysto-1.0.6"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -148,19 +139,18 @@
     {
       "attr_path": "python313Packages.calysto",
       "broken": false,
-      "derivation": "/nix/store/qgmcgh87mn4fhkh8x5rrnxmb3ncjj7px-python3.13-calysto-1.0.6.drv",
+      "derivation": "/nix/store/p8gkbn934n6s2p9z9qc48w64wfv11nyj-python3.13-calysto-1.0.6.drv",
       "description": "Tools for Jupyter and Python",
       "install_id": "calysto",
       "license": "BSD-2-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "python3.13-calysto-1.0.6",
       "pname": "calysto",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:33:09.695195Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:31:59.859963Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -169,8 +159,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/kdqdpm4lrkx24396skpf8nm7j0vqy4bz-python3.13-calysto-1.0.6-dist",
-        "out": "/nix/store/9r0h92cvi3xlgz59yai7kw6hr8by8d82-python3.13-calysto-1.0.6"
+        "dist": "/nix/store/m3lp1l750ycpnw0g6h34yqriwixs037a-python3.13-calysto-1.0.6-dist",
+        "out": "/nix/store/l5ysfmpwwcmsc6mckp5cdxzxdhlmaxla-python3.13-calysto-1.0.6"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -179,19 +169,18 @@
     {
       "attr_path": "ffmpeg",
       "broken": false,
-      "derivation": "/nix/store/32wr0i8f4x798szm80kmi66mqz30c7zs-ffmpeg-7.1.1.drv",
+      "derivation": "/nix/store/lhc3d03bmclcp701d0gaam8b68q9wnqr-ffmpeg-7.1.1.drv",
       "description": "Complete, cross-platform solution to record, convert and stream audio and video",
       "install_id": "ffmpeg",
       "license": "[ LGPL-2.1-or-later, GPL-2.0-or-later, LGPL-3.0-or-later, GPL-3.0-or-later ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "ffmpeg-7.1.1",
       "pname": "ffmpeg",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:36:16.140550Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:28:05.355646Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -201,13 +190,13 @@
         "man"
       ],
       "outputs": {
-        "bin": "/nix/store/xn0g8z254h79njvd6iwchvyfjvx4y5p3-ffmpeg-7.1.1-bin",
-        "data": "/nix/store/b0jlpxp4gbvlx9qn0kqbapnnjqd92z3q-ffmpeg-7.1.1-data",
-        "dev": "/nix/store/11nrwbw8gy5zj56jjzidljaisdjq39sy-ffmpeg-7.1.1-dev",
-        "doc": "/nix/store/hyfp15cvz48vyx9ds1q1iqrdifbscx49-ffmpeg-7.1.1-doc",
-        "lib": "/nix/store/x3w2haxr9qmyaqi1y91r59i44air198p-ffmpeg-7.1.1-lib",
-        "man": "/nix/store/1lqzlic5dk9lbr021hdwaxqqz9kvf167-ffmpeg-7.1.1-man",
-        "out": "/nix/store/722z1wbzszxlnd6l87dprg9p2zc93q84-ffmpeg-7.1.1"
+        "bin": "/nix/store/gkgrqbp39zvrbmkk1alq98sxxs0ra09i-ffmpeg-7.1.1-bin",
+        "data": "/nix/store/b8pdx5iq32fpg84pl8fplhgljlfg0mrz-ffmpeg-7.1.1-data",
+        "dev": "/nix/store/1abzm62nfgzmpw6s6npz1rin6ppfcqzg-ffmpeg-7.1.1-dev",
+        "doc": "/nix/store/q59425ijrbidn14py0vwx65h4zkq3snx-ffmpeg-7.1.1-doc",
+        "lib": "/nix/store/7zcgjn45sfnm41n2slc5wwv0r50jz4yc-ffmpeg-7.1.1-lib",
+        "man": "/nix/store/8dvz9qflvfzaq5gppmh8fzhs9qn8spjm-ffmpeg-7.1.1-man",
+        "out": "/nix/store/gc39pwvnpqsrn71bz63kakg7ylrfzmc7-ffmpeg-7.1.1"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -216,19 +205,18 @@
     {
       "attr_path": "ffmpeg",
       "broken": false,
-      "derivation": "/nix/store/8pcs543jgvbm7dq1ahnzzbxanmppsg3r-ffmpeg-7.1.1.drv",
+      "derivation": "/nix/store/0ffvn2bs5fjwypphcpj36ifvfzqzahgx-ffmpeg-7.1.1.drv",
       "description": "Complete, cross-platform solution to record, convert and stream audio and video",
       "install_id": "ffmpeg",
       "license": "[ LGPL-2.1-or-later, GPL-2.0-or-later, LGPL-3.0-or-later, GPL-3.0-or-later ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "ffmpeg-7.1.1",
       "pname": "ffmpeg",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:54:48.903742Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:47:41.213282Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -238,13 +226,13 @@
         "man"
       ],
       "outputs": {
-        "bin": "/nix/store/c8z6njgdlkf0bl16bnm42lhaqy0cfjgq-ffmpeg-7.1.1-bin",
-        "data": "/nix/store/r1wkbkc4m9lwn2bc1iwnyfdb25hj06w7-ffmpeg-7.1.1-data",
-        "dev": "/nix/store/gi225z17mzlhlbax9aivqfm7n54wj16s-ffmpeg-7.1.1-dev",
-        "doc": "/nix/store/mxrg19p0inccq7d0yb2hkbihdn000pn5-ffmpeg-7.1.1-doc",
-        "lib": "/nix/store/hg9vh962fz4skvak1d41lphbqiim6pb6-ffmpeg-7.1.1-lib",
-        "man": "/nix/store/pn80ra5bqn22qf39i3npzlshlwwc2yd4-ffmpeg-7.1.1-man",
-        "out": "/nix/store/rbz33rkps8dpcgn6hvwvzsj24x0yzgm3-ffmpeg-7.1.1"
+        "bin": "/nix/store/611i8s479ln8rf3j2fbbbq1l9hdk4i67-ffmpeg-7.1.1-bin",
+        "data": "/nix/store/1cfffndq9rf121jmw3nbl3mwkhihhp4v-ffmpeg-7.1.1-data",
+        "dev": "/nix/store/9avsfi3anri888m7mfpi3vs2agqbp93x-ffmpeg-7.1.1-dev",
+        "doc": "/nix/store/0rjaz9j0qd76jv0d1b4miv85kyn6vi6h-ffmpeg-7.1.1-doc",
+        "lib": "/nix/store/la9cjmn1y069ldhpzvdkg719hadb3rri-ffmpeg-7.1.1-lib",
+        "man": "/nix/store/wrjizy5ilzsnfkvcjqpprdrc9bi128y9-ffmpeg-7.1.1-man",
+        "out": "/nix/store/nrsbrmbnyz1cz4yq8irwl76n3qm90cnh-ffmpeg-7.1.1"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -253,19 +241,18 @@
     {
       "attr_path": "ffmpeg",
       "broken": false,
-      "derivation": "/nix/store/sm39p8wpq58a835kwpkgqbkdc5xy5gal-ffmpeg-7.1.1.drv",
+      "derivation": "/nix/store/f40irzprd71xlriwzbdb0mi4n8km5c42-ffmpeg-7.1.1.drv",
       "description": "Complete, cross-platform solution to record, convert and stream audio and video",
       "install_id": "ffmpeg",
       "license": "[ LGPL-2.1-or-later, GPL-2.0-or-later, LGPL-3.0-or-later, GPL-3.0-or-later ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "ffmpeg-7.1.1",
       "pname": "ffmpeg",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:12:23.362262Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:07:25.668165Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -275,13 +262,13 @@
         "man"
       ],
       "outputs": {
-        "bin": "/nix/store/yndgrg520x4ki9qismdz2dv2bl52a8s6-ffmpeg-7.1.1-bin",
-        "data": "/nix/store/6xfpqmxr1dfyqqwhjdimv8idyc7byfa8-ffmpeg-7.1.1-data",
-        "dev": "/nix/store/xglhnns448yr92zafq5w01dwlf8n5jg1-ffmpeg-7.1.1-dev",
-        "doc": "/nix/store/f14n8rsc9vm5pm7fcpick28na7ax4b3d-ffmpeg-7.1.1-doc",
-        "lib": "/nix/store/7jcnv1irk5k1jkk3hzakrbh50zymrr50-ffmpeg-7.1.1-lib",
-        "man": "/nix/store/ddfb84rwxx5sbbrvc00v7rlhrz370vvz-ffmpeg-7.1.1-man",
-        "out": "/nix/store/9cy2lwj6fig42gnsh9ivsgy71w81f8h1-ffmpeg-7.1.1"
+        "bin": "/nix/store/7m9y5qgxrpf6hl8q2gl4c1fmgabyngi1-ffmpeg-7.1.1-bin",
+        "data": "/nix/store/lvqs2k281yv6c9d629jxd4k6cyax64g2-ffmpeg-7.1.1-data",
+        "dev": "/nix/store/c1qnpg1sr7ka9ifb3asdgwry2x1bjy47-ffmpeg-7.1.1-dev",
+        "doc": "/nix/store/cdjqmy6i8lnsw9km19jk2aqjz9djqj1f-ffmpeg-7.1.1-doc",
+        "lib": "/nix/store/y94dz1xxvvwhmry0gy65abnh1kx6ipi4-ffmpeg-7.1.1-lib",
+        "man": "/nix/store/vdbyl17npnpjnwg5709fmnzsz1yb8y4l-ffmpeg-7.1.1-man",
+        "out": "/nix/store/29750146f2chlkanzpffvs21kcgfxlkx-ffmpeg-7.1.1"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -290,19 +277,18 @@
     {
       "attr_path": "ffmpeg",
       "broken": false,
-      "derivation": "/nix/store/nddbz0k1a682rdsinvz04xp1jlaps9wj-ffmpeg-7.1.1.drv",
+      "derivation": "/nix/store/19sa2g8q5y8ky1zdvah2kvy4pw79n9ci-ffmpeg-7.1.1.drv",
       "description": "Complete, cross-platform solution to record, convert and stream audio and video",
       "install_id": "ffmpeg",
       "license": "[ LGPL-2.1-or-later, GPL-2.0-or-later, LGPL-3.0-or-later, GPL-3.0-or-later ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "ffmpeg-7.1.1",
       "pname": "ffmpeg",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:32:28.402576Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:31:21.172723Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -312,13 +298,13 @@
         "man"
       ],
       "outputs": {
-        "bin": "/nix/store/20rmrl62qcqly9zvm64hc6d9yfws18ix-ffmpeg-7.1.1-bin",
-        "data": "/nix/store/nbs8kinkznw795sbw5mabfn1980hjr8w-ffmpeg-7.1.1-data",
-        "dev": "/nix/store/9a720c1fq2hlh06rw1pdq9bfd8vyp9bh-ffmpeg-7.1.1-dev",
-        "doc": "/nix/store/sd3kb02703462qi2hiprwhrgisdfw6rj-ffmpeg-7.1.1-doc",
-        "lib": "/nix/store/qap3r8z2c1ncd8ghijbz7skgw28h66yf-ffmpeg-7.1.1-lib",
-        "man": "/nix/store/wzpp83grkb74d8vq5yyvl8960q89c2q3-ffmpeg-7.1.1-man",
-        "out": "/nix/store/1d0bga6qii7qfhyrdvjc7896vvmzhh2b-ffmpeg-7.1.1"
+        "bin": "/nix/store/apsks1qb01pjn8q4g3ypl1rbsgz6vvyc-ffmpeg-7.1.1-bin",
+        "data": "/nix/store/h9idg6pqrfa1hv33ns3slkak416jfx9h-ffmpeg-7.1.1-data",
+        "dev": "/nix/store/18zwbjlmwnmxanrlhiwjs0ppcdv9phfj-ffmpeg-7.1.1-dev",
+        "doc": "/nix/store/sy8l9q3knk2x0h9ywa23v58aiv98j104-ffmpeg-7.1.1-doc",
+        "lib": "/nix/store/z5dk1v08a5w269l5i4702yrs5rqwp2g9-ffmpeg-7.1.1-lib",
+        "man": "/nix/store/y7vyzxw0pdaqdbn1ahz9bjp0hipnwnhv-ffmpeg-7.1.1-man",
+        "out": "/nix/store/83fdi7gqayqyr898xlplnck7qapz98nm-ffmpeg-7.1.1"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -327,19 +313,18 @@
     {
       "attr_path": "hy",
       "broken": false,
-      "derivation": "/nix/store/542id74mhw0b8a2f6ad9v6n7m3ayvf9x-python3.12-hy-1.1.0.drv",
+      "derivation": "/nix/store/hjr4fccnkjgzwrx6m2zl5f2mriib9fwr-python3.13-hy-1.1.0.drv",
       "description": "LISP dialect embedded in Python",
       "install_id": "hy",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "hy-1.1.0",
       "pname": "hy",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:36:16.703262Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:28:05.934012Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -348,8 +333,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/drcny4hfhklkba5kibjpjhwx0ql375ps-python3.12-hy-1.1.0-dist",
-        "out": "/nix/store/d5hfdinl291wq32xh9azh36sv6n9adwj-python3.12-hy-1.1.0"
+        "dist": "/nix/store/gf175f1zkgvv7raxkl5ikinjqqx68k7p-python3.13-hy-1.1.0-dist",
+        "out": "/nix/store/gicfn4a0wdkvlyi7fkx1ilxv64frf632-python3.13-hy-1.1.0"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -358,19 +343,18 @@
     {
       "attr_path": "hy",
       "broken": false,
-      "derivation": "/nix/store/32wmkvqifsik7mf78qxpah6577dk35r0-python3.12-hy-1.1.0.drv",
+      "derivation": "/nix/store/nhgh1rw6w3qzh0p1ki9dz6wphccqqg5p-python3.13-hy-1.1.0.drv",
       "description": "LISP dialect embedded in Python",
       "install_id": "hy",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "hy-1.1.0",
       "pname": "hy",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:54:50.546778Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:47:42.902842Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -379,8 +363,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/rplrh3a9q7v51q4208j8h6j9kdmbdajx-python3.12-hy-1.1.0-dist",
-        "out": "/nix/store/lmv0ggs6l11v8i86ssbaix3ycgyl280g-python3.12-hy-1.1.0"
+        "dist": "/nix/store/b0hq80761xsz8qc1wqaqidi82ciiirx7-python3.13-hy-1.1.0-dist",
+        "out": "/nix/store/wbkvjzgk7y8hq1w3ig7bln477z7aihdr-python3.13-hy-1.1.0"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -389,19 +373,18 @@
     {
       "attr_path": "hy",
       "broken": false,
-      "derivation": "/nix/store/305zwvfwhc395zwly8dyzdwa97xx8z0i-python3.12-hy-1.1.0.drv",
+      "derivation": "/nix/store/z5ff0njzwbx3qkwq0cfbpf7qpcia3pha-python3.13-hy-1.1.0.drv",
       "description": "LISP dialect embedded in Python",
       "install_id": "hy",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "hy-1.1.0",
       "pname": "hy",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:12:23.974740Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:07:26.291424Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -410,8 +393,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/c52zjmfx13n1frin32v3y5l3dl9bdj4k-python3.12-hy-1.1.0-dist",
-        "out": "/nix/store/syl6mh3d6jiyjiak4k5053kw2csc60f5-python3.12-hy-1.1.0"
+        "dist": "/nix/store/nqgvjn1j1cnyzldwh6nqdl4mjmzysy8w-python3.13-hy-1.1.0-dist",
+        "out": "/nix/store/6sxmjmbdkp9lnkp6ai23rka7lhwxhrz5-python3.13-hy-1.1.0"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -420,19 +403,18 @@
     {
       "attr_path": "hy",
       "broken": false,
-      "derivation": "/nix/store/99b585n9dych9niqww15208wrwgxzl1x-python3.12-hy-1.1.0.drv",
+      "derivation": "/nix/store/5cmxsk91v1c7wj9a9l4m0mwgx1njrf0b-python3.13-hy-1.1.0.drv",
       "description": "LISP dialect embedded in Python",
       "install_id": "hy",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "hy-1.1.0",
       "pname": "hy",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:32:30.220234Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:31:22.994040Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -441,8 +423,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/hqymg8rf27xln06dbx4254zbz2m8038f-python3.12-hy-1.1.0-dist",
-        "out": "/nix/store/nic8fnrghiai66wk6ygl4i31c98bsxdk-python3.12-hy-1.1.0"
+        "dist": "/nix/store/4s5p535fgilnq52x54cqdyd1avslyqmx-python3.13-hy-1.1.0-dist",
+        "out": "/nix/store/ffmicfr50jzygi9krmssgy4vzx3f44hi-python3.13-hy-1.1.0"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -451,19 +433,18 @@
     {
       "attr_path": "python313Packages.jupyter",
       "broken": false,
-      "derivation": "/nix/store/hwdpj8jwh1im9v98g82pxl5qpb9f8m3k-python3.13-jupyter-1.1.1.drv",
+      "derivation": "/nix/store/fa6gnwgrhrqrys753pv3bz4gjxbm98jd-python3.13-jupyter-1.1.1.drv",
       "description": "Installs all the Jupyter components in one go",
       "install_id": "jupyter",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "python3.13-jupyter-1.1.1",
       "pname": "jupyter",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:36:37.307434Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:28:26.795155Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -472,8 +453,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/n797vvqwyypa2wndxfs2kwf4mnamhf0q-python3.13-jupyter-1.1.1-dist",
-        "out": "/nix/store/8yw6m6q12bkrnj4ylxc8wz8j9s48bkam-python3.13-jupyter-1.1.1"
+        "dist": "/nix/store/g6wyysk0z7b4i3rl0mal83nrvdnm2h2g-python3.13-jupyter-1.1.1-dist",
+        "out": "/nix/store/c1j9c1j5xfr2mpbndsa1126bbr6vxbpc-python3.13-jupyter-1.1.1"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -482,19 +463,18 @@
     {
       "attr_path": "python313Packages.jupyter",
       "broken": false,
-      "derivation": "/nix/store/vn29i7fxbwlgfdrzc3b6i0iryr9l5nad-python3.13-jupyter-1.1.1.drv",
+      "derivation": "/nix/store/jg5zmyi3j5jn20s01c4ii4aviwm10d76-python3.13-jupyter-1.1.1.drv",
       "description": "Installs all the Jupyter components in one go",
       "install_id": "jupyter",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "python3.13-jupyter-1.1.1",
       "pname": "jupyter",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:55:29.609427Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:48:20.477258Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -503,8 +483,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/6a3gianzpyzpwf43gnf5kz0zysh1pyz2-python3.13-jupyter-1.1.1-dist",
-        "out": "/nix/store/76hl0g97rzix4gbdvi7zwajghf45n09g-python3.13-jupyter-1.1.1"
+        "dist": "/nix/store/mxwk99j0vxh67iqyf92xhhx885d6kfll-python3.13-jupyter-1.1.1-dist",
+        "out": "/nix/store/wjrd3k2ygmn0xxxgiil6z09nj5ykmcjh-python3.13-jupyter-1.1.1"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -513,19 +493,18 @@
     {
       "attr_path": "python313Packages.jupyter",
       "broken": false,
-      "derivation": "/nix/store/jmbmfj3ki96sqrkcmdbcbh686h6x4f1k-python3.13-jupyter-1.1.1.drv",
+      "derivation": "/nix/store/svd8yqjn9krwv5qmmsjsn33jypi6phfw-python3.13-jupyter-1.1.1.drv",
       "description": "Installs all the Jupyter components in one go",
       "install_id": "jupyter",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "python3.13-jupyter-1.1.1",
       "pname": "jupyter",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:12:45.050463Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:07:47.266040Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -534,8 +513,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/9l1kbd0dpqkvv2c9bhr9zzpz7n4gi0ns-python3.13-jupyter-1.1.1-dist",
-        "out": "/nix/store/0xfmm1ninyyfy1ah01vbsv6pqpr99m51-python3.13-jupyter-1.1.1"
+        "dist": "/nix/store/0skcwdwr7x3n0kkafsi3k5jkya0f0bf3-python3.13-jupyter-1.1.1-dist",
+        "out": "/nix/store/233pm9r6mj483xbjknn8vrls5aas01vm-python3.13-jupyter-1.1.1"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -544,19 +523,18 @@
     {
       "attr_path": "python313Packages.jupyter",
       "broken": false,
-      "derivation": "/nix/store/rp3jklm2nac0d4q006gvvx555l0mfhfm-python3.13-jupyter-1.1.1.drv",
+      "derivation": "/nix/store/yc3zl6x69mhga3b5vapbma34wzgl4pka-python3.13-jupyter-1.1.1.drv",
       "description": "Installs all the Jupyter components in one go",
       "install_id": "jupyter",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "python3.13-jupyter-1.1.1",
       "pname": "jupyter",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:33:13.762931Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:32:03.881105Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -565,140 +543,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/bqagr05nfh2ibf0zhni6yn89l0g1gmvs-python3.13-jupyter-1.1.1-dist",
-        "out": "/nix/store/j470v191z8kbbpdrq6k5k6shw66zww30-python3.13-jupyter-1.1.1"
-      },
-      "system": "x86_64-linux",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "just",
-      "broken": false,
-      "derivation": "/nix/store/pnzvyxkhw6v5rqymiw5w0jdzsmr761gp-just-1.40.0.drv",
-      "description": "Handy way to save and run project-specific commands",
-      "install_id": "just",
-      "license": "CC0-1.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "just-1.40.0",
-      "pname": "just",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:36:16.890857Z",
-      "stabilities": [
-        "staging",
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "1.40.0",
-      "outputs_to_install": [
-        "man",
-        "out"
-      ],
-      "outputs": {
-        "doc": "/nix/store/kck98fyp78wyq5v5pbdvi2alql3kphbl-just-1.40.0-doc",
-        "man": "/nix/store/2qma0wrxkqxaqv1s8h6f908slqwfbvkj-just-1.40.0-man",
-        "out": "/nix/store/w0s0f89zcpwl9ipygxiihba0j6fgwnyq-just-1.40.0"
-      },
-      "system": "aarch64-darwin",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "just",
-      "broken": false,
-      "derivation": "/nix/store/c8khhpbi7fvc8x2kmswv9k0jlfm3qsv3-just-1.40.0.drv",
-      "description": "Handy way to save and run project-specific commands",
-      "install_id": "just",
-      "license": "CC0-1.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "just-1.40.0",
-      "pname": "just",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:54:50.988356Z",
-      "stabilities": [
-        "staging",
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "1.40.0",
-      "outputs_to_install": [
-        "man",
-        "out"
-      ],
-      "outputs": {
-        "doc": "/nix/store/rdyw3qm6bvr72xn1x8ppv2v446nqnxn0-just-1.40.0-doc",
-        "man": "/nix/store/iyd406bfh3naws155rxzgbyplpk9fzh4-just-1.40.0-man",
-        "out": "/nix/store/xz278vbk5040d07xsx95b59848m6nd3w-just-1.40.0"
-      },
-      "system": "aarch64-linux",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "just",
-      "broken": false,
-      "derivation": "/nix/store/09h3i8sq6zvfhz28igr0qbldhpkfj31s-just-1.40.0.drv",
-      "description": "Handy way to save and run project-specific commands",
-      "install_id": "just",
-      "license": "CC0-1.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "just-1.40.0",
-      "pname": "just",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:12:24.172292Z",
-      "stabilities": [
-        "staging",
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "1.40.0",
-      "outputs_to_install": [
-        "man",
-        "out"
-      ],
-      "outputs": {
-        "doc": "/nix/store/vrr9idsznzv7m1n54287pl39kh6n6a22-just-1.40.0-doc",
-        "man": "/nix/store/qgjwgpk4isravm4w7y24m313878nfjnb-just-1.40.0-man",
-        "out": "/nix/store/j23s9ylivcxwwxmwwm3afpxj6338m86r-just-1.40.0"
-      },
-      "system": "x86_64-darwin",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "just",
-      "broken": false,
-      "derivation": "/nix/store/lyj2v2dnczwgynzih55mpx0vi7h47qcq-just-1.40.0.drv",
-      "description": "Handy way to save and run project-specific commands",
-      "install_id": "just",
-      "license": "CC0-1.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "just-1.40.0",
-      "pname": "just",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:32:30.715713Z",
-      "stabilities": [
-        "staging",
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "1.40.0",
-      "outputs_to_install": [
-        "man",
-        "out"
-      ],
-      "outputs": {
-        "doc": "/nix/store/b9mc1x9d3xbgbxjkw5hmlzk6ww17029d-just-1.40.0-doc",
-        "man": "/nix/store/rl9q2hs0wyy5z51sg20jwqknimhda81s-just-1.40.0-man",
-        "out": "/nix/store/gcwzmx1qrjyjpfs4a655wc2wq753w6sm-just-1.40.0"
+        "dist": "/nix/store/2dkid2l6j66af4lw4k0y3azh5r77a7cc-python3.13-jupyter-1.1.1-dist",
+        "out": "/nix/store/zwhgdra1kfwh8xrmi9ywpvv82ycg9xqr-python3.13-jupyter-1.1.1"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -707,28 +553,27 @@
     {
       "attr_path": "python313Full",
       "broken": false,
-      "derivation": "/nix/store/bkj4m5b0n9z8hrcj0gs4p2nsidq04k3j-python3-3.13.3.drv",
+      "derivation": "/nix/store/8xg50vmd0qzksd6ryyl1hswpwqqm3zz4-python3-3.13.5.drv",
       "description": "High-level dynamically-typed programming language",
       "install_id": "python313Full",
       "license": "Python-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "python3-3.13.3",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "python3-3.13.5",
       "pname": "python313Full",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:36:33.610732Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:28:22.997467Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "python3-3.13.3",
+      "version": "python3-3.13.5",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/p1bbd183vjqklb1mp1x7salmqgvgsffn-python3-3.13.3"
+        "out": "/nix/store/fdgqvcsdlqjgzww2p17sy91vvx73cl7j-python3-3.13.5"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -737,29 +582,28 @@
     {
       "attr_path": "python313Full",
       "broken": false,
-      "derivation": "/nix/store/mfpr77p54hj44igj76kfpashjdmf0yya-python3-3.13.3.drv",
+      "derivation": "/nix/store/pvd30191pkqqhw444wi7r81s4a00niq9-python3-3.13.5.drv",
       "description": "High-level dynamically-typed programming language",
       "install_id": "python313Full",
       "license": "Python-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "python3-3.13.3",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "python3-3.13.5",
       "pname": "python313Full",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:55:24.209625Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:48:15.066972Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "python3-3.13.3",
+      "version": "python3-3.13.5",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "debug": "/nix/store/gr7ypx12c415if8cgcks8w6qjk49fi2x-python3-3.13.3-debug",
-        "out": "/nix/store/9g6b4jmm7cbdz9hd3hcs1g54hjy87zvh-python3-3.13.3"
+        "debug": "/nix/store/j9bqd7hismpyqsd48sd9r824fs8wxld1-python3-3.13.5-debug",
+        "out": "/nix/store/imjii7yg48sisx3bz5va5cminczbq6r6-python3-3.13.5"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -768,28 +612,27 @@
     {
       "attr_path": "python313Full",
       "broken": false,
-      "derivation": "/nix/store/cwb60bssy9qks05vx48mcihkn6ipyfcl-python3-3.13.3.drv",
+      "derivation": "/nix/store/0547y4qqi52siyw7awbwms5nn82z30r9-python3-3.13.5.drv",
       "description": "High-level dynamically-typed programming language",
       "install_id": "python313Full",
       "license": "Python-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "python3-3.13.3",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "python3-3.13.5",
       "pname": "python313Full",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:12:41.269183Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:07:43.456013Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "python3-3.13.3",
+      "version": "python3-3.13.5",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/nqqln9c78wqnpzz0c4whqxh0g7jl9mfg-python3-3.13.3"
+        "out": "/nix/store/cm73ahxfy47vyxhj6ighqs0p64l31lyh-python3-3.13.5"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -798,29 +641,28 @@
     {
       "attr_path": "python313Full",
       "broken": false,
-      "derivation": "/nix/store/qgbh1dh8m1n69nwbbcc4c0q01lzbcgqa-python3-3.13.3.drv",
+      "derivation": "/nix/store/2wwxhrs72wbfxp35jmx9h8rmi18i5s9b-python3-3.13.5.drv",
       "description": "High-level dynamically-typed programming language",
       "install_id": "python313Full",
       "license": "Python-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "python3-3.13.3",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "python3-3.13.5",
       "pname": "python313Full",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:33:08.016894Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:31:58.219162Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "python3-3.13.3",
+      "version": "python3-3.13.5",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "debug": "/nix/store/z6636nvsbq9rrc19vnqbk8lcig4zhc3c-python3-3.13.3-debug",
-        "out": "/nix/store/pskwi0ysw5x6mf4k2bxv6rhrs0x6s4m6-python3-3.13.3"
+        "debug": "/nix/store/lxka855zb94nlg4ir5y9pi32yqlbzlkv-python3-3.13.5-debug",
+        "out": "/nix/store/kl67434pm6yih34v0bz2ss0f5kzin00i-python3-3.13.5"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -829,19 +671,18 @@
     {
       "attr_path": "python313Packages.spyder",
       "broken": false,
-      "derivation": "/nix/store/2j23b5vs3cw1gpsp698wqx3j34n7lmn2-python3.13-spyder-6.1.0a2.drv",
+      "derivation": "/nix/store/a6gi2l3y36f7k2896r8v7mvy99g3i76d-python3.13-spyder-6.1.0a2.drv",
       "description": "Scientific python development environment",
       "install_id": "spyder",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "python3.13-spyder-6.1.0a2",
       "pname": "spyder",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:55:37.064356Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:48:28.001493Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -850,8 +691,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/i0wjas6jli20q2bx9svqmm8ayd0g1jyx-python3.13-spyder-6.1.0a2-dist",
-        "out": "/nix/store/b9jqmd6l5sq60zcnrqiiadx8824669qg-python3.13-spyder-6.1.0a2"
+        "dist": "/nix/store/7lkllxs6bm6fzqmx4gcw0adyb003dnb3-python3.13-spyder-6.1.0a2-dist",
+        "out": "/nix/store/cb2100bikwxq1291ki4d0xvh86bzsrgl-python3.13-spyder-6.1.0a2"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -860,19 +701,18 @@
     {
       "attr_path": "python313Packages.spyder",
       "broken": false,
-      "derivation": "/nix/store/npmky53dabayikvymimzqwwibzb8hcm9-python3.13-spyder-6.1.0a2.drv",
+      "derivation": "/nix/store/6lbxwn523yfaqw6rriywafs1yxxbm5bg-python3.13-spyder-6.1.0a2.drv",
       "description": "Scientific python development environment",
       "install_id": "spyder",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
       "name": "python3.13-spyder-6.1.0a2",
       "pname": "spyder",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:33:21.672541Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:32:11.720734Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -881,8 +721,8 @@
         "out"
       ],
       "outputs": {
-        "dist": "/nix/store/dgcy2nx6hx198gwhaazvm8riks7dyx9w-python3.13-spyder-6.1.0a2-dist",
-        "out": "/nix/store/jk1cickyp9ifhnx24whs5vd558akj41v-python3.13-spyder-6.1.0a2"
+        "dist": "/nix/store/58l7zgvyhpjml0hdikm741z06qwkdi0x-python3.13-spyder-6.1.0a2-dist",
+        "out": "/nix/store/w8x340l8ilwwbmnm86m9979yqyss1jm3-python3.13-spyder-6.1.0a2"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -891,33 +731,32 @@
     {
       "attr_path": "sqlite",
       "broken": false,
-      "derivation": "/nix/store/h531r1c9vj315fkyq2cv77b2dzddmzbx-sqlite-3.48.0.drv",
+      "derivation": "/nix/store/gm0hd0ws14agsdvwb7vdhzhlivl0b6n5-sqlite-3.50.2.drv",
       "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
       "install_id": "sqlite",
       "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "sqlite-3.48.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "sqlite-3.50.2",
       "pname": "sqlite",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:36:57.359659Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:28:47.155850Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "3.48.0",
+      "version": "3.50.2",
       "outputs_to_install": [
         "bin",
         "man"
       ],
       "outputs": {
-        "bin": "/nix/store/cq20rd1ci51s72zv7k29h63clrj6rl0l-sqlite-3.48.0-bin",
-        "dev": "/nix/store/i30kh3xb6miyckm5nq554lmwfgciyxb7-sqlite-3.48.0-dev",
-        "doc": "/nix/store/hxvmkk8icrgshsdg39qlsn9bia3dz41z-sqlite-3.48.0-doc",
-        "man": "/nix/store/sal36w50bf6hlv076n4bypsyk51rn3ki-sqlite-3.48.0-man",
-        "out": "/nix/store/3q2bsgj3rpj8xksh6zgscwv3g1mzcjxy-sqlite-3.48.0"
+        "bin": "/nix/store/35z7rb3gd23yfcgfssy8g7qw3dpd7q9p-sqlite-3.50.2-bin",
+        "dev": "/nix/store/fnwnbb72xsrx67hlq995yrsliwpl08pl-sqlite-3.50.2-dev",
+        "doc": "/nix/store/bbg63w1qynzsvvlzhl7rig9409vvrdqq-sqlite-3.50.2-doc",
+        "man": "/nix/store/fvl0bgzn40x7qlzmhb148aqmr9k3inx3-sqlite-3.50.2-man",
+        "out": "/nix/store/73iiazjcn1qscb8m0l5f3jg56vjgwxbj-sqlite-3.50.2"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -926,34 +765,33 @@
     {
       "attr_path": "sqlite",
       "broken": false,
-      "derivation": "/nix/store/rxxka9k7b6whypngh48fhr3awiaz6hj2-sqlite-3.48.0.drv",
+      "derivation": "/nix/store/5l0yswsw9dx61zqkpj9idk74ga1iz4yq-sqlite-3.50.2.drv",
       "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
       "install_id": "sqlite",
       "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "sqlite-3.48.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "sqlite-3.50.2",
       "pname": "sqlite",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:55:58.206540Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:48:48.791451Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "3.48.0",
+      "version": "3.50.2",
       "outputs_to_install": [
         "bin",
         "man"
       ],
       "outputs": {
-        "bin": "/nix/store/j9gsxv41ravm46zxkq6bz0kih7vikf2q-sqlite-3.48.0-bin",
-        "debug": "/nix/store/cchzb2prmi3b93r0n252nj9kmi8sq15h-sqlite-3.48.0-debug",
-        "dev": "/nix/store/qq5r0v7w2knd099ih1yi705sgqb6xrq4-sqlite-3.48.0-dev",
-        "doc": "/nix/store/dy5bgi74fdcyrvsqljcm71ys8vln6jwq-sqlite-3.48.0-doc",
-        "man": "/nix/store/53xmz12n4qch61r792wvlm8aaw88r2mv-sqlite-3.48.0-man",
-        "out": "/nix/store/nzzrpcj9r48kq73fwibjxbwpnykrj5rf-sqlite-3.48.0"
+        "bin": "/nix/store/xra4yp1wl7kk5yrql2ksa28pyhgv05bh-sqlite-3.50.2-bin",
+        "debug": "/nix/store/y78vmjc4dvqg52gy2y03yy43kmm4l5xy-sqlite-3.50.2-debug",
+        "dev": "/nix/store/bllx9j696dahs4xz2942lmbab7bain1w-sqlite-3.50.2-dev",
+        "doc": "/nix/store/hdb7kzmd4d3arn8qc3n02zb2afhz01bk-sqlite-3.50.2-doc",
+        "man": "/nix/store/f434igy35argvb4ia067612g8lgamj9h-sqlite-3.50.2-man",
+        "out": "/nix/store/hkapr9yav6nx45h1gizasd80gkqv3rqd-sqlite-3.50.2"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -962,33 +800,32 @@
     {
       "attr_path": "sqlite",
       "broken": false,
-      "derivation": "/nix/store/dr069z6wipckxdjwcsdhk5lsr4f5abw2-sqlite-3.48.0.drv",
+      "derivation": "/nix/store/b5s9q3zamrgppgrgf4svcy4w918njhbz-sqlite-3.50.2.drv",
       "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
       "install_id": "sqlite",
       "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "sqlite-3.48.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "sqlite-3.50.2",
       "pname": "sqlite",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:13:05.671438Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:08:07.702575Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "3.48.0",
+      "version": "3.50.2",
       "outputs_to_install": [
         "bin",
         "man"
       ],
       "outputs": {
-        "bin": "/nix/store/whxzqmryz1s807f9difm7sbky86p0mpl-sqlite-3.48.0-bin",
-        "dev": "/nix/store/2p883ilw7k58sq8hwcnl519di738wxp0-sqlite-3.48.0-dev",
-        "doc": "/nix/store/dz22l0c3h2gxvzx45vkwcwd3sr0mvjs5-sqlite-3.48.0-doc",
-        "man": "/nix/store/c1q9an2k734218s47hsb3w7ppa5pdpgz-sqlite-3.48.0-man",
-        "out": "/nix/store/9wjh0cydjvncz80x3l3flw67rvq6jwdq-sqlite-3.48.0"
+        "bin": "/nix/store/5wm8hlhk48q6yliym7nfgpa1ijfphs2l-sqlite-3.50.2-bin",
+        "dev": "/nix/store/fi2fi6q7yqpgwa6z14xnqx00pq9s6h92-sqlite-3.50.2-dev",
+        "doc": "/nix/store/3y1wdididszk73lxk2d2h753llrl18ns-sqlite-3.50.2-doc",
+        "man": "/nix/store/zra5y09sdp0vvsynaj0mv6pl0n9x3kil-sqlite-3.50.2-man",
+        "out": "/nix/store/qgbjr35s6r2mr4i37qpkb70wqfiwslh3-sqlite-3.50.2"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -997,34 +834,33 @@
     {
       "attr_path": "sqlite",
       "broken": false,
-      "derivation": "/nix/store/5z99pfws3r68vdxjbh05ryd063vqzrix-sqlite-3.48.0.drv",
+      "derivation": "/nix/store/z7qk86z6ivqgk3gn38jswycyflvc500w-sqlite-3.50.2.drv",
       "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
       "install_id": "sqlite",
       "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "sqlite-3.48.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "sqlite-3.50.2",
       "pname": "sqlite",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:33:44.521040Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:32:33.826719Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "3.48.0",
+      "version": "3.50.2",
       "outputs_to_install": [
         "bin",
         "man"
       ],
       "outputs": {
-        "bin": "/nix/store/b83kagl3d98zf8dbvh52lw4xg881bhkf-sqlite-3.48.0-bin",
-        "debug": "/nix/store/719sjqlrhmrn02079dam88m0ch4gwm7h-sqlite-3.48.0-debug",
-        "dev": "/nix/store/92gwa4j45skp8d096csmnj2a8jcn0q9w-sqlite-3.48.0-dev",
-        "doc": "/nix/store/a0h09d196h7j564mrcy15bldd95blw7j-sqlite-3.48.0-doc",
-        "man": "/nix/store/xrjy0a756pb41qq9a38lqvy2m7jd78p5-sqlite-3.48.0-man",
-        "out": "/nix/store/yfjzkkkyxcalyj7l1n4d4y6s81i65hmy-sqlite-3.48.0"
+        "bin": "/nix/store/davps0p09b6kswdnjm3mscfk5g25cvaf-sqlite-3.50.2-bin",
+        "debug": "/nix/store/18l20nnx9pfixq0w29alajkgncvlz8qw-sqlite-3.50.2-debug",
+        "dev": "/nix/store/jmqk9474xmakj7s663kbinp7bn959kr1-sqlite-3.50.2-dev",
+        "doc": "/nix/store/fanxdjifxzjrs8zhi0qg9ifd0mqir4rf-sqlite-3.50.2-doc",
+        "man": "/nix/store/p0pcmmzd168kdpl01lnp3qi17m7y2iwv-sqlite-3.50.2-man",
+        "out": "/nix/store/yd47pmkv6iv58gs5v5jgyblvkw87pqx3-sqlite-3.50.2"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -1033,28 +869,27 @@
     {
       "attr_path": "uv",
       "broken": false,
-      "derivation": "/nix/store/isqz0gb01bzj059z0bkv7xn1nr7v6jy7-uv-0.7.13.drv",
+      "derivation": "/nix/store/rhn7jhy9gmg19rqsphqj644hz6ybdnjq-uv-0.8.2.drv",
       "description": "Extremely fast Python package installer and resolver, written in Rust",
       "install_id": "uv",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "uv-0.7.13",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "uv-0.8.2",
       "pname": "uv",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:37:13.013800Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:29:03.525700Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "0.7.13",
+      "version": "0.8.2",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/60wl696zlnnj1sq1rkb3kxny5wzxirbi-uv-0.7.13"
+        "out": "/nix/store/db9y1b002zlnyjgpsnbl9hvlwsiqajl4-uv-0.8.2"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -1063,28 +898,27 @@
     {
       "attr_path": "uv",
       "broken": false,
-      "derivation": "/nix/store/ljqd9glziv06w0wj8m2xs0mjhb6w6nhf-uv-0.7.13.drv",
+      "derivation": "/nix/store/knnv1wc9r7slfyx367sdlyyz8r4sy7r6-uv-0.8.2.drv",
       "description": "Extremely fast Python package installer and resolver, written in Rust",
       "install_id": "uv",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "uv-0.7.13",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "uv-0.8.2",
       "pname": "uv",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T00:56:19.858724Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:49:10.863162Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "0.7.13",
+      "version": "0.8.2",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/a4s894q0vdnkbx18r2prfyhl3xzf8lri-uv-0.7.13"
+        "out": "/nix/store/bdps6h2gn2rysavc3cq2slqnjlsyyk03-uv-0.8.2"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -1093,28 +927,27 @@
     {
       "attr_path": "uv",
       "broken": false,
-      "derivation": "/nix/store/3hqxyqzx3yd800hxwf28ly7kbr3zzx4h-uv-0.7.13.drv",
+      "derivation": "/nix/store/50fr7pg0vf9s8x360ddk5pv5hkr1j17i-uv-0.8.2.drv",
       "description": "Extremely fast Python package installer and resolver, written in Rust",
       "install_id": "uv",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "uv-0.7.13",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "uv-0.8.2",
       "pname": "uv",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:13:21.804090Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:08:24.142702Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "0.7.13",
+      "version": "0.8.2",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/ma157b9bqjxrgwwc3s8lil9i1a3d5sh4-uv-0.7.13"
+        "out": "/nix/store/91g6383zq1wbiik2an7g6yfrj294c19v-uv-0.8.2"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -1123,155 +956,30 @@
     {
       "attr_path": "uv",
       "broken": false,
-      "derivation": "/nix/store/01xrb7kf441xiyrk5qkqrik8ggj1ali1-uv-0.7.13.drv",
+      "derivation": "/nix/store/z5cy5l307s6b8wsmf4l3fmlp0lxigd8f-uv-0.8.2.drv",
       "description": "Extremely fast Python package installer and resolver, written in Rust",
       "install_id": "uv",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "name": "uv-0.7.13",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "uv-0.8.2",
       "pname": "uv",
-      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
-      "rev_count": 816272,
-      "rev_date": "2025-06-17T04:31:58Z",
-      "scrape_date": "2025-06-18T01:34:07.514180Z",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:32:56.820354Z",
       "stabilities": [
-        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "0.7.13",
+      "version": "0.8.2",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/xdr4fddncn2sz5asjrfls4ajpsw6j5qw-uv-0.7.13"
+        "out": "/nix/store/swq8qrr7n5gkc1b4940q62a3ll52prgl-uv-0.8.2"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "install_id": "pinkhaus-models",
-      "locked-url": "path:../pinkhaus-models?lastModified=1753889200&narHash=sha256-Um2GTlSN%2ByYL3TAfloy1Qo9X9jtH2qq8btdFl8C2wPs%3D",
-      "flake-description": "Pinkhaus Models - Shared database models and schemas",
-      "locked-flake-attr-path": "packages.aarch64-darwin.default",
-      "derivation": "/nix/store/2y5jmnkxnc9qx4qiyd27vm5v4i917cpf-python3.13-pinkhaus-models-0.1.0.drv",
-      "outputs": {
-        "dist": "/nix/store/zayhv0xinbhx6g8xdqp66z3kx99jdxhm-python3.13-pinkhaus-models-0.1.0-dist",
-        "out": "/nix/store/3fsdrgvraxw51c11kh8m05ny2l7093pm-python3.13-pinkhaus-models-0.1.0"
-      },
-      "output-names": [
-        "out",
-        "dist"
-      ],
-      "outputs-to-install": [
-        "out"
-      ],
-      "requested-outputs-to-install": [],
-      "package-system": "aarch64-darwin",
-      "system": "aarch64-darwin",
-      "name": "python3.13-pinkhaus-models-0.1.0",
-      "pname": "pinkhaus-models",
-      "version": "0.1.0",
-      "description": "Shared database models and schemas for pinkhaus projects",
-      "licenses": [
-        "MIT"
-      ],
-      "broken": false,
-      "unfree": false,
-      "priority": 5
-    },
-    {
-      "install_id": "pinkhaus-models",
-      "locked-url": "path:../pinkhaus-models?lastModified=1753889200&narHash=sha256-Um2GTlSN%2ByYL3TAfloy1Qo9X9jtH2qq8btdFl8C2wPs%3D",
-      "flake-description": "Pinkhaus Models - Shared database models and schemas",
-      "locked-flake-attr-path": "packages.aarch64-linux.default",
-      "derivation": "/nix/store/gj3272di8l6sblmq8s86d1m4flmvzvc8-python3.13-pinkhaus-models-0.1.0.drv",
-      "outputs": {
-        "dist": "/nix/store/is0q45yv5i3if45x1np5g2rmbj4632gm-python3.13-pinkhaus-models-0.1.0-dist",
-        "out": "/nix/store/2blh9m8ziim47dqg4vj40ha2y9s3m6ca-python3.13-pinkhaus-models-0.1.0"
-      },
-      "output-names": [
-        "out",
-        "dist"
-      ],
-      "outputs-to-install": [
-        "out"
-      ],
-      "requested-outputs-to-install": [],
-      "package-system": "aarch64-linux",
-      "system": "aarch64-linux",
-      "name": "python3.13-pinkhaus-models-0.1.0",
-      "pname": "pinkhaus-models",
-      "version": "0.1.0",
-      "description": "Shared database models and schemas for pinkhaus projects",
-      "licenses": [
-        "MIT"
-      ],
-      "broken": false,
-      "unfree": false,
-      "priority": 5
-    },
-    {
-      "install_id": "pinkhaus-models",
-      "locked-url": "path:../pinkhaus-models?lastModified=1753889200&narHash=sha256-Um2GTlSN%2ByYL3TAfloy1Qo9X9jtH2qq8btdFl8C2wPs%3D",
-      "flake-description": "Pinkhaus Models - Shared database models and schemas",
-      "locked-flake-attr-path": "packages.x86_64-darwin.default",
-      "derivation": "/nix/store/gnyl1jhpjkhb9ksx1kgznhkr49a4s31d-python3.13-pinkhaus-models-0.1.0.drv",
-      "outputs": {
-        "dist": "/nix/store/4cqr4k1jixki8047qlqxhnd39lbc30cg-python3.13-pinkhaus-models-0.1.0-dist",
-        "out": "/nix/store/k41xnlxar48rxp3xwfgxvzn812b7x751-python3.13-pinkhaus-models-0.1.0"
-      },
-      "output-names": [
-        "out",
-        "dist"
-      ],
-      "outputs-to-install": [
-        "out"
-      ],
-      "requested-outputs-to-install": [],
-      "package-system": "x86_64-darwin",
-      "system": "x86_64-darwin",
-      "name": "python3.13-pinkhaus-models-0.1.0",
-      "pname": "pinkhaus-models",
-      "version": "0.1.0",
-      "description": "Shared database models and schemas for pinkhaus projects",
-      "licenses": [
-        "MIT"
-      ],
-      "broken": false,
-      "unfree": false,
-      "priority": 5
-    },
-    {
-      "install_id": "pinkhaus-models",
-      "locked-url": "path:../pinkhaus-models?lastModified=1753889200&narHash=sha256-Um2GTlSN%2ByYL3TAfloy1Qo9X9jtH2qq8btdFl8C2wPs%3D",
-      "flake-description": "Pinkhaus Models - Shared database models and schemas",
-      "locked-flake-attr-path": "packages.x86_64-linux.default",
-      "derivation": "/nix/store/vk6rwz9h9ic6alawnw8fl0xxnia3m9fp-python3.13-pinkhaus-models-0.1.0.drv",
-      "outputs": {
-        "dist": "/nix/store/y97p7jyjmq0nrlq66q3vv178djcvjbpb-python3.13-pinkhaus-models-0.1.0-dist",
-        "out": "/nix/store/5nz14yis8jhm52nsa3l4in2dpn7dkzr0-python3.13-pinkhaus-models-0.1.0"
-      },
-      "output-names": [
-        "out",
-        "dist"
-      ],
-      "outputs-to-install": [
-        "out"
-      ],
-      "requested-outputs-to-install": [],
-      "package-system": "x86_64-linux",
-      "system": "x86_64-linux",
-      "name": "python3.13-pinkhaus-models-0.1.0",
-      "pname": "pinkhaus-models",
-      "version": "0.1.0",
-      "description": "Shared database models and schemas for pinkhaus projects",
-      "licenses": [
-        "MIT"
-      ],
-      "broken": false,
-      "unfree": false,
       "priority": 5
     }
   ],
@@ -1282,18 +990,12 @@
         "ffmpeg": {
           "pkg-path": "ffmpeg"
         },
-        "just": {
-          "pkg-path": "just"
-        },
-        "pinkhaus-models": {
-          "flake": "path:../pinkhaus-models"
-        },
         "sqlite": {
           "pkg-path": "sqlite"
         }
       },
       "hook": {
-        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Beige-book environment activated\"\n  echo \"pinkhaus-models is available via flox\"\n"
+        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Beige-book environment activated\"\n"
       },
       "profile": {},
       "options": {},
