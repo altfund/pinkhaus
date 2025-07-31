@@ -9,7 +9,7 @@ from .database import TranscriptionDatabase
 __version__ = "0.1.0"
 __all__ = [
     "TranscriptionMetadata",
-    "TranscriptionSegment", 
+    "TranscriptionSegment",
     "Segment",
     "TranscriptionResult",
     "TranscriptionDatabase",

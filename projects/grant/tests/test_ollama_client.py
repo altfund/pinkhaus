@@ -95,6 +95,7 @@ class TestOllamaClient:
             "llama3.2", "Who are you?", system="You are a helpful assistant."
         )
 
+        print("Response: " + response)
         # Verify system prompt was included
         call_args = mock_post.call_args
         assert call_args[1]["json"]["system"] == "You are a helpful assistant."
