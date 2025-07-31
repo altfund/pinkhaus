@@ -6,7 +6,7 @@ import json
 import toml
 import pytest
 from pathlib import Path
-from beige_book import AudioTranscriber, Segment
+from beige_book import AudioTranscriber
 
 
 # Test fixture path - audio file is in resources directory
@@ -91,9 +91,11 @@ class TestAudioTranscriber:
 
     def test_time_formatting(self):
         """Test time formatting function"""
-        assert Segment.format_time(0) == "00:00:00.000"
-        assert Segment.format_time(61.5) == "00:01:01.500"
-        assert Segment.format_time(3661.123) == "01:01:01.123"
+        from beige_book.transcriber_betterproto import format_time
+
+        assert format_time(0) == "00:00:00.000"
+        assert format_time(61.5) == "00:01:01.500"
+        assert format_time(3661.123) == "01:01:01.123"
 
 
 class TestOutputFormats:
