@@ -22,12 +22,15 @@ load_dotenv()  # loads from .env if present
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Define the base API URLs
-OVERTIME_API_URL = "https://overtimemarketsv2.xyz/overtime-v2/networks/10"
 ODDS_API_URL = "https://api.the-odds-api.com/v4/sports"
 
 ODDS_API_KEY = os.getenv("ODDS_API_KEY")
 OVERTIME_API_KEY = os.getenv("OVERTIME_API_KEY")
 
+# Base URL and network ID
+OVERTIME_BASE_URL = "https://api.overtime.io/overtime-v2"
+OVERTIME_NETWORK_ID = os.getenv("OVERTIME_NETWORK_ID", "10")
+OVERTIME_API_URL = f"{OVERTIME_BASE_URL}/networks/{OVERTIME_NETWORK_ID}"
 
 DB_NAME = "sport_odds.db"
 
@@ -64,44 +67,54 @@ def create_or_replace_table(database, df, table_name):
         conn.execute("REPLACE INTO table_metadata (table_name, last_updated) VALUES (?, ?)", 
                      (table_name_str, last_updated_str))
 
-def upsert_table(database, df, table_name, key_columns):
-    """Insert new records and update existing ones in the database."""
-    
-    df['updated_at'] = pd.Timestamp.now().isoformat()
-    
+def upsert_table(database, df, table_name, key_columns, update_columns=None):
+    """
+    Insert new records and update existing ones in the database.
+
+    :param database: str, path to the sqlite database file
+    :param df: pandas.DataFrame, the rows to upsert
+    :param table_name: str, name of the target table
+    :param key_columns: list of str, columns to use in the ON CONFLICT clause
+    :param update_columns: list of str or None, columns to overwrite on conflict;
+                           if None, all columns except key_columns will be updated
+    """
+    # Make a working copy and stamp each row with a new updated_at
+    df = df.copy()
+    df['updated_at'] = pd.Timestamp.now()
+
     with sqlite3.connect(database, timeout=10) as conn:
         cursor = conn.cursor()
-        
-        # Ensure key_columns have a UNIQUE constraint
-        cursor.execute(f"PRAGMA index_list({table_name})")
-        indexes = cursor.fetchall()
-        index_columns = []
-        for index in indexes:
-            cursor.execute(f"PRAGMA index_info({index[1]})")
-            index_columns.extend([col[2] for col in cursor.fetchall()])
-        
-        if not all(col in index_columns for col in key_columns):
-            raise ValueError(f"The ON CONFLICT key columns {key_columns} must have a UNIQUE or PRIMARY KEY constraint.")
 
         for _, row in df.iterrows():
-            # Convert timestamps to ISO format and handle None values
-            row = row.fillna("")  # Replace NaN with empty string
-            row_dict = row.to_dict()
-            row_dict["updated_at"] = pd.Timestamp.now().isoformat()
+            # 1. Turn the row into a dict, replacing NaN with empty string
+            row_dict = row.fillna("").to_dict()
 
-            columns = ", ".join(row_dict.keys())
-            placeholders = ", ".join(["?"] * len(row_dict))
-            update_columns = ", ".join([f"{col} = ?" for col in row_dict.keys() if col not in key_columns])
+            # 2. Convert any timestamp/datetime to ISO strings
+            for col, val in row_dict.items():
+                if hasattr(val, "isoformat"):
+                    row_dict[col] = val.isoformat()
+
+            cols = list(row_dict.keys())
+            placeholders = ", ".join("?" for _ in cols)
+
+            # 3. Decide which columns to update on conflict
+            if update_columns is None:
+                uc = [c for c in cols if c not in key_columns]
+            else:
+                uc = update_columns
+
+            update_clause = ", ".join(f"{c} = ?" for c in uc)
 
             sql = f"""
-                INSERT INTO {table_name} ({columns})
-                VALUES ({placeholders})
-                ON CONFLICT ({", ".join(key_columns)}) 
-                DO UPDATE SET {update_columns}
+            INSERT INTO {table_name} ({', '.join(cols)})
+            VALUES ({placeholders})
+            ON CONFLICT ({', '.join(key_columns)})
+            DO UPDATE SET {update_clause}
             """
 
-            values = tuple(row_dict.values()) + tuple(row_dict[col] for col in row_dict.keys() if col not in key_columns)
-            
+            # 4. Build the parameter list: first INSERT values, then UPDATE values
+            values = [row_dict[c] for c in cols] + [row_dict[c] for c in uc]
+
             try:
                 cursor.execute(sql, values)
             except sqlite3.InterfaceError as e:
@@ -109,6 +122,7 @@ def upsert_table(database, df, table_name, key_columns):
                 logging.error(f"Query: {sql}")
                 logging.error(f"Values: {values}")
                 raise
+
         conn.commit()
 
 
@@ -116,12 +130,12 @@ def upsert_table(database, df, table_name, key_columns):
 # Fetch all Overtime market odds
 def get_all_overtime_markets():
     try:
-        logging.info("Fetching all Overtime Markets data...")
-        response = requests.get(f"{OVERTIME_API_URL}/markets")
-        response.raise_for_status()
-
-        data = response.json()
-        return(data)
+        url = f"{OVERTIME_API_URL}/markets"
+        headers = {"x-api-key": OVERTIME_API_KEY}
+        logging.info(f"Fetching Overtime Markets from {url}")
+        resp = requests.get(url, headers=headers, timeout=10)
+        resp.raise_for_status()
+        return resp.json()
     except requests.exceptions.RequestException as e:
         logging.error(f"Error fetching Overtime Markets: {e}")
         
@@ -140,7 +154,8 @@ def get_overtime_markets_markets(overtime_all_json):
                         "market_type": market.get("type"),
                         "home_team": market.get("homeTeam"),
                         "away_team": market.get("awayTeam"),
-                        "maturity_date": market.get("maturityDate")
+                        "maturity_date": market.get("maturityDate"),
+                        "position_names": json.dumps(market.get("positionNames") or [])
                     })
     return pd.DataFrame(results)
 
@@ -164,6 +179,7 @@ def get_overtime_markets_odds(overtime_all_json):
                 "market_type": market_type,
                 "line": line,
                 "outcome": outcome_label,
+                "position": i,              # ← new
                 "american_odds": odd.get("american"),
                 "decimal_odds": odd.get("decimal"),
                 "normalized_implied": odd.get("normalizedImplied")
@@ -182,29 +198,63 @@ def get_overtime_markets_odds(overtime_all_json):
     return pd.DataFrame(results)
 
 def get_overtime_games_flat(games_json):
+    """
+    Flatten the Overtime “games-info” payload (a dict of gameId→info)
+    into a DataFrame-friendly list of dicts matching your market schema.
+    """
     rows = []
-    for league, games in games_json.items():
-        for g in games:
-            # unpack the two teams
-            teams = g.get("teams", [])
-            home = next((t for t in teams if t["isHome"]), {})
-            away = next((t for t in teams if not t["isHome"]), {})
 
-            rows.append({
-                "game_id":               g["gameId"],
-                "start_time":            g.get("startTime"),
-                "last_update":           datetime.fromtimestamp(g["lastUpdate"]/1e3),
-                "game_status":           g.get("gameStatus"),
-                "is_finished":           g.get("isGameFinished"),
-                "tournament":            g.get("tournamentName"),
-                "tournament_round":      g.get("tournamentRound"),
+    for game_id, info in games_json.items():
+        if not isinstance(info, dict):
+            # skip any unexpected values
+            continue
 
-                "home_score":            home.get("score"),
-                "away_score":            away.get("score"),
+        # Convert lastUpdate (ms since epoch) to datetime, if present
+        last_update = None
+        if info.get("lastUpdate") is not None:
+            try:
+                last_update = datetime.fromtimestamp(info["lastUpdate"] / 1000)
+            except Exception:
+                last_update = None
 
-                "home_score_by_period":  json.dumps(home.get("scoreByPeriod", [])),
-                "away_score_by_period":  json.dumps(away.get("scoreByPeriod", [])),
-            })
+        # Base row
+        row = {
+            "source_id":            game_id,                   # note: merge into market.source_id
+            "last_update":          last_update,
+            "game_status":          info.get("gameStatus"),
+            "is_finished":          info.get("isGameFinished"),
+            "tournament":           info.get("tournamentName") or None,
+            "tournament_round":     info.get("tournamentRound") or None,
+
+            # we'll fill these in from the teams array
+            "home_team":            None,
+            "away_team":            None,
+            "home_score":           None,
+            "away_score":           None,
+            "home_score_by_period": None,
+            "away_score_by_period": None,
+        }
+
+        # Unpack the two teams
+        for t in info.get("teams", []):
+            if not isinstance(t, dict) or "name" not in t:
+                continue
+
+            name = t["name"]
+            score = t.get("score")  # may be None if not finished
+            periods = t.get("scoreByPeriod", [])
+
+            if t.get("isHome"):
+                row["home_team"] = name
+                row["home_score"] = score
+                row["home_score_by_period"] = json.dumps(periods)
+            else:
+                row["away_team"] = name
+                row["away_score"] = score
+                row["away_score_by_period"] = json.dumps(periods)
+
+        rows.append(row)
+
     return pd.DataFrame(rows)
 
 # Fetch sports data from Odds API
@@ -265,8 +315,42 @@ def insert_odds(database, df):
     """Insert all odds data without replacing previous entries."""
     with sqlite3.connect(database, timeout=10) as conn:
         df.to_sql("odd", conn, if_exists="append", index=False)
+
+def upsert_teams_from_markets(conn, markets_df):
+    now   = datetime.utcnow()
+    teams = []
+
+    for _, m in markets_df.iterrows():
+        home, away = m["home_team"], m["away_team"]
+        league      = m.get("league_name")
+
+        teams.append({
+            "team_name":  home,
+            "league":     league,
+            "updated_at": now
+        })
+        teams.append({
+            "team_name":  away,
+            "league":     league,
+            "updated_at": now
+        })
+
+    teams_df = (
+        pd.DataFrame(teams)
+          .drop_duplicates(subset=["team_name"])
+    )
+
+    upsert_table(
+        database=DB_NAME,
+        df=teams_df,
+        table_name="team",
+        key_columns=["team_name"],
+        update_columns=["league","updated_at"]
+    )
+
         
 def upsert_teams_from_games(conn, games_df):
+    # Deprecated, gettingt
     # build one row per team
     now = datetime.utcnow()
     teams = []
@@ -285,7 +369,7 @@ def upsert_teams_from_games(conn, games_df):
 
     # use your generic upsert helper
     upsert_table(
-        conn,
+        DB_NAME,
         table_name="team",
         df=teams_df,
         primary_key="team_name",
@@ -298,7 +382,7 @@ def fetch_overtime_games():
     Fetches the full games-info payload from Overtime V2.
     Returns the JSON as a dict: { league_name: [ gameObj, ... ], ... }
     """
-    url = f"{OVERTIME_API_URL}/games-info"
+    url = f"{OVERTIME_BASE_URL}/games-info"
     resp = requests.get(url)
     resp.raise_for_status()
     return resp.json()
@@ -334,6 +418,9 @@ if __name__ == "__main__":
             overtime_markets_odds_df = get_overtime_markets_odds(overtime_all_json=overtime_market_all_json) #overtime_market_all_df
             insert_odds(DB_NAME, overtime_markets_odds_df)
             
+            logging.info("Updating Overtime teams...")
+            upsert_teams_from_markets(DB_NAME, overtime_markets_markets_df)
+            
             logging.info("Updating Overtime Markets games...")
             # 1) Pull games from the API and flatten
             games_json = fetch_overtime_games()
@@ -346,48 +433,38 @@ if __name__ == "__main__":
                     parse_dates=["maturity_date", "updated_at"]  # adjust as needed
                 )
                 
-                # 3) Merge games onto markets by source_id == game_id
-                enriched = (
-                    markets_df
-                    .merge(
-                        games_df,
-                        left_on="source_id",
-                        right_on="game_id",
-                        how="left",
-                        suffixes=("", "_game")  # if you want to keep both versions
-                    )
-                    .drop(columns=["game_id"])  # drop the duplicate
-                )
+                
+                # strip out any old game columns first
+                game_fields = [
+                    "last_update", "game_status", "is_finished",
+                    "tournament", "tournament_round",
+                    "home_score", "away_score",
+                    "home_score_by_period", "away_score_by_period"
+                ]
+                trimmed = markets_df.drop(columns=game_fields, errors="ignore")
+                
+                # now do a plain left-join by source_id
+                enriched = trimmed.merge(games_df[game_fields + ['source_id']], 
+                                         on="source_id", how="left")
+
+                
                 
                 # 4) Update the timestamp for this enrichment run
                 enriched["updated_at"] = datetime.utcnow()
-                to_update = enriched[enriched["game_id"].notna()]
+                to_update = enriched[enriched["source_id"].notna()]
                 
                 logging.info("Updating Overtime Markets game statuses...")
                 # 5) Upsert the enriched DataFrame back into your market table
                 upsert_table(
-                    conn,
+                    DB_NAME,
                     table_name="market",
                     df=to_update,
-                    primary_key="source_id",
-                    update_columns=[
-                        "start_time",
-                        "last_update",
-                        "game_status",
-                        "is_finished",
-                        "tournament",
-                        "tournament_round",
-                        "home_score",
-                        "away_score",
-                        "home_score_by_period",
-                        "away_score_by_period",
-                        "updated_at",
-                        # plus any status fields you already have
-                    ]
+                    key_columns=["source_id"],
+                    update_columns=game_fields + ["updated_at"]
                 )
             
                 logging.info("Updating Overtime Markets teams...")
-                upsert_teams_from_games(conn, games_df)
+                #upsert_teams_from_games(DB_NAME, games_df)
             
             logging.info("Overtime Markets data updated successfully.")
             

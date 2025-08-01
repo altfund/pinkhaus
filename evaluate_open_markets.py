@@ -49,32 +49,44 @@ class ExternalGrpcSignal(SignalProvider):
         self.timeout = timeout
 
     def get_probs(self, df: pd.DataFrame) -> pd.Series:
-        if df.empty:
-            return pd.Series([], index=df.index)
+        import grpc
         from external_pb2 import SignalBatchRequest
         from external_pb2_grpc import SignalServiceStub
-        import grpc
 
-        # Build one batch request
+        # 1) Always log entry & DataFrame size
+        print(f"[CLIENT] ExternalGrpcSignal.get_probs: {len(df)} rows", flush=True)
+
+        # 2) If empty, bail early (but log it)
+        if df.empty:
+            print("[CLIENT]  → empty df → returning empty Series", flush=True)
+            return pd.Series([], index=df.index)
+
+        # 3) Build & log the batch request
         req = SignalBatchRequest()
-        for _, row in df.iterrows():
+        for idx, row in df.iterrows():
             r = req.requests.add()
             r.source_id          = row["source_id"]
             r.normalized_outcome = row["normalized_outcome"]
             r.as_of_time         = row["time"].isoformat()
+        print(f"[CLIENT]  → sending {len(req.requests)} RPC requests", flush=True)
 
+        # 4) Actually call the RPC, but don’t hide exceptions
         try:
-            print(f"[CLIENT] Calling RPC for {len(df)} rows...")
             t0 = time.time()
             resp = self.stub.GetProbabilities(req, timeout=self.timeout)
+            took = time.time() - t0
+            print(f"[CLIENT]  → RPC returned in {took:.3f}s, {len(resp.probabilities)} probs", flush=True)
             probs = list(resp.probabilities)
-            print(f"[CLIENT] RPC returned in {time.time()-t0:.2f}s")
         except grpc.RpcError as e:
-            # on any error (timeout, unavailable, etc.) return zeros
+            # log the error before fallback
+            print(f"[CLIENT]  ! RPC error: {e.code()} {e.details()}", flush=True)
             probs = [0.0] * len(df)
 
-        # Return a properly indexed Series
-        return pd.Series(probs, index=df.index)
+        # 5) Return and log
+        series = pd.Series(probs, index=df.index)
+        print(f"[CLIENT]  → returning series head:\n{series.head()}", flush=True)
+        return series
+
 
 
 def aggregate_signals(
@@ -113,151 +125,165 @@ def _init_external_stub():
     channel = grpc.insecure_channel("localhost:50051")
     return __import__("external_pb2_grpc").SignalServiceStub(channel)
 
-_external_stub = _init_external_stub()
 
-
-SIGNAL_PROVIDERS = [
-    ImpliedRawSignal(),
-    ExternalGrpcSignal(_external_stub),
-]
-
-SIGNAL_WEIGHTS = {
-    "implied_raw": 1.0,    # base implied probability
-    "external":    1.0,    # weight for external model
-}
-
+import pandas as pd
+from typing import Optional
 
 def get_upcoming_overtime_markets_with_signals(
         limit: int = 10,
-        as_of: datetime = None,
-        min_break_minutes=60,
-        avg_game_duration_minutes=180        
+        as_of: Optional[datetime] = None,
+        min_break_minutes: int = 60,
+        avg_game_duration_minutes: int = 180        
     ) -> pd.DataFrame:
     """
-    Fetches all upcoming Overtime markets that have odds available,
-    calculates implied probabilities and evaluates internal mispricings.
-
-    Args:
-        limit (int): Max number of rows to return for preview; 0 = no limit.
-
-    Returns:
-        pd.DataFrame: Summary with signal flags and edge metrics.
+    Fetches only the *next* batch of Overtime markets as of `as_of`,
+    with implied probabilities & signals. Instrumented for timing.
     """
-    
+    t0 = time.time()
     if as_of is None:
         as_of = datetime.now(timezone.utc)
-    
-    # Step 1: Query upcoming Overtime market odds with necessary fields
-    query = """
-        SELECT 
-            o.updated_at AS time,
-            o.line AS line,
-            o.decimal_odds AS odds,
-            o.outcome,
-            o.source,
-            o.bookmaker,
-            o.market_type,
-            o.source_id AS source_id,
-            m.source_id AS market_source_id,
-            m.maturity_date,
-            m.home_team,
-            m.away_team,
-            m.league_name,
-            m.sport
-        FROM odd o
-        JOIN market m ON o.source_id = m.source_id
-        WHERE 
-            o.bookmaker = 'overtime_markets' AND
-            m.sport = 'Soccer' AND
-            o.market_type = 'winner'
-        ORDER BY m.maturity_date ASC
-    """
-    with sqlite3.connect(DB_NAME) as conn:
-        overtime_odds = pd.read_sql_query(query, conn)
+    elif as_of.tzinfo is None:
+        as_of = as_of.replace(tzinfo=timezone.utc)
+    print(f"[TIMING] as_of setup: {time.time()-t0:.3f}s")
 
-    # Step 2: Normalize outcomes and lines
-    overtime_odds["normalized_outcome"] = overtime_odds.apply(
-        lambda row: normalize_outcome(row["bookmaker"], row["market_type"], row["outcome"]),
+    # 1) Open DB & find next game date
+    t1 = time.time()
+    with sqlite3.connect(DB_NAME) as conn:
+        conn.row_factory = sqlite3.Row
+        next_date_row = conn.execute(
+            """
+            SELECT MIN(maturity_date) AS next_date
+              FROM market
+             WHERE source = 'overtime_markets'
+               AND sport     = 'Soccer'
+               AND market_type = 'winner'
+               AND maturity_date >= :as_of
+            """,
+            {"as_of": as_of.isoformat()}
+        ).fetchone()
+    next_date = next_date_row["next_date"]
+    print(f"[TIMING] found next_date ({next_date}): {time.time()-t1:.3f}s")
+    if next_date is None:
+        print("[DEBUG] no upcoming games → empty")
+        return pd.DataFrame([])
+
+    # 2) Pull only that game’s odds
+    t2 = time.time()
+    query = f"""
+    WITH relevant_markets AS (
+      SELECT source_id
+        FROM market
+       WHERE source     = 'overtime_markets'
+         AND sport         = 'Soccer'
+         AND market_type   = 'winner'
+         AND maturity_date = :next_date
+    ),
+    market_first_seen AS (
+      SELECT o.source_id,
+             MIN(o.updated_at) AS first_seen
+        FROM odd o
+        JOIN relevant_markets rm USING (source_id)
+       WHERE o.bookmaker   = 'overtime_markets'
+         AND o.market_type = 'winner'
+       GROUP BY o.source_id
+    )
+    SELECT o.updated_at   AS time,
+           o.line         AS line,
+           o.decimal_odds AS odds,
+           o.outcome,
+           o.source,
+           o.bookmaker,
+           o.market_type,
+           o.source_id,
+           m.source_id    AS market_source_id,
+           m.maturity_date,
+           m.home_team,
+           m.away_team,
+           m.league_name,
+           m.sport
+      FROM odd o
+      JOIN market m ON o.source_id = m.source_id
+      JOIN market_first_seen fs ON fs.source_id = o.source_id
+     WHERE o.bookmaker     = 'overtime_markets'
+       AND m.sport        = 'Soccer'
+       AND o.market_type  = 'winner'
+       AND m.maturity_date = :next_date
+       AND o.updated_at   <= :as_of
+       AND fs.first_seen  <= :as_of
+     ORDER BY o.updated_at DESC
+     {f"LIMIT {limit}" if limit else ""}
+    """
+    df_odds = pd.read_sql_query(
+        query, sqlite3.connect(DB_NAME),
+        params={"as_of": as_of.isoformat(), "next_date": next_date}
+    )
+    print(f"[TIMING] SQL fetch ({len(df_odds)} rows): {time.time()-t2:.3f}s")
+
+    # 3) Normalize outcomes & lines
+    t3 = time.time()
+    # Phase 1: per‐row raw normalization
+    df_odds["normalized_outcome"] = df_odds.apply(
+        lambda r: normalize_outcome(
+            r["bookmaker"], r["market_type"], r["outcome"]
+        ),
         axis=1
     )
-    overtime_odds["normalized_outcome"] = overtime_odds.apply(normalize_team_outcome, axis=1)
-    overtime_odds["normalized_line"] = pd.to_numeric(overtime_odds["line"], errors="coerce").fillna(0.0)
+    
+    # Phase 2: team‐specific cleanup
+    df_odds["normalized_outcome"] = df_odds.apply(
+        normalize_team_outcome,
+        axis=1
+    )
+    
+    df_odds["normalized_line"] = pd.to_numeric(
+        df_odds["line"], errors="coerce"
+    ).fillna(0.0)
+    print(f"[TIMING] normalize: {time.time()-t3:.3f}s")
 
-    # Step 3: Map market_type to unified type
-    market_type_map = pd.DataFrame([
+    # 4) Map to unified market_type
+    t4 = time.time()
+    mt_map = pd.DataFrame([
         {"bookmaker": "overtime_markets", "market_type": "winner", "unified_market_type": "h2h"},
         {"bookmaker": "overtime_markets", "market_type": "spread", "unified_market_type": "spread"},
         {"bookmaker": "overtime_markets", "market_type": "total", "unified_market_type": "total"},
     ])
-    merged_odds = pd.merge(
-        overtime_odds,
-        market_type_map,
-        how="inner",
-        on=["bookmaker", "market_type"]
-    )
+    merged = pd.merge(df_odds, mt_map, on=["bookmaker", "market_type"], how="inner")
+    print(f"[TIMING] merge market_type: {time.time()-t4:.3f}s")
 
-    # Step 4: Compute implied probabilities
-    # ensure all times are parsed as UTC-aware
-    merged_odds["time"] = pd.to_datetime(
-        merged_odds["time"], errors="coerce", utc=True
-    )
-    # and also maturity_date
-    merged_odds["maturity_date"] = pd.to_datetime(
-        merged_odds["maturity_date"], errors="coerce", utc=True
-    )
-    
-    # filter in pandas using our as_of
-    merged_odds = merged_odds[merged_odds["maturity_date"] >= as_of]
-    
-    # ──────────────── 3) Build match schedule & find breaks ────────────────
-    # summarize markets into per-match rows
-    match_df = summarize_match_schedule_from_open_markets(merged_odds)
-    # find all upcoming breaks between games, as of our timestamp
-    breaks_df = find_upcoming_game_breaks(
-        match_df,
-        min_break_minutes=min_break_minutes,
-        avg_game_duration_minutes=avg_game_duration_minutes,
-        now=as_of
-    )
+    # 5) Parse times & filter (should be small already)
+    t5 = time.time()
+    merged["time"] = pd.to_datetime(merged["time"], utc=True, errors="coerce")
+    merged["maturity_date"] = pd.to_datetime(merged["maturity_date"], utc=True, errors="coerce")
+    start = merged["maturity_date"].min()
+    end   = start + pd.Timedelta(minutes=avg_game_duration_minutes)
+    mask = (merged["maturity_date"] >= start) & (merged["maturity_date"] < end)
+    merged = merged.loc[mask]
+    print(f"[DEBUG] window {start}→{end}, rows: {mask.sum()}")
+    print(f"[TIMING] filter window: {time.time()-t5:.3f}s")
 
-    # ────────── 4) Turn breaks into active game time windows ───────────
-    # e.g. [(game1_start, game1_end), (game2_start, game2_end), …]
-    active_periods = extract_active_game_periods_from_breaks(match_df, breaks_df)
+    # 6) Fees & implied probabilities
+    t6 = time.time()
+    merged = apply_overtime_fees(merged)
+    merged = add_implied_probabilities(merged)
+    print(f"[TIMING] fees+implied: {time.time()-t6:.3f}s")
 
-    # ────────── 5) Keep only markets in the *first* upcoming game window ──
-    if not active_periods.empty:
-        start, end = active_periods[0]
-        mask = (
-            (merged_odds["maturity_date"] >= start) &
-            (merged_odds["maturity_date"] <  end)
-        )
-        merged_odds = merged_odds.loc[mask]
+    # 7) Latest odds per outcome-line
+    t7 = time.time()
+    merged = merged.sort_values("time", ascending=False)
+    latest = merged.drop_duplicates(subset=[
+        "unified_market_type", "normalized_outcome", "normalized_line", "source_id"
+    ])
+    print(f"[TIMING] dedupe latest: {time.time()-t7:.3f}s")
 
+    # 8) Internal signals
+    t8 = time.time()
+    result = filter_valid_internal_signals(generate_internal_mispricing_signals(latest))
+    print(f"[TIMING] internal signals: {time.time()-t8:.3f}s")
 
-    merged_odds = merged_odds.dropna(subset=["odds"])
-    merged_odds = apply_overtime_fees(merged_odds)
-    merged_odds = add_implied_probabilities(merged_odds)
+    total = time.time()-t0
+    print(f"[TIMING] TOTAL get_upcoming...: {total:.3f}s")
+    return result.head(limit) if limit else result
 
-    # Step 5: Get most recent odds per outcome-line-market
-    merged_odds["time"] = pd.to_datetime(merged_odds["time"], errors="coerce")
-    merged_odds = merged_odds.sort_values("time", ascending=False)
-    latest_odds = merged_odds.drop_duplicates(
-        subset=["unified_market_type", "normalized_outcome", "normalized_line", "source_id"]
-    )
-
-    # Step 6: Evaluate internal edge and generate signals
-    result = filter_valid_internal_signals(generate_internal_mispricing_signals(latest_odds))
-    
-    # Make a synthetic match_id if it's not already there
-    if "market_name" not in result.columns:
-        result["market_name"] = (
-            result["home_team"].astype(str) + "_vs_" + result["away_team"].astype(str)
-        )
-
-    if limit:
-        result = result.head(limit)
-
-    return result
 
 def filter_valid_internal_signals(open_markets: pd.DataFrame) -> pd.DataFrame:
     """
@@ -282,11 +308,17 @@ def filter_valid_internal_signals(open_markets: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def prepare_kelly_input(open_markets: pd.DataFrame) -> pd.DataFrame:
+def prepare_kelly_input(open_markets: pd.DataFrame,
+                        signal_providers: None,
+                        signal_weights: None
+                        ) -> pd.DataFrame:
     """
     Converts filtered open_markets to the format required for calculate_kelly_stakes_with_exclusivity.
     """
     df = open_markets.copy()
+    
+    print(f"[DEBUG] prepare_kelly_input called with {len(open_markets)} rows; "
+          f"providers={[p.name for p in signal_providers]}, weights={signal_weights}")
 
     # Make a synthetic match_id if it's not already there
     if "market_name" not in df.columns:
@@ -315,18 +347,18 @@ def prepare_kelly_input(open_markets: pd.DataFrame) -> pd.DataFrame:
         ]].assign(
             odds=pd.Series(dtype=float),
             probability=pd.Series(dtype=float),
-            **{f"contrib_{p.name}": pd.Series(dtype=float) for p in SIGNAL_PROVIDERS}
+            **{f"contrib_{p.name}": pd.Series(dtype=float) for p in signal_providers}
         )
     
     # now it's guaranteed non-empty
     
-    df = aggregate_signals(df, SIGNAL_PROVIDERS, SIGNAL_WEIGHTS)
+    df = aggregate_signals(df, signal_providers, signal_weights)
     
     df["odds"] = df["adjusted_odds"]
 
     return df[["source_id", "market_name", "bet_name", "league_name", "unified_market_type", 
                "normalized_outcome", "normalized_line", "odds", "probability", "bookmaker",
-               *[f"contrib_{p.name}" for p in SIGNAL_PROVIDERS]
+               *[f"contrib_{p.name}" for p in signal_providers]
                ]]
 
 def summarize_match_schedule_from_open_markets(open_markets: pd.DataFrame) -> pd.DataFrame:
@@ -387,51 +419,29 @@ def find_upcoming_game_breaks(
         now = datetime.now(timezone.utc)
 
     df = matches_df.copy()
-    # 1) Parse & enforce UTC-aware timestamps
-    df["maturity_date"] = pd.to_datetime(
-        df["maturity_date"], errors="coerce", utc=True
-    )
-    
-    # 2) Use an aware 'now' in UTC
-    now = datetime.now(timezone.utc)
-    
-    # 3) Safe comparison
-    df = df[df["maturity_date"] > now]
+    df["maturity_date"] = pd.to_datetime(df["maturity_date"], utc=True)
+    df = df[df["maturity_date"] > now].sort_values("maturity_date").reset_index(drop=True)
 
-    df = df.sort_values("maturity_date").reset_index(drop=True)
+    if df.shape[0] < 2:
+        return pd.DataFrame([], columns=["break_start", "break_end",
+                                         "duration_minutes", "games_before", "games_after"])
 
-    if df.empty:
-        return pd.DataFrame(columns=["break_start", "break_end", "duration_minutes", "games_before", "games_after"])
-
-    # Calculate time between consecutive games
-    df["next_game"] = df["maturity_date"].shift(-1)
+    df["next_game"]   = df["maturity_date"].shift(-1)
     df["gap_minutes"] = (df["next_game"] - df["maturity_date"]).dt.total_seconds() / 60
+    breaks = df[df["gap_minutes"] >= min_break_minutes]
 
-    breaks = df[df["gap_minutes"] >= min_break_minutes].copy()
-
-    # Construct break metadata
-    break_info = []
-    games_before_running = 0
+    rows = []
     for idx, row in breaks.iterrows():
-        break_start = row["maturity_date"] + timedelta(minutes=avg_game_duration_minutes)
-        break_end = row["next_game"]
-        duration = (break_end - break_start).total_seconds() / 60
-
-        games_before = ((df["maturity_date"] < break_start).sum()) - games_before_running
-        games_after = (df["maturity_date"] >= break_end).sum()
-
-        break_info.append({
-            "break_start": break_start,
-            "break_end": break_end,
-            "duration_minutes": duration,
-            "games_before": games_before,
-            "games_after": games_after
+        start = row["maturity_date"] + timedelta(minutes=avg_game_duration_minutes)
+        end   = row["next_game"]
+        rows.append({
+            "break_start":       start,
+            "break_end":         end,
+            "duration_minutes":  (end - start).total_seconds() / 60,
+            "games_before":      idx+1,
+            "games_after":       df.shape[0] - idx - 1,
         })
-        
-        games_before_running += games_before
-
-    break_df = pd.DataFrame(break_info)
-    return break_df
+    return pd.DataFrame(rows)
 
 def extract_active_game_periods_from_breaks(match_df: pd.DataFrame, break_df: pd.DataFrame, avg_game_duration_minutes: int = 120,) -> pd.DataFrame:
     """
@@ -697,6 +707,15 @@ def trim_kelly_results(
     ]]
 
 
+SIGNAL_PROVIDERS = [
+    ImpliedRawSignal()#,
+    #ExternalGrpcSignal(_external_stub),
+]
+
+SIGNAL_WEIGHTS = {
+    "implied_raw": 1.0#,    # base implied probability
+    #"external":    1.0,    # weight for external model
+}
 
 def generate_betting_session_report_and_save(
     kelly_bankroll: float = 1.0,
@@ -713,7 +732,9 @@ def generate_betting_session_report_and_save(
     avg_game_duration_minutes: float = 180.0,
     base_dir: str = "betting_reports",
     display_md: bool = True,
-    save_as_latest: bool = True
+    save_as_latest: bool = True,
+    signal_providers=SIGNAL_PROVIDERS,
+    signal_weights=SIGNAL_WEIGHTS
 ) -> dict:
     import pandas as pd
     import numpy as np
@@ -726,6 +747,11 @@ def generate_betting_session_report_and_save(
     
     if as_of is None:
         as_of = datetime.now(timezone.utc)
+    elif as_of.tzinfo is None:
+        # assume naive times are UTC
+        as_of = as_of.replace(tzinfo=timezone.utc)
+        
+    print(f"evaluating open markets as of {as_of}")
 
     open_markets = get_upcoming_overtime_markets_with_signals(
         limit=abs_game_limit,
@@ -733,6 +759,9 @@ def generate_betting_session_report_and_save(
         min_break_minutes=min_break_minutes,
         avg_game_duration_minutes=avg_game_duration_minutes
         )
+    
+    print(f"[DEBUG] open_markets → {len(open_markets)} rows")
+
 
     match_df = summarize_match_schedule_from_open_markets(open_markets)
     breaks_df = find_upcoming_game_breaks(
@@ -753,13 +782,33 @@ def generate_betting_session_report_and_save(
 
 
     first_chunk = game_times_df.iloc[0]
-    start, end = first_chunk["chunk_start"], first_chunk["chunk_end"]
+    start = first_chunk["chunk_start"]
+    # If there’s a next chunk, that defines the session end...
+    if len(game_times_df) > 1:
+        second_chunk = game_times_df.iloc[1]
+        end = second_chunk["chunk_start"]
+    else:
+        # …otherwise fall back to game duration
+        end = start + timedelta(minutes=avg_game_duration_minutes)
 
     filtered = open_markets.copy()
     filtered["maturity_date"] = pd.to_datetime(filtered["maturity_date"], errors="coerce")
     filtered = filtered[(filtered["maturity_date"] >= start) & (filtered["maturity_date"] <= end)]
+    
+    # make sure we have a market_name column
+    if "market_name" not in filtered.columns:
+        filtered["market_name"] = (
+            filtered["home_team"].astype(str)
+            + "_vs_"
+            + filtered["away_team"].astype(str)
+        )
 
-    kelly_ready = prepare_kelly_input(filtered)
+    
+    print(f"[DEBUG] filtered has {len(filtered)} rows; providers = {[p.name for p in signal_providers]}")
+
+    kelly_ready = prepare_kelly_input(filtered,
+                                      signal_providers,
+                                      signal_weights)
 
     kelly_results = calculate_kelly_stakes_with_exclusivity(
         kelly_ready,
@@ -835,9 +884,11 @@ Bets to Place:
         "trimmed_results": trimmed_kelly_results,
         "match_df": match_df,
         "game_times_df": game_times_df,
-        "open_markets": open_markets,
+        "open_markets": open_markets.to_json(orient="records", date_format="iso"), #json.dumps(open_markets.to_dict(orient="records")),
+        "bets_to_place": bets_to_make.to_json(orient="records" , date_format="iso"), #json.dumps(bets_to_make.to_dict(orient="records")),
         "start": start,
         "end": end,
+        "as_of": as_of,
         "metrics": {
             "expected_return": expected_trimmed_return,
             "expected_multiplier": expected_multiplier,
@@ -883,7 +934,7 @@ def save_and_display_betting_report(report_data: dict, base_dir: str = "betting_
         dict: Paths to the saved report files.
     """
     # Prepare timestamped directory
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    timestamp = report_data["as_of"].strftime("%Y-%m-%d_%H-%M-%S")
     report_dir = Path(base_dir) / timestamp
     report_dir.mkdir(parents=True, exist_ok=True)
 
@@ -938,15 +989,16 @@ def save_and_display_betting_report(report_data: dict, base_dir: str = "betting_
     }
 
 
-
-# if __name__ == "__main__":
-#     save_and_display_betting_report((
-#         generate_betting_session_report_and_save(
-#             execution_bankroll=100,
-#             avg_game_duration_minutes=200.0,
-#             min_break_minutes=60.0,
-#             abs_game_limit=None
-#             )))
+if __name__ == "__main__":
+    save_and_display_betting_report((
+        generate_betting_session_report_and_save(
+            execution_bankroll=100,
+            avg_game_duration_minutes=200.0,
+            min_break_minutes=60.0,
+            abs_game_limit=None,
+            signal_providers=SIGNAL_PROVIDERS,
+            signal_weights=SIGNAL_WEIGHTS
+            )))
 
 
 

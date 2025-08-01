@@ -1,3 +1,8 @@
+backtests/
+~lock.*
+*.sql
+*.db-journal
+
 *.json
 *.html
 betting_reports/
