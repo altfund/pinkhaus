@@ -17,6 +17,7 @@ version = 1
 [install]
 ffmpeg.pkg-path = "ffmpeg"
 sqlite.pkg-path = "sqlite"
+just.pkg-path = "just"
 
 ## Environment Variables ---------------------------------------------
 ##  ... available for use in the activated environment
