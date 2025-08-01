@@ -99,6 +99,7 @@ def index_command(args):
         print(f"Indexing transcription {args.transcription_id}...")
         rag.index_transcription(args.transcription_id)
     else:
+        print("Indexing ALL transcriptions...")
         rag.index_all_transcriptions(batch_size=args.batch_size)
 
     # Show stats
@@ -233,7 +234,7 @@ def main():
     index_parser = subparsers.add_parser("index", help="Index podcast transcriptions")
     index_parser.add_argument(
         "--db",
-        default="../beige-book/protobuf_transcriptions.db",
+        default="../../resources/fc.db",
         help="Path to transcriptions database",
     )
     index_parser.add_argument(
@@ -264,7 +265,7 @@ def main():
     ask_parser.add_argument("question", help="Question to ask")
     ask_parser.add_argument(
         "--db",
-        default="../beige-book/protobuf_transcriptions.db",
+        default="../../resources/fc.db",
         help="Path to transcriptions database",
     )
     ask_parser.add_argument(

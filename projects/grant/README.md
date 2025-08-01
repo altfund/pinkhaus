@@ -80,7 +80,7 @@ uv run grant pull nomic-embed-text
 uv run grant pull llama3.2
 
 # 4. Index your podcast database
-uv run grant index --db ../beige-book/protobuf_transcriptions.db
+uv run grant index --db ../beige-book/grant_chroma_db
 
 # 5. Ask questions!
 uv run grant ask "What are the main topics discussed in these podcasts?"

@@ -109,12 +109,11 @@ class RAGPipeline:
     def _is_transcription_indexed(self, transcription_id: int) -> bool:
         """Check if a transcription is already indexed."""
 
-        # Simple check: see if we have any chunks for this transcription
-        test_embedding = [0.0] * 768  # Dummy embedding for nomic-embed-text
-        results = self.vector_store.search_by_metadata(
-            test_embedding, n_results=1, transcription_id=transcription_id
+        # Direct metadata lookup - no vector search needed
+        results = self.vector_store.get_by_metadata(
+            where={"transcription_id": transcription_id}, limit=1
         )
-        return len(results) > 0
+        return len(results.get("ids", [])) > 0
 
     def query(
         self,

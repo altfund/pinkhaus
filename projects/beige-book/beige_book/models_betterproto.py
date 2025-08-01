@@ -21,6 +21,8 @@ from .proto_models import (
     TranscriptionResponse as _TranscriptionResponse,
     ProcessingError as _ProcessingError,
     ProcessingSummary as _ProcessingSummary,
+    # Import needed for TranscriptionResponse type hints
+    TranscriptionResult,  # noqa: F401
 )
 
 
@@ -102,7 +104,7 @@ class FeedOptions(_FeedOptions):
 
     def validate(self):
         """Validate feed options"""
-        if self.limit < 0:
+        if self.limit is not None and self.limit < 0:
             raise ValueError("Feed limit must be non-negative")
         if self.order not in [
             FeedOptionsOrder.ORDER_NEWEST,
@@ -110,9 +112,9 @@ class FeedOptions(_FeedOptions):
             FeedOptionsOrder.ORDER_UNSPECIFIED,
         ]:
             raise ValueError(f"Invalid order: {self.order}")
-        if self.max_retries < 0:
+        if self.max_retries is not None and self.max_retries < 0:
             raise ValueError("Max retries cannot be negative")
-        if self.initial_delay < 0:
+        if self.initial_delay is not None and self.initial_delay < 0:
             raise ValueError("Initial delay cannot be negative")
 
 
@@ -224,7 +226,10 @@ class TranscriptionRequest(_TranscriptionRequest):
             and self.processing.feed_options
         ):
             if (
-                self.processing.feed_options.limit > 0
+                (
+                    self.processing.feed_options.limit is not None
+                    and self.processing.feed_options.limit > 0
+                )
                 or self.processing.feed_options.order
                 != FeedOptionsOrder.ORDER_UNSPECIFIED
             ):
