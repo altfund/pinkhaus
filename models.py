@@ -8,7 +8,7 @@ Created on Sat Jul 19 17:28:16 2025
 
 from sqlalchemy import (
     Column, String, Boolean, Integer,
-    Float, Text, DateTime, ForeignKey, UniqueConstraint
+    Float, Text, DateTime, ForeignKey, UniqueConstraint, Index
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
@@ -42,8 +42,18 @@ class Market(Base):
     start_time           = Column(DateTime)
     last_update          = Column(DateTime)
     
+    position_names       = Column(String)
+    
     maturity_date        = Column(DateTime)
     updated_at           = Column(DateTime, server_default=func.current_timestamp())
+    
+    __table_args__ = (
+        # speed up: filter on (source, sport, market_type, maturity_date)
+        Index(
+            "idx_market_performance",
+            "source", "sport", "market_type", "maturity_date"
+        ),
+    )    
 
     # FK to game would go here if you still had a `game` table:
     # game_id             = Column(String, ForeignKey("game.game_id"))
@@ -63,6 +73,7 @@ class Odd(Base):
     __tablename__ = "odd"
     id                   = Column(Integer, primary_key=True, autoincrement=True)
     source_id            = Column(String, ForeignKey("market.source_id"), nullable=False)
+    position             = Column(Integer) #, nullable=False, server_default=-1)   # ← new
     market_type          = Column(String, nullable=False)
     line                 = Column(Float)
     outcome              = Column(String, nullable=False)
@@ -72,6 +83,18 @@ class Odd(Base):
     decimal_odds         = Column(Float)
     normalized_implied   = Column(Float)
     updated_at           = Column(DateTime, server_default=func.current_timestamp())
+    
+    #__table_args__ = (
+        # prevent inserting the same position twice
+    #    UniqueConstraint("source_id", "position", name="uq_odd_source_position"),
+    #)
+    __table_args__ = (
+        # speed up: filter on (bookmaker, market_type, source_id, updated_at)
+        Index(
+            "idx_odd_performance",
+            "bookmaker", "market_type", "source_id", "updated_at"
+        ),
+    )
 
 class Team(Base):
     __tablename__ = "team"

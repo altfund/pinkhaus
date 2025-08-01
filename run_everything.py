@@ -22,6 +22,7 @@ WATCHED_FILES = [
     "get_oracle_odds.py",
     "find_opportunities.py",
     "evaluate_open_markets.py",
+    "free_data_pull.py",
     "run_scheduler.sh"
 ]
 
@@ -66,9 +67,9 @@ def restart_scheduler_service():
 # Configuration of scripts with run intervals (in minutes) and dependencies
 SCRIPT_CONFIG = {
     "free_data_pull.py": {"interval": 5, "depends_on": []},
-    "match_markets.py": {"interval": 60, "depends_on": ["free_data_pull.py"]},
-    "get_oracle_odds.py": {"interval": 60*12, "depends_on": ["match_markets.py"]},
-    "find_opportunities.py": {"interval": 60*12, "depends_on": ["get_oracle_odds.py"]},
+    #"match_markets.py": {"interval": 60, "depends_on": ["free_data_pull.py"]},
+    #"get_oracle_odds.py": {"interval": 60*12, "depends_on": ["match_markets.py"]},
+    #"find_opportunities.py": {"interval": 60*12, "depends_on": ["get_oracle_odds.py"]},
     "evaluate_open_markets.py": {"interval": 30, "depends_on": ["free_data_pull.py"]},
     "db_inspector.py": {"interval": 60, "depends_on": []}
 }
