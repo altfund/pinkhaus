@@ -140,6 +140,11 @@ class PodcastVectorStore:
         results = self.collection.get(ids=[chunk_id])
         return len(results["ids"]) > 0
 
+    def get_by_metadata(self, where: Dict[str, Any], limit: int = 1) -> Dict[str, Any]:
+        """Get chunks by metadata filter without vector search."""
+
+        return self.collection.get(where=where, limit=limit)
+
     def delete_chunks(self, chunk_ids: List[str]):
         """Delete chunks by IDs."""
 

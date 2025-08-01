@@ -17,7 +17,9 @@ class TestPodcastVectorStore:
         """Test vector store initialization."""
         mock_client = MagicMock()
         mock_collection = MagicMock()
-        mock_client.get_collection.side_effect = chromadb.errors.NotFoundError("Collection [test_podcasts] does not exists")
+        mock_client.get_collection.side_effect = chromadb.errors.NotFoundError(
+            "Collection [test_podcasts] does not exists"
+        )
         mock_client.create_collection.return_value = mock_collection
         mock_chroma_client.return_value = mock_client
 
@@ -39,7 +41,9 @@ class TestPodcastVectorStore:
         assert store.collection == mock_collection
 
     @patch("chromadb.PersistentClient")
-    def test_store_initialization_existing_collection(self, mock_chroma_client, temp_dir):
+    def test_store_initialization_existing_collection(
+        self, mock_chroma_client, temp_dir
+    ):
         """Test vector store initialization when collection already exists."""
         mock_client = MagicMock()
         mock_collection = MagicMock()
@@ -55,7 +59,7 @@ class TestPodcastVectorStore:
 
         # Verify get_collection was called
         mock_client.get_collection.assert_called_once_with("test_podcasts")
-        
+
         # Verify create_collection was NOT called since collection exists
         mock_client.create_collection.assert_not_called()
 
@@ -211,6 +215,38 @@ class TestPodcastVectorStore:
         results = store.search([0.1] * 384)
 
         assert results == []
+
+    @patch("chromadb.PersistentClient")
+    def test_get_by_metadata(self, mock_chroma_client):
+        """Test getting chunks by metadata filter."""
+        # Setup mocks
+        mock_client = MagicMock()
+        mock_collection = MagicMock()
+        mock_collection.get.return_value = {
+            "ids": ["123_0", "123_1"],
+            "documents": ["First chunk", "Second chunk"],
+            "metadatas": [
+                {"transcription_id": 123, "chunk_index": 0},
+                {"transcription_id": 123, "chunk_index": 1},
+            ],
+        }
+        mock_client.get_collection.return_value = mock_collection
+        mock_chroma_client.return_value = mock_client
+
+        store = PodcastVectorStore()
+
+        # Test getting by transcription_id
+        results = store.get_by_metadata(where={"transcription_id": 123}, limit=10)
+
+        # Verify get was called with correct parameters
+        mock_collection.get.assert_called_once_with(
+            where={"transcription_id": 123}, limit=10
+        )
+
+        # Check results
+        assert len(results["ids"]) == 2
+        assert results["ids"] == ["123_0", "123_1"]
+        assert results["documents"] == ["First chunk", "Second chunk"]
 
     @patch("chromadb.PersistentClient")
     def test_add_empty_chunks(self, mock_chroma_client):
