@@ -17,6 +17,7 @@ version = 1
 [install]
 sqlite.pkg-path = "sqlite"
 ollama.pkg-path = "ollama"
+just.pkg-path = "just"
 
 ## Environment Variables ---------------------------------------------
 ##  ... available for use in the activated environment
