@@ -10,7 +10,6 @@ from .models import (
     TranscriptionResult,
     Segment,
 )
-from .proto_models import TranscriptionResult, Segment
 
 
 class TranscriptionDatabase:

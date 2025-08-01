@@ -23,7 +23,6 @@ from .proto_models import (
     ProcessingConfigModel,
     OutputConfigFormat,
     FeedOptionsOrder,
-    TranscriptionResult,
 )
 from .feed_parser import FeedParser, FeedItem
 from .downloader import AudioDownloader

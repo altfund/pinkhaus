@@ -110,7 +110,7 @@ class RAGPipeline:
         """Check if a transcription is already indexed."""
 
         # Simple check: see if we have any chunks for this transcription
-        test_embedding = [0.0] * 384  # Dummy embedding
+        test_embedding = [0.0] * 768  # Dummy embedding for nomic-embed-text
         results = self.vector_store.search_by_metadata(
             test_embedding, n_results=1, transcription_id=transcription_id
         )

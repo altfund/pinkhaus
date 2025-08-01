@@ -29,7 +29,7 @@ class PodcastVectorStore:
         """Get or create the ChromaDB collection."""
         try:
             return self.client.get_collection(self.collection_name)
-        except ValueError:
+        except chromadb.errors.NotFoundError:
             return self.client.create_collection(
                 name=self.collection_name,
                 metadata={"description": "Podcast transcription segments"},

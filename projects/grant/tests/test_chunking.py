@@ -178,7 +178,9 @@ class TestPodcastChunker:
 
         # Check that chunks contain segment metadata
         for chunk in chunks:
-            assert "segment_indices" in chunk.metadata
+            assert "first_segment_index" in chunk.metadata
+            assert "last_segment_index" in chunk.metadata
+            assert "segment_count" in chunk.metadata
             assert "start_time" in chunk.metadata
             assert "end_time" in chunk.metadata
 

@@ -17,7 +17,7 @@ Grant is a Retrieval-Augmented Generation (RAG) tool that uses Ollama to answer 
 
 1. **Flox** (recommended): For environment management
    - Provides all dependencies including Ollama
-   - See CLAUDE.md for project-specific conventions
+2. Install ollama on your computer have it running (default port for now)
 
 2. **Alternative**: If not using Flox, you'll need:
    - **Ollama**: Install from [ollama.ai](https://ollama.ai)
@@ -34,23 +34,11 @@ Grant is a Retrieval-Augmented Generation (RAG) tool that uses Ollama to answer 
    ```
    
    This will automatically:
-   - Install all system dependencies (sqlite, ollama, etc.)
+   - Install all system dependencies
    - Set up Python 3.13
    - Create and activate a virtual environment
    - Install all Python dependencies
    - Add pinkhaus-models to your Python path
-
-2. Start the Ollama service:
-   ```bash
-   # Start just ollama
-   flox services start ollama
-   
-   # Or start all services
-   flox services start
-   
-   # Check service status
-   flox services status
-   ```
 
 #### Option 2: Manual Setup
 
