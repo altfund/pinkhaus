@@ -19,7 +19,7 @@ class TextChunk:
 
 
 class PodcastChunker:
-    """Chunk podcast transcriptions intelligently using segment boundaries."""
+    """Chunk podcast transcriptions using segment boundaries."""
 
     def __init__(
         self,
@@ -139,8 +139,9 @@ class PodcastChunker:
         chunk_metadata = {
             "transcription_id": metadata.id,
             "chunk_index": chunk_index,
-            "segment_ids": [seg.id for seg in segments if seg.id],
-            "segment_indices": [seg.segment_index for seg in segments],
+            "segment_count": len(segments),
+            "first_segment_index": segments[0].segment_index,
+            "last_segment_index": segments[-1].segment_index,
             "start_time": segments[0].start_time,
             "end_time": segments[-1].end_time,
             "duration": segments[-1].end_time - segments[0].start_time,

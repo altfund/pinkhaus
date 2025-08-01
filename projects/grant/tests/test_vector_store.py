@@ -4,6 +4,7 @@ Tests for the vector store module.
 
 from unittest.mock import MagicMock, patch
 
+import chromadb.errors
 from grant.vector_store import PodcastVectorStore
 from grant.chunking import TextChunk
 
@@ -16,7 +17,7 @@ class TestPodcastVectorStore:
         """Test vector store initialization."""
         mock_client = MagicMock()
         mock_collection = MagicMock()
-        mock_client.get_collection.side_effect = ValueError("Not found")
+        mock_client.get_collection.side_effect = chromadb.errors.NotFoundError("Collection [test_podcasts] does not exists")
         mock_client.create_collection.return_value = mock_collection
         mock_chroma_client.return_value = mock_client
 
@@ -34,6 +35,29 @@ class TestPodcastVectorStore:
             name="test_podcasts",
             metadata={"description": "Podcast transcription segments"},
         )
+
+        assert store.collection == mock_collection
+
+    @patch("chromadb.PersistentClient")
+    def test_store_initialization_existing_collection(self, mock_chroma_client, temp_dir):
+        """Test vector store initialization when collection already exists."""
+        mock_client = MagicMock()
+        mock_collection = MagicMock()
+        mock_client.get_collection.return_value = mock_collection
+        mock_chroma_client.return_value = mock_client
+
+        store = PodcastVectorStore(
+            persist_directory=str(temp_dir), collection_name="test_podcasts"
+        )
+
+        # Verify ChromaDB client was created
+        mock_chroma_client.assert_called_once()
+
+        # Verify get_collection was called
+        mock_client.get_collection.assert_called_once_with("test_podcasts")
+        
+        # Verify create_collection was NOT called since collection exists
+        mock_client.create_collection.assert_not_called()
 
         assert store.collection == mock_collection
 
