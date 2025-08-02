@@ -1,8 +1,11 @@
 import chromadb
 from chromadb.config import Settings
 from typing import List, Dict, Any, Optional, Tuple
+import logging
 
 from .chunking import TextChunk
+
+logger = logging.getLogger(__name__)
 
 
 class PodcastVectorStore:
@@ -70,6 +73,20 @@ class PodcastVectorStore:
         chunks_with_scores = []
 
         if results["ids"] and results["ids"][0]:
+            logger.debug(f"Results keys: {list(results.keys())}")
+            logger.debug(f"Number of results returned: {len(results['ids'][0])}")
+            if results["metadatas"] and results["metadatas"][0]:
+                from datetime import datetime
+                logger.debug("All results metadata:")
+                for idx, meta in enumerate(results['metadatas'][0]):
+                    logger.debug(f"\nResult {idx + 1}:")
+                    logger.debug(f"  - Title: {meta.get('title', 'N/A')}")
+                    if 'published_timestamp' in meta and meta['published_timestamp']:
+                        unix_ts = meta['published_timestamp']
+                        iso_date = datetime.fromtimestamp(unix_ts).isoformat()
+                        logger.debug(f"  - Published timestamp: {unix_ts} (Unix) -> {iso_date} (ISO8601)")
+                    if 'published' in meta:
+                        logger.debug(f"  - Published (original) ISO string: {meta['published']}")
             for i in range(len(results["ids"][0])):
                 chunk = TextChunk(
                     id=results["ids"][0][i],
@@ -94,27 +111,43 @@ class PodcastVectorStore:
     ) -> List[Tuple[TextChunk, float]]:
         """Search with metadata filters."""
 
-        where = {}
+        where_conditions = []
 
         if transcription_id is not None:
-            where["transcription_id"] = transcription_id
+            where_conditions.append({"transcription_id": transcription_id})
+            logger.debug(f"Filtering by transcription_id: {transcription_id}")
 
-        # ChromaDB doesn't support complex date queries easily,
-        # so we'll filter dates post-retrieval if needed
-        results = self.search(query_embedding, n_results * 2, where)
+        # Convert dates to Unix timestamps for ChromaDB filtering
+        if start_date:
+            from datetime import datetime
+            start_timestamp = int(datetime.fromisoformat(
+                start_date.replace('Z', '+00:00')
+            ).timestamp())
+            where_conditions.append({"published_timestamp": {"$gte": start_timestamp}})
+            logger.debug(f"Filtering by start_date: {start_date} (timestamp: {start_timestamp})")
 
-        # Post-filter by dates if needed
-        if start_date or end_date:
-            filtered_results = []
-            for chunk, score in results:
-                published = chunk.metadata.get("published")
-                if published:
-                    if start_date and published < start_date:
-                        continue
-                    if end_date and published > end_date:
-                        continue
-                filtered_results.append((chunk, score))
-            results = filtered_results[:n_results]
+        if end_date:
+            from datetime import datetime
+            end_timestamp = int(datetime.fromisoformat(
+                end_date.replace('Z', '+00:00')
+            ).timestamp())
+            where_conditions.append({"published_timestamp": {"$lte": end_timestamp}})
+            logger.debug(f"Filtering by end_date: {end_date} (timestamp: {end_timestamp})")
+
+        # Build the where clause
+        if len(where_conditions) > 1:
+            where = {"$and": where_conditions}
+        elif len(where_conditions) == 1:
+            where = where_conditions[0]
+        else:
+            where = None
+
+        logger.debug(f"Final where clause for ChromaDB query: {where}")
+        logger.debug(f"Requesting {n_results} results")
+
+        # Now we can query directly with the correct n_results!
+        results = self.search(query_embedding, n_results, where)
+        logger.debug(f"Retrieved {len(results)} results from vector store")
 
         return results
 
