@@ -42,14 +42,19 @@ def run_command(cmd: list[str], description: str, capture_output: bool = False) 
 
 def process_one_podcast(args, date_threshold: str) -> bool:
     """Process a single podcast. Returns True if a podcast was processed."""
+    # Get absolute paths for feeds and db
+    feeds_path = Path(args.feeds).resolve()
+    db_path = Path(args.db).resolve()
+    vector_store_path = Path(args.vector_store).resolve()
+    
     # Build beige-book command for one podcast
     beige_book_cmd = [
         "flox", "activate", "--",
         "uv", "run", "python", "-m", "beige_book",
         "transcribe",
-        "--feed", args.feeds,
+        "--feed", str(feeds_path),
         "--format", "sqlite",
-        "--db-path", args.db,
+        "--db-path", str(db_path),
         "--model", args.model,
         "--date-threshold", date_threshold,
         "--limit", "1",  # Process only one podcast
@@ -61,12 +66,19 @@ def process_one_podcast(args, date_threshold: str) -> bool:
     if args.verbose:
         beige_book_cmd.append("--verbose")
 
-    # Run beige-book transcribe for one podcast
-    exit_code, output = run_command(
-        beige_book_cmd,
-        f"Fetching and transcribing one podcast after {date_threshold}",
-        capture_output=True
-    )
+    # Change to beige-book directory and run command
+    original_dir = os.getcwd()
+    beige_book_dir = Path(__file__).parent.parent / "projects" / "beige-book"
+    
+    try:
+        os.chdir(beige_book_dir)
+        exit_code, output = run_command(
+            beige_book_cmd,
+            f"Fetching and transcribing one podcast after {date_threshold}",
+            capture_output=True
+        )
+    finally:
+        os.chdir(original_dir)
 
     if exit_code != 0:
         return False
@@ -81,14 +93,21 @@ def process_one_podcast(args, date_threshold: str) -> bool:
         "flox", "activate", "--",
         "uv", "run", "python", "-m", "grant",
         "index",
-        "--db", args.db,
-        "--vector-store", args.vector_store,
+        "--db", str(db_path),
+        "--vector-store", str(vector_store_path),
     ]
 
-    exit_code, _ = run_command(
-        grant_cmd,
-        "Indexing transcription into vector database"
-    )
+    # Change to grant directory and run command
+    grant_dir = Path(__file__).parent.parent / "projects" / "grant"
+    
+    try:
+        os.chdir(grant_dir)
+        exit_code, _ = run_command(
+            grant_cmd,
+            "Indexing transcription into vector database"
+        )
+    finally:
+        os.chdir(original_dir)
 
     if exit_code != 0:
         logger.error("Failed to index transcription")
@@ -114,7 +133,7 @@ def main():
     )
     parser.add_argument(
         "--feeds",
-        default="feeds.toml",
+        default="./resources/fc/feeds.toml",
         help="Path to TOML file containing RSS feed URLs (default: feeds.toml)",
     )
     parser.add_argument(
@@ -182,13 +201,17 @@ def main():
 
     if args.dry_run:
         # Show what would be run
+        feeds_path = Path(args.feeds).resolve()
+        db_path = Path(args.db).resolve()
+        vector_store_path = Path(args.vector_store).resolve()
+        
         example_cmd = [
             "flox", "activate", "--",
             "uv", "run", "python", "-m", "beige_book",
             "transcribe",
-            "--feed", args.feeds,
+            "--feed", str(feeds_path),
             "--format", "sqlite",
-            "--db-path", args.db,
+            "--db-path", str(db_path),
             "--model", args.model,
             "--date-threshold", date_threshold,
             "--limit", "1",
@@ -199,10 +222,12 @@ def main():
             example_cmd.append("--verbose")
             
         print("\nDry run mode - commands that would be executed:")
-        print(f"\n1. Fetch and transcribe one podcast:")
+        print(f"\n1. Fetch and transcribe one podcast (from beige-book directory):")
+        print(f"   cd projects/beige-book")
         print(f"   {' '.join(example_cmd)}")
-        print(f"\n2. Index transcription:")
-        print(f"   flox activate -- uv run python -m grant index --db {args.db} --vector-store {args.vector_store}")
+        print(f"\n2. Index transcription (from grant directory):")
+        print(f"   cd projects/grant")
+        print(f"   flox activate -- uv run python -m grant index --db {db_path} --vector-store {vector_store_path}")
         if args.daemon:
             print("\n3. Loop continuously with exponential backoff when no new podcasts are found")
         return 0

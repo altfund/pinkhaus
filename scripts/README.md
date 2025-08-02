@@ -6,9 +6,12 @@ Orchestrates the podcast transcription pipeline by running beige-book to fetch/t
 
 The script processes podcasts one at a time, immediately indexing each one after transcription. This ensures the vector database is always up-to-date and allows for incremental processing.
 
+**Important**: This script must be run from the pinkhaus root directory (not from the scripts directory).
+
 ### Usage
 
 ```bash
+# From the pinkhaus root directory:
 python scripts/sync_podcasts.py [options]
 ```
 
@@ -71,7 +74,7 @@ python scripts/sync_podcasts.py --since 2024-01-01 --model large --round-robin
 python scripts/sync_podcasts.py --days 30 --round-robin --daemon
 
 # Daemon mode with verbose logging
-python scripts/sync_podcasts.py --since 2024-01-01 --daemon --verbose
+python scripts/sync_podcasts.py --since 2025-01-01 --daemon --verbose
 
 # Dry run to see what would be executed
 python scripts/sync_podcasts.py --days 30 --dry-run
