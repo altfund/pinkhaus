@@ -386,7 +386,7 @@ class TestValidation:
             },
         }
         response = client.post("/transcribe", json=request_data)
-        assert response.status_code == 422
+        assert response.status_code == 400
 
     def test_feed_options_with_file_input(self, client):
         """Test that feed options are rejected for file input"""

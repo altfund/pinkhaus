@@ -404,8 +404,8 @@ class TranscriptionDatabase:
         for seg in data["segments"]:
             segments.append(
                 Segment(
-                    start_ms=int(seg["start_time"] * 1000),
-                    end_ms=int(seg["end_time"] * 1000),
+                    start=seg["start_time"],
+                    end=seg["end_time"],
                     text=seg["text"],
                 )
             )
