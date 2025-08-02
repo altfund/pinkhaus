@@ -28,15 +28,9 @@ class TestTranscriptionDatabase:
     def sample_result(self):
         """Create a sample TranscriptionResult for testing"""
         segments = [
-            Segment(
-                start=0.0, end=4.5, text="The stale smell of old beer lingers."
-            ),
-            Segment(
-                start=4.5, end=7.0, text="It takes heat to bring out the odor."
-            ),
-            Segment(
-                start=7.0, end=10.0, text="A cold dip restores health in zest."
-            ),
+            Segment(start=0.0, end=4.5, text="The stale smell of old beer lingers."),
+            Segment(start=4.5, end=7.0, text="It takes heat to bring out the odor."),
+            Segment(start=7.0, end=10.0, text="A cold dip restores health in zest."),
         ]
 
         return TranscriptionResult(

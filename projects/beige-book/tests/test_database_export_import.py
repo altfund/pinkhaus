@@ -47,25 +47,21 @@ class TestDatabaseExportImport:
     def sample_beige_transcription(self):
         """Create a sample beige-book style transcription result."""
         from beige_book.transcriber import Segment as BeigeSegment
-        
+
         result = BeigeTranscriptionResult()
         result.filename = "test_beige.mp3"
         result.file_hash = "xyz789"
         result.language = "en"
         result.full_text = "This is a test transcription."
         result.created_at = 1234567890  # Unix timestamp
-        
+
         # Add segments to the protobuf message
-        result.segments.append(BeigeSegment(
-            start_ms=0,
-            end_ms=3000,
-            text="This is a test"
-        ))
-        result.segments.append(BeigeSegment(
-            start_ms=3000,
-            end_ms=5000,
-            text="transcription."
-        ))
+        result.segments.append(
+            BeigeSegment(start_ms=0, end_ms=3000, text="This is a test")
+        )
+        result.segments.append(
+            BeigeSegment(start_ms=3000, end_ms=5000, text="transcription.")
+        )
         return result
 
     def test_single_transcription_export_import_json(
@@ -175,16 +171,18 @@ class TestDatabaseExportImport:
         """Test beige-book TranscriptionResult TOML export (no import available)."""
         # Export to TOML
         toml_str = sample_beige_transcription.to_toml()
-        
+
         # Verify TOML was generated
         assert toml_str
         assert "test_beige.mp3" in toml_str
         assert "xyz789" in toml_str
         assert "This is a test transcription." in toml_str
-        
+
         # Since betterproto doesn't support from_toml, we can't do round-trip
         # Instead, save the original to database
-        transcription_id = temp_db.save_transcription(sample_beige_transcription, model_name="base")
+        transcription_id = temp_db.save_transcription(
+            sample_beige_transcription, model_name="base"
+        )
 
         # Retrieve and verify
         data = temp_db.get_transcription(transcription_id)
