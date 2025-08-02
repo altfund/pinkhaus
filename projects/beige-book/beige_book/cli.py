@@ -51,7 +51,8 @@ def args_to_request(args) -> TranscriptionRequest:
         feed_options = FeedOptions(
             limit=args.limit,
             order=args.order,
-            date_threshold=getattr(args, 'date_threshold', None) or ""
+            date_threshold=getattr(args, "date_threshold", None) or "",
+            round_robin=getattr(args, "round_robin", False),
         )
 
     # Create processing config
@@ -223,6 +224,11 @@ def main():
     parser.add_argument(
         "--date-threshold",
         help="Only process items published after this date (ISO8601 format, e.g., 2024-01-01 or 2024-01-01T12:00:00)",
+    )
+    parser.add_argument(
+        "--round-robin",
+        action="store_true",
+        help="Process feeds in round-robin fashion (newest episode from each feed before moving to next)",
     )
 
     args = parser.parse_args()

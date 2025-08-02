@@ -208,7 +208,10 @@ class TestRAGPipeline:
         mock_vector_store.get_collection_stats.return_value = {"total_chunks": 10}
 
         # Create pipeline
-        pipeline = RAGPipeline(str(mock_db.db_path), mock_ollama_client)
+        pipeline = RAGPipeline(
+            ollama_client=mock_ollama_client,
+            db_path=str(mock_db.db_path)
+        )
         pipeline.db = mock_db
 
         # Index all
@@ -296,7 +299,10 @@ class TestRAGPipeline:
         ]
 
         # Create pipeline
-        pipeline = RAGPipeline(str(mock_db.db_path), mock_ollama_client)
+        pipeline = RAGPipeline(
+            ollama_client=mock_ollama_client,
+            db_path=str(mock_db.db_path)
+        )
         pipeline.db = mock_db
 
         # Query

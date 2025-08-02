@@ -352,7 +352,9 @@ Please provide a comprehensive answer based on the context provided. If the cont
         if self.db:
             transcriptions = self.db.get_all_transcriptions()
             indexed_count = sum(
-                1 for t in transcriptions if t.id and self._is_transcription_indexed(t.id)
+                1
+                for t in transcriptions
+                if t.id and self._is_transcription_indexed(t.id)
             )
             stats["total_transcriptions"] = len(transcriptions)
             stats["indexed_transcriptions"] = indexed_count

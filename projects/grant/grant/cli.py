@@ -7,8 +7,8 @@ from .ollama_client import OllamaClient
 from .rag import RAGPipeline, RAGConfig
 from .embeddings import EmbeddingService
 
-DEFAULT_CHROMA_DB="./grant_chroma_db"
-DEFAULT_FC_DB="../../resources/fc/fc.db"
+DEFAULT_CHROMA_DB = "./grant_chroma_db"
+DEFAULT_FC_DB = "../../resources/fc/fc.db"
 
 
 def setup_logging(debug: bool = False):
@@ -16,9 +16,10 @@ def setup_logging(debug: bool = False):
     level = logging.DEBUG if debug else logging.WARNING
     logging.basicConfig(
         level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
+
 
 def list_models(client: OllamaClient) -> None:
     try:
@@ -194,7 +195,7 @@ def stats_command(args):
 
     # Initialize RAG pipeline
     rag = RAGPipeline(
-        ollama_client=client, 
+        ollama_client=client,
         vector_store_path=args.vector_store,
         db_path=args.db,
     )
@@ -300,11 +301,11 @@ def main():
     )
     ask_parser.add_argument(
         "--after",
-        help="Only search content published after this date (ISO8601 format, e.g., 2024-01-15 or 2024-01-15T12:00:00)"
+        help="Only search content published after this date (ISO8601 format, e.g., 2024-01-15 or 2024-01-15T12:00:00)",
     )
     ask_parser.add_argument(
         "--before",
-        help="Only search content published before this date (ISO8601 format, e.g., 2024-01-15 or 2024-01-15T12:00:00)"
+        help="Only search content published before this date (ISO8601 format, e.g., 2024-01-15 or 2024-01-15T12:00:00)",
     )
     ask_parser.add_argument(
         "--show-sources", action="store_true", help="Show source information"
