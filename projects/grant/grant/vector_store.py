@@ -77,16 +77,21 @@ class PodcastVectorStore:
             logger.debug(f"Number of results returned: {len(results['ids'][0])}")
             if results["metadatas"] and results["metadatas"][0]:
                 from datetime import datetime
+
                 logger.debug("All results metadata:")
-                for idx, meta in enumerate(results['metadatas'][0]):
+                for idx, meta in enumerate(results["metadatas"][0]):
                     logger.debug(f"\nResult {idx + 1}:")
                     logger.debug(f"  - Title: {meta.get('title', 'N/A')}")
-                    if 'published_timestamp' in meta and meta['published_timestamp']:
-                        unix_ts = meta['published_timestamp']
+                    if "published_timestamp" in meta and meta["published_timestamp"]:
+                        unix_ts = meta["published_timestamp"]
                         iso_date = datetime.fromtimestamp(unix_ts).isoformat()
-                        logger.debug(f"  - Published timestamp: {unix_ts} (Unix) -> {iso_date} (ISO8601)")
-                    if 'published' in meta:
-                        logger.debug(f"  - Published (original) ISO string: {meta['published']}")
+                        logger.debug(
+                            f"  - Published timestamp: {unix_ts} (Unix) -> {iso_date} (ISO8601)"
+                        )
+                    if "published" in meta:
+                        logger.debug(
+                            f"  - Published (original) ISO string: {meta['published']}"
+                        )
             for i in range(len(results["ids"][0])):
                 chunk = TextChunk(
                     id=results["ids"][0][i],
@@ -120,19 +125,25 @@ class PodcastVectorStore:
         # Convert dates to Unix timestamps for ChromaDB filtering
         if start_date:
             from datetime import datetime
-            start_timestamp = int(datetime.fromisoformat(
-                start_date.replace('Z', '+00:00')
-            ).timestamp())
+
+            start_timestamp = int(
+                datetime.fromisoformat(start_date.replace("Z", "+00:00")).timestamp()
+            )
             where_conditions.append({"published_timestamp": {"$gte": start_timestamp}})
-            logger.debug(f"Filtering by start_date: {start_date} (timestamp: {start_timestamp})")
+            logger.debug(
+                f"Filtering by start_date: {start_date} (timestamp: {start_timestamp})"
+            )
 
         if end_date:
             from datetime import datetime
-            end_timestamp = int(datetime.fromisoformat(
-                end_date.replace('Z', '+00:00')
-            ).timestamp())
+
+            end_timestamp = int(
+                datetime.fromisoformat(end_date.replace("Z", "+00:00")).timestamp()
+            )
             where_conditions.append({"published_timestamp": {"$lte": end_timestamp}})
-            logger.debug(f"Filtering by end_date: {end_date} (timestamp: {end_timestamp})")
+            logger.debug(
+                f"Filtering by end_date: {end_date} (timestamp: {end_timestamp})"
+            )
 
         # Build the where clause
         if len(where_conditions) > 1:

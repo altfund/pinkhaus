@@ -120,7 +120,8 @@ class FeedOptions(_FeedOptions):
             # Validate ISO8601 format
             try:
                 from datetime import datetime
-                datetime.fromisoformat(self.date_threshold.replace('Z', '+00:00'))
+
+                datetime.fromisoformat(self.date_threshold.replace("Z", "+00:00"))
             except ValueError:
                 raise ValueError(f"Invalid ISO8601 date format: {self.date_threshold}")
 

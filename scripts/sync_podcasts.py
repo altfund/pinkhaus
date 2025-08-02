@@ -11,21 +11,90 @@ import argparse
 import subprocess
 import sys
 import os
+import time
+import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 
 
-def run_command(cmd: list[str], description: str) -> int:
-    """Run a command and return its exit code."""
-    print(f"\n{description}...")
-    print(f"Running: {' '.join(cmd)}")
+# Setup logging
+logger = logging.getLogger(__name__)
+
+
+def run_command(cmd: list[str], description: str, capture_output: bool = False) -> tuple[int, str]:
+    """Run a command and return its exit code and output."""
+    logger.info(f"{description}...")
+    logger.debug(f"Running: {' '.join(cmd)}")
 
     try:
-        result = subprocess.run(cmd, check=True)
-        return result.returncode
+        if capture_output:
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+            return result.returncode, result.stdout
+        else:
+            result = subprocess.run(cmd, check=True)
+            return result.returncode, ""
     except subprocess.CalledProcessError as e:
-        print(f"Error: Command failed with exit code {e.returncode}")
-        return e.returncode
+        logger.error(f"Command failed with exit code {e.returncode}")
+        if capture_output and e.stdout:
+            logger.debug(f"Output: {e.stdout}")
+        return e.returncode, ""
+
+
+def process_one_podcast(args, date_threshold: str) -> bool:
+    """Process a single podcast. Returns True if a podcast was processed."""
+    # Build beige-book command for one podcast
+    beige_book_cmd = [
+        "flox", "activate", "--",
+        "uv", "run", "python", "-m", "beige_book",
+        "transcribe",
+        "--feed", args.feeds,
+        "--format", "sqlite",
+        "--db-path", args.db,
+        "--model", args.model,
+        "--date-threshold", date_threshold,
+        "--limit", "1",  # Process only one podcast
+    ]
+
+    if args.round_robin:
+        beige_book_cmd.append("--round-robin")
+        
+    if args.verbose:
+        beige_book_cmd.append("--verbose")
+
+    # Run beige-book transcribe for one podcast
+    exit_code, output = run_command(
+        beige_book_cmd,
+        f"Fetching and transcribing one podcast after {date_threshold}",
+        capture_output=True
+    )
+
+    if exit_code != 0:
+        return False
+
+    # Check if we actually processed something
+    if "Processed: 0" in output or "Total items: 0" in output:
+        logger.info("No new podcasts to process")
+        return False
+
+    # Run grant index immediately
+    grant_cmd = [
+        "flox", "activate", "--",
+        "uv", "run", "python", "-m", "grant",
+        "index",
+        "--db", args.db,
+        "--vector-store", args.vector_store,
+    ]
+
+    exit_code, _ = run_command(
+        grant_cmd,
+        "Indexing transcription into vector database"
+    )
+
+    if exit_code != 0:
+        logger.error("Failed to index transcription")
+        return False
+
+    return True
 
 
 def main():
@@ -65,6 +134,11 @@ def main():
         help="Whisper model to use for transcription (default: tiny)",
     )
     parser.add_argument(
+        "--round-robin",
+        action="store_true",
+        help="Process feeds in round-robin mode (newest episode from each feed before moving to next)",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Show commands that would be run without executing them",
@@ -75,8 +149,20 @@ def main():
         action="store_true",
         help="Enable verbose logging",
     )
+    parser.add_argument(
+        "--daemon",
+        action="store_true",
+        help="Run in daemon mode (continuous processing with exponential backoff)",
+    )
 
     args = parser.parse_args()
+
+    # Setup logging
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
 
     # Determine date threshold
     if args.days:
@@ -87,68 +173,78 @@ def main():
         # Default to last 30 days
         date_threshold = (datetime.now() - timedelta(days=30)).isoformat()
 
-    print(f"Syncing podcasts published after: {date_threshold}")
+    logger.info(f"Syncing podcasts published after: {date_threshold}")
 
     # Check if feeds file exists
     if not Path(args.feeds).exists():
-        print(f"Error: Feeds file not found: {args.feeds}")
+        logger.error(f"Feeds file not found: {args.feeds}")
         return 1
 
-    # Build beige-book command
-    beige_book_cmd = [
-        "flox", "activate", "--",
-        "uv", "run", "python", "-m", "beige_book",
-        "transcribe",
-        "--feed", args.feeds,
-        "--format", "sqlite",
-        "--db-path", args.db,
-        "--model", args.model,
-        "--date-threshold", date_threshold,
-    ]
-
-    if args.verbose:
-        beige_book_cmd.append("--verbose")
-
-    # Build grant command
-    grant_cmd = [
-        "flox", "activate", "--",
-        "uv", "run", "python", "-m", "grant",
-        "index",
-        "--db", args.db,
-        "--vector-store", args.vector_store,
-    ]
-
     if args.dry_run:
+        # Show what would be run
+        example_cmd = [
+            "flox", "activate", "--",
+            "uv", "run", "python", "-m", "beige_book",
+            "transcribe",
+            "--feed", args.feeds,
+            "--format", "sqlite",
+            "--db-path", args.db,
+            "--model", args.model,
+            "--date-threshold", date_threshold,
+            "--limit", "1",
+        ]
+        if args.round_robin:
+            example_cmd.append("--round-robin")
+        if args.verbose:
+            example_cmd.append("--verbose")
+            
         print("\nDry run mode - commands that would be executed:")
-        print(f"\n1. Fetch and transcribe podcasts:")
-        print(f"   {' '.join(beige_book_cmd)}")
-        print(f"\n2. Index transcriptions:")
-        print(f"   {' '.join(grant_cmd)}")
+        print(f"\n1. Fetch and transcribe one podcast:")
+        print(f"   {' '.join(example_cmd)}")
+        print(f"\n2. Index transcription:")
+        print(f"   flox activate -- uv run python -m grant index --db {args.db} --vector-store {args.vector_store}")
+        if args.daemon:
+            print("\n3. Loop continuously with exponential backoff when no new podcasts are found")
         return 0
 
-    # Run beige-book transcribe
-    exit_code = run_command(
-        beige_book_cmd,
-        f"Fetching and transcribing podcasts after {date_threshold}"
-    )
-
-    if exit_code != 0:
-        print(f"Error: beige-book transcribe failed with exit code {exit_code}")
-        return exit_code
-
-    # Run grant index
-    exit_code = run_command(
-        grant_cmd,
-        "Indexing transcriptions into vector database"
-    )
-
-    if exit_code != 0:
-        print(f"Error: grant index failed with exit code {exit_code}")
-        return exit_code
-
-    print("\nSync completed successfully!")
-    print(f"\nYou can now query the podcasts using:")
-    print(f"  flox activate -- uv run python -m grant ask \"your question here\" --vector-store {args.vector_store}")
+    if args.daemon:
+        # Daemon mode - run continuously
+        logger.info("Starting in daemon mode...")
+        sleep_time = 60  # Start with 1 minute
+        max_sleep_time = 3600  # Max 1 hour
+        
+        while True:
+            try:
+                if process_one_podcast(args, date_threshold):
+                    # Successfully processed a podcast, reset sleep time
+                    sleep_time = 60
+                else:
+                    # No podcast processed, exponential backoff
+                    logger.info(f"No new podcasts found. Sleeping for {sleep_time} seconds...")
+                    time.sleep(sleep_time)
+                    sleep_time = min(sleep_time * 2, max_sleep_time)
+            except KeyboardInterrupt:
+                logger.info("Daemon mode interrupted by user")
+                return 0
+            except Exception as e:
+                logger.error(f"Unexpected error in daemon mode: {e}")
+                time.sleep(60)  # Sleep 1 minute on error
+    else:
+        # Non-daemon mode - process all available podcasts one at a time
+        processed_count = 0
+        while True:
+            if process_one_podcast(args, date_threshold):
+                processed_count += 1
+            else:
+                # No more podcasts to process
+                break
+        
+        if processed_count > 0:
+            logger.info(f"\nSync completed successfully! Processed {processed_count} podcast(s).")
+            print(f"\nYou can now query the podcasts using:")
+            print(f"  flox activate -- uv run python -m grant ask \"your question here\" --vector-store {args.vector_store}")
+        else:
+            logger.info("No new podcasts to process.")
 
     return 0
 

@@ -30,6 +30,7 @@ message FeedOptions {
   int32 max_retries = 3;
   float initial_delay = 4;  // Initial delay in seconds between retries
   string date_threshold = 5;  // ISO8601 date string - only process items published after this date
+  bool round_robin = 6;  // Process feeds in round-robin fashion (newest episode from each feed before moving to next)
 }
 
 // Processing Configuration
