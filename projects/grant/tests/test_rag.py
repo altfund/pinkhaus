@@ -209,8 +209,7 @@ class TestRAGPipeline:
 
         # Create pipeline
         pipeline = RAGPipeline(
-            ollama_client=mock_ollama_client,
-            db_path=str(mock_db.db_path)
+            ollama_client=mock_ollama_client, db_path=str(mock_db.db_path)
         )
         pipeline.db = mock_db
 
@@ -300,8 +299,7 @@ class TestRAGPipeline:
 
         # Create pipeline
         pipeline = RAGPipeline(
-            ollama_client=mock_ollama_client,
-            db_path=str(mock_db.db_path)
+            ollama_client=mock_ollama_client, db_path=str(mock_db.db_path)
         )
         pipeline.db = mock_db
 
