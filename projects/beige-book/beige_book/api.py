@@ -6,7 +6,7 @@ Provides a REST API interface to the same functionality as the CLI.
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse, Response
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Optional, Literal
 from datetime import datetime
 import logging
@@ -49,19 +49,22 @@ class FeedOptionsAPI(BaseModel):
         1.0, description="Initial delay in seconds between retries"
     )
 
-    @validator("limit")
+    @field_validator("limit")
+    @classmethod
     def validate_limit(cls, v):
         if v is not None and v < 1:
             raise ValueError("Feed limit must be positive")
         return v
 
-    @validator("max_retries")
+    @field_validator("max_retries")
+    @classmethod
     def validate_max_retries(cls, v):
         if v < 0:
             raise ValueError("Max retries cannot be negative")
         return v
 
-    @validator("initial_delay")
+    @field_validator("initial_delay")
+    @classmethod
     def validate_initial_delay(cls, v):
         if v < 0:
             raise ValueError("Initial delay cannot be negative")
@@ -79,7 +82,8 @@ class DatabaseConfigAPI(BaseModel):
         "transcription_segments", description="Name of the segments table"
     )
 
-    @validator("db_path")
+    @field_validator("db_path")
+    @classmethod
     def validate_db_path(cls, v):
         if not v:
             raise ValueError("Database path cannot be empty")
@@ -96,7 +100,8 @@ class InputConfigAPI(BaseModel):
         ..., description="File path for audio file or TOML path for feeds"
     )
 
-    @validator("source")
+    @field_validator("source")
+    @classmethod
     def validate_source(cls, v):
         if not v:
             raise ValueError("Input source cannot be empty")
@@ -129,9 +134,10 @@ class OutputConfigAPI(BaseModel):
         None, description="Database configuration (required for sqlite format)"
     )
 
-    @validator("database", always=True)
-    def validate_database(cls, v, values):
-        if values.get("format") == "sqlite" and not v:
+    @field_validator("database", mode="after")
+    @classmethod
+    def validate_database(cls, v, info):
+        if info.data.get("format") == "sqlite" and not v:
             raise ValueError("SQLite format requires database configuration")
         return v
 
@@ -143,18 +149,20 @@ class TranscriptionRequestAPI(BaseModel):
     processing: ProcessingConfigAPI = Field(..., description="Processing configuration")
     output: OutputConfigAPI = Field(..., description="Output configuration")
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "input": {"type": "file", "source": "/path/to/audio.mp3"},
                 "processing": {"model": "tiny", "verbose": False},
                 "output": {"format": "json", "destination": None},
             }
         }
+    )
 
-    @validator("processing")
-    def validate_processing(cls, v, values):
-        input_config = values.get("input")
+    @field_validator("processing", mode="after")
+    @classmethod
+    def validate_processing(cls, v, info):
+        input_config = info.data.get("input")
         if input_config:
             if input_config.type == "file" and v.feed_options:
                 raise ValueError("Feed options provided for file input")

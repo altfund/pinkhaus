@@ -29,13 +29,13 @@ class TestTranscriptionDatabase:
         """Create a sample TranscriptionResult for testing"""
         segments = [
             Segment(
-                start_ms=0, end_ms=4500, text="The stale smell of old beer lingers."
+                start=0.0, end=4.5, text="The stale smell of old beer lingers."
             ),
             Segment(
-                start_ms=4500, end_ms=7000, text="It takes heat to bring out the odor."
+                start=4.5, end=7.0, text="It takes heat to bring out the odor."
             ),
             Segment(
-                start_ms=7000, end_ms=10000, text="A cold dip restores health in zest."
+                start=7.0, end=10.0, text="A cold dip restores health in zest."
             ),
         ]
 
@@ -223,7 +223,7 @@ class TestTranscriptionDatabase:
 
         # Create multiple transcriptions
         for i in range(5):
-            segments = [Segment(start_ms=0, end_ms=1000, text=f"Test {i}")]
+            segments = [Segment(start=0.0, end=1.0, text=f"Test {i}")]
             result = TranscriptionResult(
                 filename=f"test_{i}.wav",
                 file_hash=f"hash_{i}",
