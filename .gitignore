@@ -5,3 +5,5 @@ pgdata
 projects/grant/.embedding_cache/
 projects/grant/grant_chroma_db/
 projects/grant/test_grant_chroma_db/
+grant_chroma_db
+.embedding_cache

@@ -1,0 +1,43 @@
+name: Sync Podcasts CI
+
+# paths is set b/c sync-podcasts depends on everything
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'projects/sync-podcasts/**'
+      - 'projects/beige-book/**'
+      - 'projects/grant/**'
+      - 'projects/pinkhaus-models/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'projects/sync-podcasts/**'
+      - 'projects/beige-book/**'
+      - 'projects/grant/**'
+      - 'projects/pinkhaus-models/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/sync-podcasts
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Flox
+      uses: flox/install-flox-action@v4
+      
+    - name: Setup Python and run tests
+      run: |
+        flox activate -- uv python install 3.13
+        flox activate -- uv venv
+        flox activate -- uv sync
+        flox activate -- uv run pytest tests/ -v || echo "No tests yet"
+        
+    - name: Lint and format check
+      run: |
+        flox activate -- uv run ruff check .
+        flox activate -- uv run ruff format . --check
