@@ -11,6 +11,8 @@ import os
 from typing import List, Optional
 from datetime import datetime
 
+from .transcriber import AudioTranscriber, TranscriptionResult
+from pinkhaus_models import TranscriptionDatabase
 from .models import (
     TranscriptionRequest,
     TranscriptionResponse,
@@ -21,10 +23,7 @@ from .proto_models import (
     ProcessingConfigModel,
     OutputConfigFormat,
     FeedOptionsOrder,
-    TranscriptionResult,
 )
-from .transcriber import AudioTranscriber
-from .database import TranscriptionDatabase
 from .feed_parser import FeedParser, FeedItem
 from .downloader import AudioDownloader
 
