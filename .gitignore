@@ -2,3 +2,6 @@ pgdata
 **/*.mcp.json
 .idea
 **/*__pycache__
+projects/grant/.embedding_cache/
+projects/grant/grant_chroma_db/
+projects/grant/test_grant_chroma_db/
