@@ -292,6 +292,21 @@ class TranscriptionService:
         self, items: List[FeedItem], feed_options
     ) -> List[FeedItem]:
         """Sort and limit feed items based on options"""
+        # Filter by date threshold if specified
+        if feed_options.date_threshold:
+            try:
+                threshold_date = datetime.fromisoformat(
+                    feed_options.date_threshold.replace('Z', '+00:00')
+                )
+                # Filter items published after the threshold
+                items = [
+                    item for item in items
+                    if item.published and item.published > threshold_date
+                ]
+                logger.info(f"Filtered to {len(items)} items after {feed_options.date_threshold}")
+            except ValueError as e:
+                logger.warning(f"Invalid date threshold format: {e}")
+
         # Sort by publication date
         if feed_options.order == FeedOptionsOrder.ORDER_NEWEST:
             sorted_items = sorted(
