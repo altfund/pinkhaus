@@ -15,7 +15,6 @@ import sys
 PYTHON_EXECUTABLE = sys.executable  # This will resolve to the full path
 
 import os
-import time
 
 WATCHED_FILES = [
     "match_markets.py",

@@ -8,8 +8,6 @@ Created on Sat Jul 26 02:44:54 2025
 
 # backfill_position_names.py
 import sqlite3
-import json
-import pandas as pd
 from free_data_pull import get_all_overtime_markets, get_overtime_markets_markets
 
 DB = "sport_odds.db"

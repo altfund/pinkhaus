@@ -2,14 +2,10 @@ import requests
 import pandas as pd
 import sqlite3
 import json
-import time
-from contextlib import closing
-from fuzzywuzzy import fuzz
 import logging
 from datetime import datetime
 import os
 from dotenv import load_dotenv
-from database import engine
 from alembic.config import Config
 from alembic import command
 

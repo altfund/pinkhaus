@@ -474,7 +474,7 @@ def check_for_arbitrage_opportunities(limit: int = 5):
     if not arb_odds.empty:
         plot_odds_history(arb_odds, y_axis="odds")  # implied_normalized _raw #odds
     else:
-        print(f"No odds data found")
+        print("No odds data found")
 
 
 if __name__ == "__main__":

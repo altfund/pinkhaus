@@ -144,9 +144,6 @@ def optimize_kelly_multimarket(
 
 
 import pandas as pd
-import numpy as np
-from itertools import combinations
-from scipy.optimize import minimize
 
 
 def calculate_kelly_stakes_with_exclusivity(
