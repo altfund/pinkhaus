@@ -35,3 +35,10 @@ pythonpath = ["."]
 [tool.ruff]
 target-version = "py313"
 line-length = 88
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.4",
+    "pytest>=8.0.0",
+    "pytest-mock>=3.0.0",
+]
