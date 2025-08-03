@@ -6,7 +6,7 @@ Created on Fri Mar 14 20:42:00 2025
 @author: ess
 """
 
-#from db_queries import get_upcoming_game
+# from db_queries import get_upcoming_game
 DB_NAME = "sport_odds.db"
 
 from get_oracle_odds import get_upcoming_matched_markets
@@ -41,61 +41,83 @@ def plot_odds_history(df: pd.DataFrame, y_axis="odds"):
     marker_styles = ["o", "s", "D", "^", "v", "<", ">"]
     line_styles = ["-", "--", "-.", ":"]
     bookmaker_styles = {
-        book: {"marker": marker_styles[i % len(marker_styles)], "linestyle": line_styles[i % len(line_styles)]}
+        book: {
+            "marker": marker_styles[i % len(marker_styles)],
+            "linestyle": line_styles[i % len(line_styles)],
+        }
         for i, book in enumerate(bookmakers)
     }
 
-    fig, axes = plt.subplots(nrows=len(unique_markets), ncols=1, figsize=(12, 5 * len(unique_markets)), sharex=True)
+    fig, axes = plt.subplots(
+        nrows=len(unique_markets),
+        ncols=1,
+        figsize=(12, 5 * len(unique_markets)),
+        sharex=True,
+    )
     if len(unique_markets) == 1:
         axes = [axes]  # ensure iterable
 
     # Consistent color for outcome+line
-    df["key"] = df.apply(lambda x: f"{x['normalized_outcome']} | {x['normalized_line']}", axis=1)
+    df["key"] = df.apply(
+        lambda x: f"{x['normalized_outcome']} | {x['normalized_line']}", axis=1
+    )
     unique_keys = sorted(df["key"].unique())
-    color_map = dict(zip(unique_keys, cm.get_cmap("tab20")(np.linspace(0, 1, len(unique_keys)))))
+    color_map = dict(
+        zip(unique_keys, cm.get_cmap("tab20")(np.linspace(0, 1, len(unique_keys))))
+    )
 
     for ax, market in zip(axes, unique_markets):
         sub_df = df[df["unified_market_type"] == market]
-        sub_df = sub_df.sort_values(by=["normalized_outcome", "normalized_line", "bookmaker"])
+        sub_df = sub_df.sort_values(
+            by=["normalized_outcome", "normalized_line", "bookmaker"]
+        )
 
         handles = []
         labels = []
 
-        for (bookmaker, outcome, line), group in sub_df.groupby(["bookmaker", "normalized_outcome", "normalized_line"], sort=False):
+        for (bookmaker, outcome, line), group in sub_df.groupby(
+            ["bookmaker", "normalized_outcome", "normalized_line"], sort=False
+        ):
             key = f"{outcome} | {line}"
             label = f"{bookmaker} | {key}"
             style = bookmaker_styles.get(bookmaker, {"marker": "o", "linestyle": "-"})
 
-            line_obj, = ax.plot(
+            (line_obj,) = ax.plot(
                 group["time"],
                 group[y_axis],
                 label=label,
                 marker=style["marker"],
                 linestyle=style["linestyle"],
-                color=color_map.get(key, "gray")
+                color=color_map.get(key, "gray"),
             )
             handles.append(line_obj)
             labels.append(label)
 
         # Sort legend entries by outcome and line
-        sorted_legend = sorted(zip(labels, handles), key=lambda x: (x[0].split("|")[1].strip(), float(x[0].split("|")[2].strip())))
+        sorted_legend = sorted(
+            zip(labels, handles),
+            key=lambda x: (
+                x[0].split("|")[1].strip(),
+                float(x[0].split("|")[2].strip()),
+            ),
+        )
         sorted_labels, sorted_handles = zip(*sorted_legend)
 
         ax.set_title(f"Market: {market}")
         ax.set_ylabel(y_axis)
         ax.grid(True, linestyle="--", alpha=0.5)
-        ax.legend(sorted_handles, sorted_labels, loc='best', fontsize="small")
+        ax.legend(sorted_handles, sorted_labels, loc="best", fontsize="small")
 
     plt.xlabel("Time")
     plt.tight_layout()
     plt.show()
 
-    
+
 def filter_odds_history(
     df: pd.DataFrame,
     filters: dict = None,
     sort_by: str = "time",
-    ascending: bool = False
+    ascending: bool = False,
 ) -> pd.DataFrame:
     """
     Filters and sorts the odds history DataFrame based on flexible parameters.
@@ -133,8 +155,6 @@ def filter_odds_history(
     return filtered.reset_index(drop=True)
 
 
-
-
 def fetch_odds_history(match_id: int) -> pd.DataFrame:
     """
     Fetches the odds history for both sources tied to a given match ID.
@@ -167,7 +187,11 @@ def fetch_odds_history(match_id: int) -> pd.DataFrame:
                 print(f"Match {match_id} has no valid source IDs.")
                 return pd.DataFrame()
 
-            valid_ids = [str(sid) for sid in [overtime_source_id, odds_api_source_id] if pd.notna(sid)]
+            valid_ids = [
+                str(sid)
+                for sid in [overtime_source_id, odds_api_source_id]
+                if pd.notna(sid)
+            ]
 
             # Step 2: Fetch odds and join market metadata
             odds_query = f"""
@@ -186,7 +210,7 @@ def fetch_odds_history(match_id: int) -> pd.DataFrame:
                     m.maturity_date
                 FROM odd o
                 JOIN market m ON o.source_id = m.source_id
-                WHERE o.source_id IN ({','.join(['?'] * len(valid_ids))})
+                WHERE o.source_id IN ({",".join(["?"] * len(valid_ids))})
                 ORDER BY o.updated_at ASC;
             """
             return pd.read_sql_query(odds_query, conn, params=valid_ids)
@@ -194,7 +218,6 @@ def fetch_odds_history(match_id: int) -> pd.DataFrame:
     except Exception as e:
         print(f"Error fetching odds history: {e}")
         return pd.DataFrame()
-
 
 
 def get_next_match_with_odds(db_name: str, limit: int = 1) -> pd.DataFrame:
@@ -223,7 +246,8 @@ def get_next_match_with_odds(db_name: str, limit: int = 1) -> pd.DataFrame:
     except Exception as e:
         print(f"Database query failed: {e}")
         return pd.DataFrame()
-    
+
+
 # Display home win odds for the next maturing market match
 def display_next_maturing_home_win_odds(db_name: str, limit: int = 1) -> pd.DataFrame:
     with sqlite3.connect(db_name) as conn:
@@ -239,14 +263,16 @@ def display_next_maturing_home_win_odds(db_name: str, limit: int = 1) -> pd.Data
         result = pd.read_sql_query(query, conn, params=(pd.Timestamp.now(),))
         if not result.empty:
             row = result.iloc[0]
-            odds = json.loads(row['markets'])
-            home_win_odds = next((o for o in odds if o['key'] == 'home'), None)
-            logging.info(f"Next Match: {row['home_team']} vs {row['away_team']} (Maturity: {row['maturity_date']})")
-            logging.info(f"Bookmaker: {row['bookmaker']}, Home Win Odds: {home_win_odds}")
+            odds = json.loads(row["markets"])
+            home_win_odds = next((o for o in odds if o["key"] == "home"), None)
+            logging.info(
+                f"Next Match: {row['home_team']} vs {row['away_team']} (Maturity: {row['maturity_date']})"
+            )
+            logging.info(
+                f"Bookmaker: {row['bookmaker']}, Home Win Odds: {home_win_odds}"
+            )
         else:
             logging.info("No upcoming matches with odds available.")
-
-
 
 
 def diagnose_alignment_issues(merged_odds: pd.DataFrame) -> dict:
@@ -259,19 +285,27 @@ def diagnose_alignment_issues(merged_odds: pd.DataFrame) -> dict:
     diagnostics = {}
 
     # 1. Check for null unified_market_type
-    diagnostics["null_unified_market_type"] = merged_odds[merged_odds["unified_market_type"].isnull()]
+    diagnostics["null_unified_market_type"] = merged_odds[
+        merged_odds["unified_market_type"].isnull()
+    ]
 
     # 2. Unique lines and data types
-    diagnostics["line_type_check"] = merged_odds["normalized_line"].apply(type).value_counts()
+    diagnostics["line_type_check"] = (
+        merged_odds["normalized_line"].apply(type).value_counts()
+    )
 
     # 3. Unique values for normalized_outcome per bookmaker
     diagnostics["outcome_by_bookmaker"] = (
-        merged_odds.groupby("bookmaker")["normalized_outcome"].value_counts().unstack(fill_value=0)
+        merged_odds.groupby("bookmaker")["normalized_outcome"]
+        .value_counts()
+        .unstack(fill_value=0)
     )
 
     # 4. Line mismatches by market + outcome
     diagnostics["group_counts"] = (
-        merged_odds.groupby(["unified_market_type", "normalized_outcome", "normalized_line"])["bookmaker"]
+        merged_odds.groupby(
+            ["unified_market_type", "normalized_outcome", "normalized_line"]
+        )["bookmaker"]
         .nunique()
         .reset_index(name="bookmaker_count")
         .sort_values("bookmaker_count", ascending=False)
@@ -286,13 +320,18 @@ def diagnose_alignment_issues(merged_odds: pd.DataFrame) -> dict:
 
     # 6. Outcome names that mismatch across bookmakers
     outcome_overlap = (
-        merged_odds.groupby(["unified_market_type", "normalized_line", "normalized_outcome"])["bookmaker"]
+        merged_odds.groupby(
+            ["unified_market_type", "normalized_line", "normalized_outcome"]
+        )["bookmaker"]
         .nunique()
         .reset_index()
     )
-    diagnostics["mismatched_outcomes"] = outcome_overlap[outcome_overlap["bookmaker"] < 2]
+    diagnostics["mismatched_outcomes"] = outcome_overlap[
+        outcome_overlap["bookmaker"] < 2
+    ]
 
     return diagnostics
+
 
 def check_for_arbitrage_opportunities(limit: int = 5):
     """
@@ -310,53 +349,88 @@ def check_for_arbitrage_opportunities(limit: int = 5):
     match_ids = upcoming_matches["match_id"].tolist()
 
     # Fetch and combine odds data for all matches
-    all_odds = pd.concat([
-        fetch_odds_history(mid).assign(match_id=mid) for mid in match_ids
-    ], ignore_index=True)
-
+    all_odds = pd.concat(
+        [fetch_odds_history(mid).assign(match_id=mid) for mid in match_ids],
+        ignore_index=True,
+    )
 
     # Filter for relevant bookmakers
     filtered_odds = filter_odds_history(
         all_odds,
         filters={"bookmaker": ["overtime_markets", "pinnacle"]},
         sort_by="time",
-        ascending=False
+        ascending=False,
     )
 
     # Map market_type to unified type
-    market_type_map = pd.DataFrame([
-        {"bookmaker": "overtime_markets", "market_type": "winner", "unified_market_type": "h2h"},
-        {"bookmaker": "pinnacle", "market_type": "h2h", "unified_market_type": "h2h"},
-        {"bookmaker": "overtime_markets", "market_type": "spread", "unified_market_type": "spread"},
-        {"bookmaker": "pinnacle", "market_type": "spreads", "unified_market_type": "spread"},
-        {"bookmaker": "overtime_markets", "market_type": "total", "unified_market_type": "total"},
-        {"bookmaker": "pinnacle", "market_type": "totals", "unified_market_type": "total"},
-    ])
+    market_type_map = pd.DataFrame(
+        [
+            {
+                "bookmaker": "overtime_markets",
+                "market_type": "winner",
+                "unified_market_type": "h2h",
+            },
+            {
+                "bookmaker": "pinnacle",
+                "market_type": "h2h",
+                "unified_market_type": "h2h",
+            },
+            {
+                "bookmaker": "overtime_markets",
+                "market_type": "spread",
+                "unified_market_type": "spread",
+            },
+            {
+                "bookmaker": "pinnacle",
+                "market_type": "spreads",
+                "unified_market_type": "spread",
+            },
+            {
+                "bookmaker": "overtime_markets",
+                "market_type": "total",
+                "unified_market_type": "total",
+            },
+            {
+                "bookmaker": "pinnacle",
+                "market_type": "totals",
+                "unified_market_type": "total",
+            },
+        ]
+    )
 
     # Merge unified market_type
     merged_odds = pd.merge(
-        filtered_odds,
-        market_type_map,
-        how="inner",
-        on=["bookmaker", "market_type"]
+        filtered_odds, market_type_map, how="inner", on=["bookmaker", "market_type"]
     )
 
     # Normalize outcomes
     merged_odds["normalized_outcome"] = merged_odds.apply(
-        lambda row: normalize_outcome(row["bookmaker"], row["market_type"], row["outcome"]),
-        axis=1
+        lambda row: normalize_outcome(
+            row["bookmaker"], row["market_type"], row["outcome"]
+        ),
+        axis=1,
     )
-    merged_odds["normalized_outcome"] = merged_odds.apply(normalize_team_outcome, axis=1)
-    merged_odds["normalized_line"] = pd.to_numeric(merged_odds["line"], errors="coerce").fillna(0.0)
+    merged_odds["normalized_outcome"] = merged_odds.apply(
+        normalize_team_outcome, axis=1
+    )
+    merged_odds["normalized_line"] = pd.to_numeric(
+        merged_odds["line"], errors="coerce"
+    ).fillna(0.0)
 
     # Calculate implied probabilities
     merged_odds = add_implied_probabilities(merged_odds)
-    
+
     # Run diagnostics on the sample
     diagnostics = diagnose_alignment_issues(merged_odds)
 
     latest_odds = merged_odds.drop_duplicates(
-        subset=["match_id", "bookmaker", "unified_market_type", "normalized_outcome", "normalized_line"]
+        subset=[
+            "match_id",
+            "bookmaker",
+            "unified_market_type",
+            "normalized_outcome",
+            "normalized_line",
+        ]
     )
 
     # Evaluate edge and generate signals
@@ -365,8 +439,9 @@ def check_for_arbitrage_opportunities(limit: int = 5):
 
     # Keep only outcomes with multiple bookmakers
     group_counts = (
-        merged_odds
-        .groupby(["match_id", "unified_market_type", "normalized_outcome", "normalized_line"])["bookmaker"]
+        merged_odds.groupby(
+            ["match_id", "unified_market_type", "normalized_outcome", "normalized_line"]
+        )["bookmaker"]
         .nunique()
         .reset_index(name="bookmaker_count")
     )
@@ -374,9 +449,11 @@ def check_for_arbitrage_opportunities(limit: int = 5):
 
     arb_odds = pd.merge(
         merged_odds,
-        valid_groups[["match_id", "unified_market_type", "normalized_outcome", "normalized_line"]],
+        valid_groups[
+            ["match_id", "unified_market_type", "normalized_outcome", "normalized_line"]
+        ],
         on=["match_id", "unified_market_type", "normalized_outcome", "normalized_line"],
-        how="inner"
+        how="inner",
     )
 
     # Get most recent odds per bookmaker-market-outcome-line combo
@@ -390,16 +467,14 @@ def check_for_arbitrage_opportunities(limit: int = 5):
             index="market_type",
             columns="bookmaker",
             aggfunc=lambda x: True,
-            fill_value=False
+            fill_value=False,
         )
     )
 
     if not arb_odds.empty:
-        plot_odds_history(arb_odds, y_axis="odds") #implied_normalized _raw #odds
+        plot_odds_history(arb_odds, y_axis="odds")  # implied_normalized _raw #odds
     else:
         print(f"No odds data found")
-
-
 
 
 if __name__ == "__main__":

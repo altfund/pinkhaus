@@ -14,6 +14,7 @@ from free_data_pull import upsert_table
 
 DB_NAME = "sport_odds.db"
 
+
 # Function to match markets exactly and upsert results
 def match_markets():
     logging.info("Matching markets from Overtime and Odds API...")
@@ -35,11 +36,19 @@ def match_markets():
 
         matches["confidence"] = 1.00
         matches["updated_at"] = pd.Timestamp.now().isoformat()
-        upsert_table(DB_NAME, matches, "match", key_columns=["overtime_source_id", "odds_api_source_id"])
+        upsert_table(
+            DB_NAME,
+            matches,
+            "match",
+            key_columns=["overtime_source_id", "odds_api_source_id"],
+        )
         logging.info(f"Upserted {len(matches)} exact matches into match table.")
+
 
 # Main function
 if __name__ == "__main__":
     # Match markets and store results in match table
     match_markets()
-    logging.info("Exact markets matched and upserted in match table with 100% confidence.")
+    logging.info(
+        "Exact markets matched and upserted in match table with 100% confidence."
+    )
