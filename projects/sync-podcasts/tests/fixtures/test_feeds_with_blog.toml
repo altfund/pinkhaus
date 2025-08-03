@@ -1,0 +1,7 @@
+[feeds]
+rss = [
+    "http://localhost:8000/feed1.xml",
+    "http://localhost:8000/feed2.xml", 
+    "http://localhost:8000/feed3.xml",
+    "http://localhost:8000/feed4.xml"
+]

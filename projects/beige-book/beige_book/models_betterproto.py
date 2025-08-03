@@ -391,7 +391,11 @@ def create_feed_request(
 
     database_config = None
     if db_path or format == "sqlite":
-        database_config = DatabaseConfig(db_path=db_path or "beige_book_feeds.db")
+        database_config = DatabaseConfig(
+            db_path=db_path or "beige_book_feeds.db",
+            metadata_table="transcription_metadata",
+            segments_table="transcription_segments"
+        )
 
     return TranscriptionRequest(
         input=InputConfig(type=InputConfigInputType.INPUT_TYPE_FEED, source=toml_path),
