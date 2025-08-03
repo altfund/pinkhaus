@@ -4,7 +4,7 @@ from .models import (
     Segment,
     TranscriptionResult,
 )
-from .database import TranscriptionDatabase
+from .database import TranscriptionDatabase, VectorStore
 
 __version__ = "0.1.0"
 __all__ = [
@@ -13,4 +13,5 @@ __all__ = [
     "Segment",
     "TranscriptionResult",
     "TranscriptionDatabase",
+    "VectorStore",
 ]
