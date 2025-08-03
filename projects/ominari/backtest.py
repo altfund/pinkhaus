@@ -15,11 +15,8 @@ _external_stub = _init_external_stub()
 # backtest_utils.py
 
 import pandas as pd
-from dateutil.relativedelta import relativedelta
-from free_data_pull import DB_NAME
 
-from sqlalchemy import select, text
-from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from evaluate_open_markets import (
     generate_betting_session_report_and_save,
@@ -30,13 +27,8 @@ from evaluate_open_markets import (
 from database import engine
 
 from performance import (
-    get_latest_session_ids,
-    load_bets_with_results,
-    score_bets,
-    summarize_performance,
     summarize_backtest_performance,
 )
-from models import BettingSession  # :contentReference[oaicite:4]{index=4}
 
 from evaluate_open_markets import (
     summarize_match_schedule_from_open_markets,

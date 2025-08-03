@@ -13,12 +13,10 @@ from kelly_multimarket import *
 
 DB_NAME = "sport_odds.db"
 
-import pandas as pd
 import grpc
 import time
 
 import sqlite3
-import pandas as pd
 from odds_formatting_helpers import (
     normalize_outcome,
     normalize_team_outcome,
@@ -30,7 +28,7 @@ from typing import Optional, Dict
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, BettingSession, Bet
+from models import BettingSession, Bet
 
 engine = create_engine(f"sqlite:///{DB_NAME}")
 
@@ -67,7 +65,6 @@ class ExternalGrpcSignal(SignalProvider):
     def get_probs(self, df: pd.DataFrame) -> pd.Series:
         import grpc
         from external_pb2 import SignalBatchRequest
-        from external_pb2_grpc import SignalServiceStub
 
         # 1) Always log entry & DataFrame size
         print(f"[CLIENT] ExternalGrpcSignal.get_probs: {len(df)} rows", flush=True)
@@ -537,10 +534,10 @@ def summarize_match_schedule_from_open_markets(
 
 # Re-import necessary modules after code execution environment reset
 import pandas as pd
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 
-from datetime import timedelta, datetime, timezone
+from datetime import datetime
 import pandas as pd
 
 
@@ -1136,10 +1133,8 @@ Bets to Place:
     }
 
 
-import os
 from datetime import datetime
 from pathlib import Path
-import markdown
 from markdown2 import markdown as md2
 import pdfkit
 from IPython.display import Markdown, display

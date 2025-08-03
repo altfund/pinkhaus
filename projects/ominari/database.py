@@ -6,7 +6,6 @@ Database connection configuration with SQLite pragmas to avoid locking issues.
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import Pool
 
 DB_NAME = "sport_odds.db"
 DB_URL = f"sqlite:///{DB_NAME}"
