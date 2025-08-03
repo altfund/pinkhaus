@@ -8,7 +8,7 @@ Created on Fri Aug  1 01:39:20 2025
 
 # performance.py
 import pandas as pd
-from sqlalchemy import create_engine, text, select, func
+from sqlalchemy import select, func
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
 from models import Bet, BettingSession, Market

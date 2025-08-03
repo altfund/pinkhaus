@@ -7,7 +7,6 @@ Created on Thu Apr  3 23:20:28 2025
 """
 
 import sqlite3
-import json
 from pathlib import Path
 
 # Connect to existing database
@@ -51,7 +50,6 @@ conn.close()
 
 import requests
 import sqlite3
-import time
 from datetime import datetime
 from eth_utils import to_checksum_address
 
