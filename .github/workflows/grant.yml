@@ -4,14 +4,8 @@ name: Grant Build and Test
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'projects/grant/**'
-      - 'projects/pinkhaus-models/**'
   pull_request:
     branches: [ main ]
-    paths:
-      - 'projects/grant/**'
-      - 'projects/pinkhaus-models/**'
 
 jobs:
   build:
