@@ -75,7 +75,7 @@ SCRIPT_CONFIG = {
 }
 
 # Define script directory
-SCRIPT_DIR = Path("/home/ess/Documents/apps/ominari")
+SCRIPT_DIR = Path("/home/ess/Documents/apps/ominari/projects/ominari")
 
 # Path to store last run times
 LAST_RUN_PATH = SCRIPT_DIR / "last_run_times.json"
@@ -133,4 +133,4 @@ def resolve_and_run(script_name, visited=None):
 for script in SCRIPT_CONFIG:
     resolve_and_run(script)
 
-watch_for_changes_and_restart("/home/ess/Documents/apps/ominari")
+watch_for_changes_and_restart("/home/ess/Documents/apps/ominari/projects/ominari")
