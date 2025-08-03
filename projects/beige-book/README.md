@@ -11,7 +11,10 @@ A command-line tool, Python library, and REST API for transcribing audio files u
 - RSS/podcast feed processing with automatic audio download
 - Resumable feed processing with duplicate detection
 - Feed item ordering (newest/oldest first) and limiting
-- **Speaker diarization** - identify "who speaks when" in podcasts (NEW!)
+- **Speaker diarization** - identify "who speaks when" in podcasts
+- **Speaker identity tracking** - recognize recurring speakers across episodes (NEW!)
+- Voice embeddings for speaker fingerprinting
+- Persistent speaker profiles with canonical labels (HOST, GUEST, etc.)
 - Python library API for programmatic use
 - REST API with Swagger/OpenAPI documentation
 - Comprehensive test suite
@@ -165,7 +168,7 @@ Save transcription to a file:
 transcribe audio.wav --format json --output result.json
 ```
 
-## Speaker Diarization (NEW!)
+## Speaker Diarization
 
 Identify different speakers in podcasts and conversations.
 
@@ -211,6 +214,90 @@ result = transcriber.transcribe_file(
 For a complete demo, run: `python demos/demo_diarization.py`
 
 See [README_SPEAKER_DIARIZATION.md](README_SPEAKER_DIARIZATION.md) for full documentation.
+
+## Speaker Identity Tracking (NEW!)
+
+Track and recognize recurring speakers across multiple recordings within a podcast feed.
+
+### Features
+
+- **Voice Fingerprinting**: Extract voice embeddings to identify unique speakers
+- **Persistent Profiles**: Maintain speaker profiles across episodes
+- **Automatic Recognition**: Match speakers to known profiles using voice similarity
+- **Canonical Labels**: Assign roles like HOST, COHOST, GUEST to speakers
+- **Query by Speaker**: Find all statements made by a specific person over time
+
+### Basic Usage
+
+```python
+from beige_book.transcriber import AudioTranscriber
+from beige_book.database import TranscriptionDatabase
+
+# Enable both diarization and speaker identification
+transcriber = AudioTranscriber(model_name="tiny")
+result = transcriber.transcribe_file(
+    "episode_001.mp3",
+    enable_diarization=True,
+    enable_speaker_identification=True,
+    feed_url="https://podcast.example.com/feed.rss"
+)
+
+# Save to database (automatically matches speakers)
+db = TranscriptionDatabase("podcast.db")
+db.create_tables()
+db.create_speaker_identity_tables()
+trans_id = db.save_transcription(result, feed_url="https://podcast.example.com/feed.rss")
+
+# Query speaker history
+profiles = db.get_speaker_profiles_for_feed("https://podcast.example.com/feed.rss")
+for profile in profiles:
+    print(f"{profile['display_name']}: {profile['total_appearances']} episodes")
+    
+    # Get all statements by this speaker
+    statements = db.get_speaker_statements(profile['id'])
+    for stmt in statements[:5]:
+        print(f"  - {stmt['transcription_date']}: \"{stmt['text']}\"")
+```
+
+### Managing Speaker Profiles
+
+```python
+# Create known speaker profiles
+host_id = db.create_speaker_profile(
+    display_name="John Doe", 
+    feed_url="https://podcast.example.com/feed.rss",
+    canonical_label="HOST"
+)
+
+# Manually verify/correct speaker matches
+db.link_speaker_occurrence(
+    transcription_id=trans_id,
+    temporary_label="SPEAKER_0",
+    profile_id=host_id,
+    confidence=1.0,
+    is_verified=True
+)
+
+# Merge duplicate profiles
+matcher = SpeakerMatcher(db)
+matcher.merge_speaker_profiles(profile_id_keep=host_id, profile_id_merge=duplicate_id)
+```
+
+### Voice Embedding Methods
+
+The system supports multiple embedding extraction methods:
+
+- **SpeechBrain** (default): State-of-the-art ECAPA-TDNN model
+- **PyAnnote**: Integrated with diarization pipeline
+- **Mock**: For testing without GPU/models
+
+Configure the method:
+```python
+# In save_transcription, speaker matching uses the configured method
+os.environ['SPEAKER_EMBEDDING_METHOD'] = 'speechbrain'  # or 'pyannote', 'mock'
+```
+
+For a complete demo, run: `python test_speaker_identity.py`
 
 ## RSS/Podcast Feed Processing
 
