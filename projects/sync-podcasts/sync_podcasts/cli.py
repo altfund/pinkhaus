@@ -13,8 +13,8 @@ def setup_logging(verbose: bool = False):
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
         level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
 
@@ -98,7 +98,7 @@ def main():
         date_threshold=args.date_threshold,
         days_back=args.days,
         ollama_base_url=args.ollama_base_url,
-        verbose=args.verbose
+        verbose=args.verbose,
     )
 
     # Run the syncer
