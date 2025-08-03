@@ -60,6 +60,8 @@ class TranscriptionResult(betterproto.Message):
     segments: List["Segment"] = betterproto.message_field(4)
     full_text: str = betterproto.string_field(5)
     created_at: int = betterproto.int64_field(6)
+    has_speaker_labels: bool = betterproto.bool_field(7)
+    num_speakers: int = betterproto.int64_field(8)
 
 
 @dataclass
