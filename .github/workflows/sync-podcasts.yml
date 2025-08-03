@@ -19,25 +19,22 @@ on:
 
 jobs:
   test:
+    name: "Build and test sync podcasts"
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: projects/sync-podcasts
-    
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install Flox
-      uses: flox/install-flox-action@v4
+      - name: "Checkout"
+      - uses: actions/checkout@v4
       
-    - name: Setup Python and run tests
-      run: |
-        flox activate -- uv python install 3.13
-        flox activate -- uv venv
-        flox activate -- uv sync
-        flox activate -- uv run pytest tests/ -v || echo "No tests yet"
+      - name: Install Flox
+        uses: flox/install-flox-action@v2
         
-    - name: Lint and format check
-      run: |
-        flox activate -- uv run ruff check .
-        flox activate -- uv run ruff format . --check
+      - name: "Activate Flox and run lint/format"
+        working-directory: ./projects/sync-podcasts
+        run: |
+          flox activate -- just install
+          flox activate -- just check
+          
+      - name: Lint and format check
+        working-directory: ./projects/sync-podcasts
+        run: |
+          flox activate -- pytest
