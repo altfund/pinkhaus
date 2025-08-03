@@ -23,10 +23,11 @@ WATCHED_FILES = [
     "find_opportunities.py",
     "evaluate_open_markets.py",
     "free_data_pull.py",
-    "run_scheduler.sh"
+    "run_scheduler.sh",
 ]
 
 FILE_HASHES = {}
+
 
 def file_changed(file_path):
     try:
@@ -39,6 +40,7 @@ def file_changed(file_path):
         print(f"Could not check {file_path}: {e}")
         return False
 
+
 def watch_for_changes_and_restart(base_path="."):
     changed = any(file_changed(os.path.join(base_path, f)) for f in WATCHED_FILES)
     if changed:
@@ -49,29 +51,35 @@ def watch_for_changes_and_restart(base_path="."):
 def run_script(script_name):
     script_path = SCRIPT_DIR / script_name
     print(f"Running: {script_name}")
-    result = subprocess.run([PYTHON_EXECUTABLE, str(script_path)], capture_output=True, text=True)
+    result = subprocess.run(
+        [PYTHON_EXECUTABLE, str(script_path)], capture_output=True, text=True
+    )
     print(result.stdout)
     if result.stderr:
         print("Error:", result.stderr)
     update_last_run(script_name)
 
+
 def restart_scheduler_service():
     """Restart the systemd user service to reflect updates to scripts/configs."""
     try:
         subprocess.run(["systemctl", "--user", "daemon-reexec"], check=True)
-        subprocess.run(["systemctl", "--user", "restart", "altfund_scheduler.service"], check=True)
+        subprocess.run(
+            ["systemctl", "--user", "restart", "altfund_scheduler.service"], check=True
+        )
         print("🔁 altfund_scheduler.service restarted.")
     except subprocess.CalledProcessError as e:
         print(f"⚠️ Failed to restart service: {e}")
 
+
 # Configuration of scripts with run intervals (in minutes) and dependencies
 SCRIPT_CONFIG = {
     "free_data_pull.py": {"interval": 5, "depends_on": []},
-    #"match_markets.py": {"interval": 60, "depends_on": ["free_data_pull.py"]},
-    #"get_oracle_odds.py": {"interval": 60*12, "depends_on": ["match_markets.py"]},
-    #"find_opportunities.py": {"interval": 60*12, "depends_on": ["get_oracle_odds.py"]},
+    # "match_markets.py": {"interval": 60, "depends_on": ["free_data_pull.py"]},
+    # "get_oracle_odds.py": {"interval": 60*12, "depends_on": ["match_markets.py"]},
+    # "find_opportunities.py": {"interval": 60*12, "depends_on": ["get_oracle_odds.py"]},
     "evaluate_open_markets.py": {"interval": 30, "depends_on": ["free_data_pull.py"]},
-    "db_inspector.py": {"interval": 60, "depends_on": []}
+    "db_inspector.py": {"interval": 60, "depends_on": []},
 }
 
 # Define script directory
@@ -86,8 +94,9 @@ if LAST_RUN_PATH.exists():
         last_run_times = json.load(f)
 else:
     last_run_times = {}
-    
+
 LOG_FILE = SCRIPT_DIR / "script_scheduler.log"
+
 
 def log_message(message):
     with open(LOG_FILE, "a") as log:
@@ -98,10 +107,12 @@ def get_last_run(script_name):
     ts = last_run_times.get(script_name)
     return datetime.fromisoformat(ts) if ts else None
 
+
 def update_last_run(script_name):
     last_run_times[script_name] = datetime.utcnow().isoformat()
     with open(LAST_RUN_PATH, "w") as f:
         json.dump(last_run_times, f, indent=2)
+
 
 def is_ready_to_run(script_name):
     config = SCRIPT_CONFIG[script_name]
@@ -128,6 +139,7 @@ def resolve_and_run(script_name, visited=None):
     # Run if it's due and dependencies are up to date
     if is_ready_to_run(script_name):
         run_script(script_name)
+
 
 # Example usage: resolve and run all scripts
 for script in SCRIPT_CONFIG:
