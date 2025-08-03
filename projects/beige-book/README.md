@@ -11,6 +11,7 @@ A command-line tool, Python library, and REST API for transcribing audio files u
 - RSS/podcast feed processing with automatic audio download
 - Resumable feed processing with duplicate detection
 - Feed item ordering (newest/oldest first) and limiting
+- **Speaker diarization** - identify "who speaks when" in podcasts (NEW!)
 - Python library API for programmatic use
 - REST API with Swagger/OpenAPI documentation
 - Comprehensive test suite
@@ -116,39 +117,32 @@ Output structure:
 }
 ```
 
-#### 3. Table Format
-ASCII table with formatted columns for easy reading.
-
-```bash
-transcribe audio.wav --format table
-```
-
-#### 4. CSV Format
-Comma-separated values with proper escaping.
+#### 3. CSV Format
+Comma-separated values with metadata in comments.
 
 ```bash
 transcribe audio.wav --format csv
 ```
 
-#### 5. TOML Format
-TOML structured data format.
+#### 4. TOML Format
+Structured data in TOML format.
 
 ```bash
 transcribe audio.wav --format toml
 ```
 
-#### 6. SQLite Database Format
-Store transcriptions in a SQLite database with proper normalization.
+#### 5. Table Format
+Human-readable table with aligned columns.
+
+```bash
+transcribe audio.wav --format table
+```
+
+#### 6. SQLite Database
+Store results in a database with foreign key relationships.
 
 ```bash
 transcribe audio.wav --format sqlite --db-path transcriptions.db
-```
-
-With custom table names:
-```bash
-transcribe audio.wav --format sqlite --db-path my.db \
-  --metadata-table my_metadata \
-  --segments-table my_segments
 ```
 
 ### Model Selection
@@ -169,29 +163,79 @@ Save transcription to a file:
 
 ```bash
 transcribe audio.wav --format json --output result.json
-transcribe audio.wav --format csv -o data.csv
 ```
 
-## RSS Feed Processing
+## Speaker Diarization (NEW!)
 
-The tool can process RSS/podcast feeds from a TOML configuration file, automatically downloading and transcribing audio files.
+Identify different speakers in podcasts and conversations.
 
-### Feed Configuration
+### Quick Setup
 
-Create a TOML file with RSS feed URLs:
+1. **Accept model terms** at: https://huggingface.co/pyannote/speaker-diarization-3.1
+2. **Create a token** at: https://huggingface.co/settings/tokens (read permission only)
+3. **Set environment variable**: `export HF_TOKEN='hf_your_token_here'`
+
+### Using Speaker Diarization
+
+```python
+from beige_book.transcriber import AudioTranscriber
+
+# Enable diarization
+transcriber = AudioTranscriber(model_name="tiny")
+result = transcriber.transcribe_file(
+    "podcast.wav",
+    enable_diarization=True,
+    hf_token=os.getenv("HF_TOKEN")
+)
+
+# Results include speaker labels
+# {
+#   "segments": [
+#     {
+#       "start": "00:00:00.000",
+#       "end": "00:00:05.230", 
+#       "text": "Welcome to our podcast!",
+#       "speaker": "SPEAKER_0"
+#     },
+#     {
+#       "start": "00:00:05.230",
+#       "end": "00:00:08.150",
+#       "text": "Thanks for having me.",
+#       "speaker": "SPEAKER_1"
+#     }
+#   ],
+#   "num_speakers": 2
+# }
+```
+
+For a complete demo, run: `python demos/demo_diarization.py`
+
+See [README_SPEAKER_DIARIZATION.md](README_SPEAKER_DIARIZATION.md) for full documentation.
+
+## RSS/Podcast Feed Processing
+
+The tool can process RSS/podcast feeds, automatically downloading and transcribing audio files.
+
+### Feed File Format
+
+Create a TOML file (`feeds.toml`) with your RSS feed URLs:
 
 ```toml
 [feeds]
 rss = [
     "https://feeds.example.com/podcast1.xml",
-    "https://feeds.megaphone.fm/ESP9520742908",
     "https://feeds.example.com/podcast2.xml"
 ]
 ```
 
-### Basic Feed Processing
+```toml
+[[feeds]]
+rss = "https://example.com/podcast2/feed.xml"
+[[feeds]]
+rss = "https://example.com/podcast1/feed.xml"
+```
 
-Process all items from feeds:
+### Process Feeds
 
 ```bash
 uv run transcribe feeds.toml --feed
@@ -262,9 +306,28 @@ Example JSON output with feed metadata:
 }
 ```
 
-## Library Usage
+## Database Schema
 
-### Basic Example
+When using SQLite output, the following tables are created:
+
+### transcription_metadata
+- `id`: Primary key
+- `filename`: Name of the transcribed file
+- `file_hash`: SHA256 hash of the file
+- `language`: Detected language code
+- `created_at`: Timestamp of transcription
+- `full_text`: Complete transcribed text
+
+### transcription_segments
+- `id`: Primary key
+- `metadata_id`: Foreign key to transcription_metadata
+- `start_ms`: Start time in milliseconds
+- `end_ms`: End time in milliseconds
+- `text`: Transcribed text for this segment
+
+## Python Library Usage
+
+The tool can be used as a Python library:
 
 ```python
 from beige_book import AudioTranscriber
@@ -487,7 +550,11 @@ curl -X POST http://localhost:8000/transcribe \
   }'
 ```
 
-Process RSS feeds:
+See the API documentation for all available endpoints and options.
+
+## Quick Test with Harvard Audio
+
+Test the complete functionality including speaker diarization:
 
 ```bash
 curl -X POST http://localhost:8000/transcribe \
@@ -514,11 +581,34 @@ curl -X POST http://localhost:8000/transcribe \
   }'
 ```
 
+```bash
+# Activate environment
+flox activate
+source .venv/bin/activate
+
+# Run the harvard audio test (includes speaker diarization)
+python tests/test_harvard_diarization.py
+```
+
+This will:
+- Transcribe the harvard.wav test file
+- Perform speaker diarization (real if HF_TOKEN is set, mock otherwise)
+- Create a SQLite database with all results
+- Generate JSON and CSV outputs with speaker labels
+- Display sample segments and statistics
+
+### Code Style
+
+The project uses ruff for linting:
+```bash
+uv run ruff check .
+uv run ruff format .
+```
+
 ## Running Tests
 
 The project includes a comprehensive test suite using pytest.
 
-### Run All Tests
 
 ```bash
 # Run all tests

@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 # Add project to path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from beige_book.transcriber import AudioTranscriber
 from beige_book.speaker_diarizer import SpeakerDiarizer

@@ -2,6 +2,20 @@
 
 This document explains how to use pyannote-audio for speaker diarization (identifying "who speaks when") in podcast transcriptions.
 
+## Quick Test
+
+**Run the test now that you have your HF_TOKEN set:**
+
+```bash
+# Make sure your token is set
+echo $HF_TOKEN  # Should show your token
+
+# Run the harvard audio test
+python tests/test_harvard_diarization.py
+```
+
+This test uses the harvard.wav file and creates a complete database with speaker information.
+
 ## Current Status
 
 ✅ **pyannote-audio is now fully integrated and working with Python 3.11!**
@@ -111,17 +125,31 @@ The project now uses Python 3.11, which fully supports pyannote-audio. Everythin
    transcribe podcast.wav --enable-diarization
    
    # Or using Python
-   python demo_diarization.py
+   python demos/demo_diarization.py
    ```
 
 ## Hugging Face Setup
 
 To use real speaker diarization models:
 
-1. Create account at https://huggingface.co
-2. Accept model conditions at https://huggingface.co/pyannote/speaker-diarization-3.1
-3. Generate access token at https://huggingface.co/settings/tokens
-4. Set token as environment variable: `export HF_TOKEN=your-token-here`
+1. **Create account** at https://huggingface.co
+
+2. **Accept model conditions** at https://huggingface.co/pyannote/speaker-diarization-3.1
+   - Click "Agree and access repository" button
+   - This is required before the model can be downloaded
+
+3. **Generate access token** at https://huggingface.co/settings/tokens
+   - Click "New token"
+   - Name it (e.g., "pyannote-diarization")
+   - Select "read" permission (that's all you need)
+   - Copy the token (starts with `hf_...`)
+
+4. **Set token as environment variable**: 
+   ```bash
+   export HF_TOKEN='hf_your_token_here'
+   ```
+
+**Token Permissions Required**: Only 'read' permission is needed to download and use the models.
 
 ## Example Output
 
