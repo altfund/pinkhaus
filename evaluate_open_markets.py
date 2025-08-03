@@ -25,6 +25,16 @@ from odds_formatting_helpers import (
     generate_internal_mispricing_signals
 )
 from datetime import datetime, timezone
+from typing import Optional, Dict
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm  import sessionmaker
+from models          import Base, BettingSession, Bet
+
+engine = create_engine(f"sqlite:///{DB_NAME}")
+
+Session = sessionmaker(bind=engine)
+
 
 # ─── 1. SIGNAL ABSTRACTION ─────────────────────────────────────────────────────
 
@@ -87,6 +97,86 @@ class ExternalGrpcSignal(SignalProvider):
         print(f"[CLIENT]  → returning series head:\n{series.head()}", flush=True)
         return series
 
+def save_bets_to_db(
+    bets_df,
+    as_of_datetime,
+    session_type: str,
+    strategy_name: str,
+    # ← new parameters ↓
+    kelly_bankroll: float,
+    execution_bankroll: float,
+    kelly_fraction: float,
+    cap_per_game: float,
+    cap_per_bet: float,
+    cap_per_game_market: float,
+    min_bet_abs: float,
+    min_bet_pct: float,
+    abs_game_limit: Optional[int],
+    min_break_minutes: float,
+    avg_game_duration_minutes: float,
+    signal_weights: Dict[str, float],
+    num_open_markets: int,
+    num_games: int,
+    normalized_return: float, 
+    expected_return: float,
+    total_original_stake: float,
+    total_trimmed_stake: float,
+    total_fee_amount: float,
+    db_path: str = DB_NAME
+):
+    session = Session()
+
+    bs = BettingSession(
+        as_of                     = as_of_datetime,
+        session_type              = session_type,
+        strategy_name             = strategy_name,
+        kelly_bankroll            = kelly_bankroll,
+        execution_bankroll        = execution_bankroll,
+        kelly_fraction            = kelly_fraction,
+        cap_per_game              = cap_per_game,
+        cap_per_bet               = cap_per_bet,
+        cap_per_game_market       = cap_per_game_market,
+        min_bet_abs               = min_bet_abs,
+        min_bet_pct               = min_bet_pct,
+        abs_game_limit            = abs_game_limit,
+        min_break_minutes         = min_break_minutes,
+        avg_game_duration_minutes = avg_game_duration_minutes,
+        signal_weights            = json.dumps(signal_weights),
+        num_open_markets          = num_open_markets,
+        num_games                 = num_games,
+        num_bets_recommended      = len(bets_df),
+        expected_return           = expected_return,
+        normalized_return         = (expected_return / total_trimmed_stake)
+                                        if total_trimmed_stake else None,
+        total_original_stake      = total_original_stake,
+        total_trimmed_stake       = total_trimmed_stake,
+        total_fee_amount          = total_fee_amount,
+    )
+    session.add(bs)
+    session.commit()  # populate bs.id
+
+    for _, r in bets_df.iterrows():
+        bet = Bet(
+            session_id          = bs.id,
+            source_id           = r["source_id"],
+            unified_market_type = r["unified_market_type"],
+            normalized_outcome  = r["normalized_outcome"],
+            normalized_line     = float(r["normalized_line"]),
+            bet_name            = r.get("bet_name"),
+            probability         = float(r.get("probability", 0.0)),
+            odds                = float(r.get("odds", 0.0)),
+            stake               = float(r["stake"]),
+            execution_stake     = float(r.get("execution_stake", 0.0)),
+            fee_amount          = float(r.get("fee_amount", 0.0)),
+            fee_pct             = float(r.get("fee_pct", 0.0))
+        )
+        session.merge(bet)
+
+    session.commit()
+    session_id = bs.id
+    session.close()
+    return session_id
+
 
 
 def aggregate_signals(
@@ -133,50 +223,68 @@ def get_upcoming_overtime_markets_with_signals(
         limit: int = 10,
         as_of: Optional[datetime] = None,
         min_break_minutes: int = 60,
-        avg_game_duration_minutes: int = 180        
+        avg_game_duration_minutes: int = 180,
+        window_end: Optional[datetime] = None
     ) -> pd.DataFrame:
     """
-    Fetches only the *next* batch of Overtime markets as of `as_of`,
-    with implied probabilities & signals. Instrumented for timing.
+    Fetches Overtime markets as of `as_of`, spanning from the next game
+    start through `window_end` (or +avg_game_duration if no window_end),
+    with implied probabilities & signals.
     """
     t0 = time.time()
+    # --- 1) normalize as_of ---
     if as_of is None:
         as_of = datetime.now(timezone.utc)
     elif as_of.tzinfo is None:
         as_of = as_of.replace(tzinfo=timezone.utc)
     print(f"[TIMING] as_of setup: {time.time()-t0:.3f}s")
 
-    # 1) Open DB & find next game date
+    # --- 2) find the very next maturity_date after as_of ---
     t1 = time.time()
     with sqlite3.connect(DB_NAME) as conn:
         conn.row_factory = sqlite3.Row
-        next_date_row = conn.execute(
+        row = conn.execute(
             """
             SELECT MIN(maturity_date) AS next_date
               FROM market
-             WHERE source = 'overtime_markets'
-               AND sport     = 'Soccer'
-               AND market_type = 'winner'
+             WHERE source        = 'overtime_markets'
+               AND sport         = 'Soccer'
+               AND market_type   = 'winner'
                AND maturity_date >= :as_of
             """,
             {"as_of": as_of.isoformat()}
         ).fetchone()
-    next_date = next_date_row["next_date"]
+    next_date = row["next_date"]
     print(f"[TIMING] found next_date ({next_date}): {time.time()-t1:.3f}s")
     if next_date is None:
         print("[DEBUG] no upcoming games → empty")
         return pd.DataFrame([])
 
-    # 2) Pull only that game’s odds
+    # convert that to a UTC-aware datetime
+    # convert that to a UTC-aware datetime
+    chunk_start = pd.to_datetime(next_date, utc=True)
+
+    # --- 3) decide real window_end ---
+    if window_end is None:
+        chunk_end = chunk_start + timedelta(minutes=avg_game_duration_minutes)
+    else:
+        chunk_end = pd.to_datetime(window_end, utc=True)
+
+    # for SQL we need naive UTC datetimes
+    ws_naive = chunk_start.astimezone(timezone.utc).replace(tzinfo=None)
+    we_naive = chunk_end   .astimezone(timezone.utc).replace(tzinfo=None)
+    print(f"[DEBUG] pulling markets {chunk_start}→{chunk_end}")
+
+    # --- 4) pull _all_ relevant markets in that window via SQL ---
     t2 = time.time()
     query = f"""
     WITH relevant_markets AS (
       SELECT source_id
         FROM market
-       WHERE source     = 'overtime_markets'
+       WHERE source        = 'overtime_markets'
          AND sport         = 'Soccer'
          AND market_type   = 'winner'
-         AND maturity_date = :next_date
+         AND maturity_date BETWEEN :ws AND :we
     ),
     market_first_seen AS (
       SELECT o.source_id,
@@ -188,100 +296,89 @@ def get_upcoming_overtime_markets_with_signals(
        GROUP BY o.source_id
     )
     SELECT o.updated_at   AS time,
-           o.line         AS line,
-           o.decimal_odds AS odds,
-           o.outcome,
-           o.source,
-           o.bookmaker,
-           o.market_type,
-           o.source_id,
-           m.source_id    AS market_source_id,
-           m.maturity_date,
-           m.home_team,
-           m.away_team,
-           m.league_name,
-           m.sport
+           o.line, o.decimal_odds AS odds, o.outcome,
+           o.source, o.bookmaker, o.market_type, o.source_id,
+           m.maturity_date, m.home_team, m.away_team, m.league_name, m.sport
       FROM odd o
-      JOIN market m ON o.source_id = m.source_id
-      JOIN market_first_seen fs ON fs.source_id = o.source_id
+      JOIN market m               ON o.source_id = m.source_id
+      JOIN relevant_markets rm    ON o.source_id = rm.source_id
+      JOIN market_first_seen fs   ON fs.source_id = o.source_id
      WHERE o.bookmaker     = 'overtime_markets'
-       AND m.sport        = 'Soccer'
-       AND o.market_type  = 'winner'
-       AND m.maturity_date = :next_date
+       AND m.sport         = 'Soccer'
+       AND o.market_type   = 'winner'
        AND o.updated_at   <= :as_of
        AND fs.first_seen  <= :as_of
      ORDER BY o.updated_at DESC
      {f"LIMIT {limit}" if limit else ""}
     """
-    df_odds = pd.read_sql_query(
-        query, sqlite3.connect(DB_NAME),
-        params={"as_of": as_of.isoformat(), "next_date": next_date}
+    params = {
+        "as_of": as_of.isoformat(),
+        "ws":    ws_naive.isoformat(),
+        "we":    we_naive.isoformat(),
+    }
+    df = pd.read_sql_query(
+        query,
+        sqlite3.connect(DB_NAME),
+        params=params,
+        parse_dates=["time","maturity_date"]
     )
-    print(f"[TIMING] SQL fetch ({len(df_odds)} rows): {time.time()-t2:.3f}s")
+    print(f"[TIMING] SQL fetch ({len(df)} rows): {time.time()-t2:.3f}s")
 
-    # 3) Normalize outcomes & lines
+    # --- 5) normalize & unify as before ---
     t3 = time.time()
-    # Phase 1: per‐row raw normalization
-    df_odds["normalized_outcome"] = df_odds.apply(
-        lambda r: normalize_outcome(
-            r["bookmaker"], r["market_type"], r["outcome"]
-        ),
+    # first pull back the raw mapping
+    df["normalized_outcome"] = df.apply(
+        lambda r: normalize_outcome(r.bookmaker, r.market_type, r.outcome),
         axis=1
     )
     
-    # Phase 2: team‐specific cleanup
-    df_odds["normalized_outcome"] = df_odds.apply(
-        normalize_team_outcome,
-        axis=1
-    )
-    
-    df_odds["normalized_line"] = pd.to_numeric(
-        df_odds["line"], errors="coerce"
-    ).fillna(0.0)
+    # then re‐normalize to Home/Away based on team names
+    df["normalized_outcome"] = df.apply(normalize_team_outcome, axis=1)
+
+    df["normalized_line"] = pd.to_numeric(df["line"], errors="coerce").fillna(0.0)
     print(f"[TIMING] normalize: {time.time()-t3:.3f}s")
 
-    # 4) Map to unified market_type
     t4 = time.time()
     mt_map = pd.DataFrame([
-        {"bookmaker": "overtime_markets", "market_type": "winner", "unified_market_type": "h2h"},
-        {"bookmaker": "overtime_markets", "market_type": "spread", "unified_market_type": "spread"},
-        {"bookmaker": "overtime_markets", "market_type": "total", "unified_market_type": "total"},
+        {"bookmaker":"overtime_markets","market_type":"winner","unified_market_type":"h2h"},
+        {"bookmaker":"overtime_markets","market_type":"spread","unified_market_type":"spread"},
+        {"bookmaker":"overtime_markets","market_type":"total","unified_market_type":"total"},
     ])
-    merged = pd.merge(df_odds, mt_map, on=["bookmaker", "market_type"], how="inner")
+    df = df.merge(mt_map, on=["bookmaker","market_type"], how="inner")
     print(f"[TIMING] merge market_type: {time.time()-t4:.3f}s")
 
-    # 5) Parse times & filter (should be small already)
+    # --- 6) final maturity_date filter (now honors chunk_end) ---
     t5 = time.time()
-    merged["time"] = pd.to_datetime(merged["time"], utc=True, errors="coerce")
-    merged["maturity_date"] = pd.to_datetime(merged["maturity_date"], utc=True, errors="coerce")
-    start = merged["maturity_date"].min()
-    end   = start + pd.Timedelta(minutes=avg_game_duration_minutes)
-    mask = (merged["maturity_date"] >= start) & (merged["maturity_date"] < end)
-    merged = merged.loc[mask]
-    print(f"[DEBUG] window {start}→{end}, rows: {mask.sum()}")
+    df["time"]          = pd.to_datetime(df["time"],          utc=True)
+    df["maturity_date"] = pd.to_datetime(df["maturity_date"], utc=True)
+    mask = (
+        (df["maturity_date"] >= chunk_start) &
+        (df["maturity_date"] <= chunk_end)
+    )
+    df = df.loc[mask]
+    print(f"[DEBUG] window {chunk_start}→{chunk_end}, rows: {mask.sum()}")
     print(f"[TIMING] filter window: {time.time()-t5:.3f}s")
 
-    # 6) Fees & implied probabilities
+    # --- 7) fees, implied, dedupe, signals as before ---
     t6 = time.time()
-    merged = apply_overtime_fees(merged)
-    merged = add_implied_probabilities(merged)
+    df = apply_overtime_fees(df)
+    df = add_implied_probabilities(df)
     print(f"[TIMING] fees+implied: {time.time()-t6:.3f}s")
 
-    # 7) Latest odds per outcome-line
     t7 = time.time()
-    merged = merged.sort_values("time", ascending=False)
-    latest = merged.drop_duplicates(subset=[
-        "unified_market_type", "normalized_outcome", "normalized_line", "source_id"
-    ])
+    df = (
+        df.sort_values("time", ascending=False)
+          .drop_duplicates(
+             subset=["unified_market_type","normalized_outcome","normalized_line","source_id"]
+          )
+    )
     print(f"[TIMING] dedupe latest: {time.time()-t7:.3f}s")
 
-    # 8) Internal signals
     t8 = time.time()
-    result = filter_valid_internal_signals(generate_internal_mispricing_signals(latest))
+    result = filter_valid_internal_signals(generate_internal_mispricing_signals(df))
     print(f"[TIMING] internal signals: {time.time()-t8:.3f}s")
 
-    total = time.time()-t0
-    print(f"[TIMING] TOTAL get_upcoming...: {total:.3f}s")
+    print(f"[TIMING] TOTAL get_upcoming...: {time.time()-t0:.3f}s")
     return result.head(limit) if limit else result
 
 
@@ -397,24 +494,15 @@ import pandas as pd
 from datetime import datetime, timedelta, timezone
 
 
+from datetime import timedelta, datetime, timezone
+import pandas as pd
+
 def find_upcoming_game_breaks(
     matches_df: pd.DataFrame,
-    min_break_minutes: int = 60,
-    avg_game_duration_minutes: int = 180,
+    min_break_minutes: float = 60,
+    avg_game_duration_minutes: float = 180,
     now: datetime = None
 ) -> pd.DataFrame:
-    """
-    Identifies breaks in upcoming matches where no games are scheduled for at least `min_break_minutes`.
-
-    Args:
-        matches_df (pd.DataFrame): Must contain a 'maturity_date' datetime column.
-        min_break_minutes (int): Minimum time gap (in minutes) to consider as a break.
-        avg_game_duration_minutes (int): Estimated duration of a game (for overlap handling).
-        now (datetime): Optional override for "current time".
-
-    Returns:
-        pd.DataFrame: List of breaks with start/end times, duration, and game counts before/after.
-    """
     if now is None:
         now = datetime.now(timezone.utc)
 
@@ -422,13 +510,19 @@ def find_upcoming_game_breaks(
     df["maturity_date"] = pd.to_datetime(df["maturity_date"], utc=True)
     df = df[df["maturity_date"] > now].sort_values("maturity_date").reset_index(drop=True)
 
-    if df.shape[0] < 2:
-        return pd.DataFrame([], columns=["break_start", "break_end",
-                                         "duration_minutes", "games_before", "games_after"])
+    if len(df) < 2:
+        return pd.DataFrame([], columns=[
+            "break_start", "break_end", "duration_minutes", "games_before", "games_after"
+        ])
 
-    df["next_game"]   = df["maturity_date"].shift(-1)
-    df["gap_minutes"] = (df["next_game"] - df["maturity_date"]).dt.total_seconds() / 60
-    breaks = df[df["gap_minutes"] >= min_break_minutes]
+    df["next_game"] = df["maturity_date"].shift(-1)
+    # raw gap in minutes
+    df["raw_gap"] = (df["next_game"] - df["maturity_date"]).dt.total_seconds() / 60
+    # effective idle time after you allow the first game to finish
+    df["effective_gap"] = df["raw_gap"] - avg_game_duration_minutes
+
+    # only keep those breaks where effective idle ≥ threshold
+    breaks = df[df["effective_gap"] >= min_break_minutes]
 
     rows = []
     for idx, row in breaks.iterrows():
@@ -438,53 +532,59 @@ def find_upcoming_game_breaks(
             "break_start":       start,
             "break_end":         end,
             "duration_minutes":  (end - start).total_seconds() / 60,
-            "games_before":      idx+1,
-            "games_after":       df.shape[0] - idx - 1,
+            "games_before":      idx + 1,
+            "games_after":       len(df) - idx - 1,
         })
+
     return pd.DataFrame(rows)
 
-def extract_active_game_periods_from_breaks(match_df: pd.DataFrame, break_df: pd.DataFrame, avg_game_duration_minutes: int = 120,) -> pd.DataFrame:
-    """
-    Given a list of games and the breaks between them, derive the active game periods ("chunks")
-    with start/end times, number of games, and time span.
 
-    Returns:
-        pd.DataFrame: Summary of contiguous game periods with their stats
+def extract_active_game_periods_from_breaks(
+    match_df: pd.DataFrame,
+    break_df: pd.DataFrame,
+    avg_game_duration_minutes: float = 120,
+) -> pd.DataFrame:
     """
-    match_df = match_df.sort_values("maturity_date").reset_index(drop=True).copy()
-    break_df = break_df.sort_values("break_start").reset_index(drop=True).copy()
+    Carve out contiguous periods of play given the true break intervals.
+    """
+    # --- new guard ---
+    if match_df.empty:
+        # No games at all → no chunks
+        return pd.DataFrame(columns=[
+            "chunk_start", "chunk_end", "duration_minutes", "num_games"
+        ])
+
+    df = match_df.sort_values("maturity_date").reset_index(drop=True)
+    # always compute an explicit end_time for chunk-termination
+    df["end_time"] = df["maturity_date"] + timedelta(minutes=avg_game_duration_minutes)
+
+    # if no breaks, single chunk from first start to last end
+    if break_df.empty:
+        return pd.DataFrame([{
+            "chunk_start":      df["maturity_date"].iloc[0],
+            "chunk_end":        df["end_time"].iloc[-1],
+            "duration_minutes": (df["end_time"].iloc[-1] - df["maturity_date"].iloc[0]).total_seconds() / 60,
+            "num_games":        len(df)
+        }])
+
+    # build lists of (start, end) for each chunk
+    chunk_starts = [df["maturity_date"].iloc[0]] + list(break_df["break_end"])
+    chunk_ends   = list(break_df["break_start"])  + [df["end_time"].iloc[-1]]
 
     chunks = []
-    last_idx = 0
-
-    for i, row in break_df.iterrows():
-        # Get all games before the next break_start
-        chunk = match_df[
-            (match_df["maturity_date"] >= match_df.iloc[last_idx]["maturity_date"]) &
-            (match_df["maturity_date"] < row["break_start"])
-        ]
-        if not chunk.empty:
+    for start, end in zip(chunk_starts, chunk_ends):
+        sub = df[(df["maturity_date"] >= start) & (df["end_time"] < end)]
+        if not sub.empty:
             chunks.append({
-                "chunk_start": chunk["maturity_date"].min(),
-                "chunk_end": chunk["maturity_date"].max() + timedelta(minutes=avg_game_duration_minutes),
-                "duration_minutes": (chunk["maturity_date"].max()  + timedelta(minutes=avg_game_duration_minutes) - chunk["maturity_date"].min()).total_seconds() / 60,
-                "num_games": len(chunk)
+                "chunk_start":      start,
+                "chunk_end":        end,
+                "duration_minutes": (end - start).total_seconds() / 60,
+                "num_games":        len(sub)
             })
-        # Update pointer
-        last_idx = match_df[match_df["maturity_date"] >= row["break_end"]].index.min()
 
-    # Capture the final chunk after the last break, if any
-    if last_idx is not None and last_idx < len(match_df):
-        final_chunk = match_df.iloc[last_idx:]
-        chunks.append({
-            "chunk_start": final_chunk["maturity_date"].min(),
-            "chunk_end": final_chunk["maturity_date"].max(),
-            "duration_minutes": (final_chunk["maturity_date"].max() - final_chunk["maturity_date"].min()).total_seconds() / 60,
-            "num_games": len(final_chunk)
-        })
+    return pd.DataFrame(chunks)
 
-    chunk_df = pd.DataFrame(chunks)
-    return chunk_df
+
 
 def build_structural_correlation_matrix(
     bets_df,
@@ -717,6 +817,12 @@ SIGNAL_WEIGHTS = {
     #"external":    1.0,    # weight for external model
 }
 
+# assume all your existing imports: get_upcoming_overtime_markets_with_signals,
+# summarize_match_schedule_from_open_markets, find_upcoming_game_breaks,
+# extract_active_game_periods_from_breaks, prepare_kelly_input, calculate_kelly_stakes_with_exclusivity,
+# build_structural_correlation_matrix, calculate_expected_kelly_return, trim_kelly_results,
+# enrich_trimmed_results_with_fee_info, save_and_display_betting_report, save_bets_to_db
+
 def generate_betting_session_report_and_save(
     kelly_bankroll: float = 1.0,
     execution_bankroll: float = 15.0,
@@ -726,102 +832,100 @@ def generate_betting_session_report_and_save(
     cap_per_game_market: float = 0.10,
     min_bet_abs: float = 0.5,
     min_bet_pct: float = 0.0025,
-    abs_game_limit: int = None,
-    as_of: datetime = None,
+    abs_game_limit: Optional[int] = None,
+    as_of: Optional[datetime] = None,
     min_break_minutes: float = 360.0,
     avg_game_duration_minutes: float = 180.0,
     base_dir: str = "betting_reports",
     display_md: bool = True,
     save_as_latest: bool = True,
-    signal_providers=SIGNAL_PROVIDERS,
-    signal_weights=SIGNAL_WEIGHTS
+    signal_providers=None,
+    signal_weights=None,
+    mode: Optional[str] = None,
+    strat: Optional[str] = None,
+    window_end: Optional[datetime] = None
 ) -> dict:
-    import pandas as pd
-    import numpy as np
-    from datetime import datetime
-    from pathlib import Path
-    import json, pickle
-    import pdfkit
-    from markdown2 import markdown as md2
-    from IPython.display import Markdown, display
-    
+    # --- 1) normalize as_of ---
     if as_of is None:
         as_of = datetime.now(timezone.utc)
     elif as_of.tzinfo is None:
-        # assume naive times are UTC
         as_of = as_of.replace(tzinfo=timezone.utc)
-        
-    print(f"evaluating open markets as of {as_of}")
+    print(f"evaluating open markets as of {as_of.isoformat()}")
 
+    # --- 2) determine session window [start, end] ---
+    start = as_of
+    default_end = as_of + timedelta(minutes=avg_game_duration_minutes)
+    # allow explicit override
+    if window_end is not None:
+        end = window_end
+    else:
+        end = default_end
+
+    # --- 3) load full as_of snapshot and filter by maturity_date ---
     open_markets = get_upcoming_overtime_markets_with_signals(
         limit=abs_game_limit,
         as_of=as_of,
+        window_end=end,  
         min_break_minutes=min_break_minutes,
         avg_game_duration_minutes=avg_game_duration_minutes
-        )
-    
-    print(f"[DEBUG] open_markets → {len(open_markets)} rows")
-
-
-    match_df = summarize_match_schedule_from_open_markets(open_markets)
-    breaks_df = find_upcoming_game_breaks(
-        match_df,
-        min_break_minutes=min_break_minutes,
-        avg_game_duration_minutes=avg_game_duration_minutes,
-        now=as_of
     )
-    game_times_df = extract_active_game_periods_from_breaks(match_df, breaks_df)
-    # EARLY EXIT if there are no games to report
-    if game_times_df.empty:
-        print("No upcoming games—skipping report generation.")
-        # return a minimal dict so callers can still index into ["report"]
-        return {
-            "report": "",         # empty report
-            "filename": None,     # or "" if you prefer
-        }
-
-
-    first_chunk = game_times_df.iloc[0]
-    start = first_chunk["chunk_start"]
-    # If there’s a next chunk, that defines the session end...
-    if len(game_times_df) > 1:
-        second_chunk = game_times_df.iloc[1]
-        end = second_chunk["chunk_start"]
-    else:
-        # …otherwise fall back to game duration
-        end = start + timedelta(minutes=avg_game_duration_minutes)
-
-    filtered = open_markets.copy()
-    filtered["maturity_date"] = pd.to_datetime(filtered["maturity_date"], errors="coerce")
-    filtered = filtered[(filtered["maturity_date"] >= start) & (filtered["maturity_date"] <= end)]
+    print(f"[DEBUG] open_markets → {len(open_markets)} rows")
     
-    # make sure we have a market_name column
-    if "market_name" not in filtered.columns:
-        filtered["market_name"] = (
-            filtered["home_team"].astype(str)
+    if open_markets.empty:
+        print("[DEBUG] no upcoming games → empty")
+        return {"report": "", "filename": None}
+
+    open_markets["maturity_date"] = pd.to_datetime(
+        open_markets["maturity_date"], utc=True
+    )
+    
+    # --- 5) prepare for Kelly ---
+    match_df    = summarize_match_schedule_from_open_markets(open_markets)
+    breaks_df   = find_upcoming_game_breaks(match_df, min_break_minutes, avg_game_duration_minutes, now=as_of)
+    game_times  = extract_active_game_periods_from_breaks(match_df, breaks_df)
+    
+    # after game_times_df = extract_active_game_periods_from_breaks(...)
+    if not game_times.empty:
+        first_chunk  = game_times.iloc[0]
+        if len(game_times) > 1:
+            # session ends exactly when the next chunk starts
+            end = game_times.iloc[1]["chunk_start"]
+        else:
+            end = first_chunk["chunk_start"] + timedelta(minutes=avg_game_duration_minutes)
+
+
+    markets_df = open_markets[
+        (open_markets["maturity_date"] >= start) &
+        (open_markets["maturity_date"] < end)
+    ]
+    print(f"[DEBUG] filtered markets → {len(markets_df)} rows")
+    
+    
+    # --- 4) early exit if nothing to bet on ---
+    if markets_df.empty:
+        print(f"No markets maturing before {end.isoformat()} — skipping session.")
+        return {"report": "", "filename": None}
+    
+
+    
+    # --- ensure we have a market_name column ---
+    if "market_name" not in markets_df.columns:
+        markets_df = markets_df.copy()
+        markets_df["market_name"] = (
+            markets_df["home_team"].astype(str)
             + "_vs_"
-            + filtered["away_team"].astype(str)
+            + markets_df["away_team"].astype(str)
         )
 
-    
-    print(f"[DEBUG] filtered has {len(filtered)} rows; providers = {[p.name for p in signal_providers]}")
-
-    kelly_ready = prepare_kelly_input(filtered,
-                                      signal_providers,
-                                      signal_weights)
-
-    kelly_results = calculate_kelly_stakes_with_exclusivity(
+    kelly_ready = prepare_kelly_input(markets_df, signal_providers, signal_weights)
+    kelly_raw   = calculate_kelly_stakes_with_exclusivity(
         kelly_ready,
         bankroll=kelly_bankroll,
         correlation_matrix=build_structural_correlation_matrix(kelly_ready),
         risk_adjusted=True,
     )
-
-    expected_return = calculate_expected_kelly_return(kelly_results, None)
-    normalized_return = expected_return / kelly_results["stake"].sum()
-
-    trimmed_kelly_results = trim_kelly_results(
-        kelly_results,
+    trimmed     = trim_kelly_results(
+        kelly_raw,
         kelly_fraction=kelly_fraction,
         bankroll=execution_bankroll,
         cap_per_game=cap_per_game,
@@ -830,85 +934,108 @@ def generate_betting_session_report_and_save(
         min_bet_abs=min_bet_abs,
         min_bet_pct=min_bet_pct,
     )
-    
-    trimmed_kelly_results = enrich_trimmed_results_with_fee_info(trimmed_kelly_results)
+    trimmed     = enrich_trimmed_results_with_fee_info(trimmed)
 
-    expected_trimmed_return = calculate_expected_kelly_return(trimmed_kelly_results, None)
-    total_staked = trimmed_kelly_results["stake"].sum()
-    normalized_return_trimmed = expected_trimmed_return / total_staked if total_staked > 0 else 0
-    expected_multiplier = np.exp(expected_trimmed_return)
-    kelly_volatility = np.std(np.log1p(trimmed_kelly_results["stake_fraction"] * (trimmed_kelly_results["odds"] - 1)))
-    kelly_sharpe_ratio = expected_trimmed_return / kelly_volatility
+    # --- 6) compute stats & build report ---
+    total_staked            = trimmed["stake"].sum()
+    exp_ret                 = calculate_expected_kelly_return(trimmed, None)
+    exp_mult                = np.exp(exp_ret)
+    vol                     = np.std(np.log1p(trimmed["stake_fraction"] * (trimmed["odds"] - 1)))
+    sharpe                  = exp_ret / vol if vol else 0
 
-    active_games = sorted(filtered["market_name"].str.extract(r"(.+?)_vs_.*")[0].dropna().unique())
-    bets_to_make = trimmed_kelly_results[
-        ["market_name", "unified_market_type", "normalized_outcome", "normalized_line",
-         "stake", "execution_stake", "fee_amount", "fee_pct", "odds", "adjusted_odds"]
-    ][trimmed_kelly_results["stake"] > 0]
+    active_games = sorted(markets_df["market_name"].unique())
+    bets_to_make = trimmed[trimmed["stake"] > 0]
 
-
-    report = f"""
+    report_md = f"""
 BETTING SESSION REPORT
 =======================
 
-Session Time Window: {start} to {end}
-Duration: {(end - start)}
+Session Window: {start} → {end}  (duration: {end-start})
 
 Parameters:
-  - Kelly Bankroll (for % calc): {kelly_bankroll}
-  - Execution Bankroll: {execution_bankroll}
-  - Kelly Fraction: {kelly_fraction}
-  - Cap per Game: {cap_per_game}
-  - Cap per Bet: {cap_per_bet}
-  - Cap per Game Market: {cap_per_game_market}
-  - Min Bet (abs): {min_bet_abs}
-  - Min Bet (%): {min_bet_pct}
+  • Kelly bankroll: {kelly_bankroll}
+  • Execution bankroll: {execution_bankroll}
+  • Kelly fraction: {kelly_fraction}
+  • Caps: game={cap_per_game}, bet={cap_per_bet}, game‐market={cap_per_game_market}
+  • Min bets: {min_bet_abs} abs, {min_bet_pct:.4f} pct
 
-Games Covered:
-{', '.join(active_games)}
+Games Covered: {', '.join(active_games)}
 
-Expected Return (Log): {expected_trimmed_return:.4f}
-Expected Multiplier: {expected_multiplier:.3f}x
-Volatility: {kelly_volatility:.4f}
-Sharpe Ratio: {kelly_sharpe_ratio:.4f}
+Expected Return (log): {exp_ret:.4f}
+Expected Multiplier: {exp_mult:.3f}x
+Volatility: {vol:.4f}
+Sharpe: {sharpe:.4f}
 Total Stake: {total_staked:.2f}
 
 Bets to Place:
 {bets_to_make.to_string(index=False)}
 """
 
-    result = {
-        "report": report,
+    # display and/or save report
+    if mode != "backtest":
+        save_and_display_betting_report(
+            {"report": report_md, "start": start, "end": end}, 
+            base_dir=base_dir, display_md=display_md
+        )
+
+    # --- 7) persist to DB ---
+    stats = dict(
+        num_open_markets      = len(open_markets),
+        #num_bettable_markets  = len(markets_df),
+        total_trimmed_stake   = float(total_staked),
+        total_fee_amount      = float(bets_to_make["fee_amount"].sum()),
+        expected_return   = float(exp_ret),
+        normalized_return     = float(exp_ret / total_staked if total_staked else 0),
+        total_original_stake  = float(trimmed["original_stake"].sum())
+    )
+
+    session_id = save_bets_to_db(
+        bets_df                    = bets_to_make,
+        as_of_datetime             = as_of,
+        session_type               = mode or "simulation",
+        strategy_name              = strat,
+
+        # ← your strategy params
+        kelly_bankroll             = kelly_bankroll,
+        execution_bankroll         = execution_bankroll,
+        kelly_fraction             = kelly_fraction,
+        cap_per_game               = cap_per_game,
+        cap_per_bet                = cap_per_bet,
+        cap_per_game_market        = cap_per_game_market,
+        min_bet_abs                = min_bet_abs,
+        min_bet_pct                = min_bet_pct,
+        abs_game_limit             = abs_game_limit,
+        min_break_minutes          = min_break_minutes,
+        avg_game_duration_minutes  = avg_game_duration_minutes,
+        signal_weights             = signal_weights,
+
+        # ← session‐level stats
+        num_open_markets           = len(open_markets),
+        num_games                  = match_df.shape[0],
+        normalized_return          = stats["normalized_return"],
+        expected_return            = stats["expected_return"],
+        total_original_stake       = stats["total_original_stake"],
+        total_trimmed_stake        = stats["total_trimmed_stake"],
+        total_fee_amount           = stats["total_fee_amount"],
+
+        # (optional override of default DB path)
+        db_path                    = DB_NAME,
+    )
+    print(f"Saved BettingSession id={session_id}")
+
+    # --- 8) optionally record latest ---
+    if save_as_latest and mode != "backtest":
+        p = Path(base_dir) / "latest_session.pkl"
+        with open(p, "wb") as f:
+            pickle.dump({"report": report_md, **stats}, f)
+
+    return {
+        "report": report_md,
         "kelly_input": kelly_ready,
-        "kelly_results": kelly_results,
-        "trimmed_results": trimmed_kelly_results,
-        "match_df": match_df,
-        "game_times_df": game_times_df,
-        "open_markets": open_markets.to_json(orient="records", date_format="iso"), #json.dumps(open_markets.to_dict(orient="records")),
-        "bets_to_place": bets_to_make.to_json(orient="records" , date_format="iso"), #json.dumps(bets_to_make.to_dict(orient="records")),
-        "start": start,
-        "end": end,
-        "as_of": as_of,
-        "metrics": {
-            "expected_return": expected_trimmed_return,
-            "expected_multiplier": expected_multiplier,
-            "sharpe_ratio": kelly_sharpe_ratio,
-            "volatility": kelly_volatility,
-            "total_staked": total_staked,
-            "normalized_return": normalized_return_trimmed,
-        },
+        "kelly_raw": kelly_raw,
+        "trimmed": trimmed,
+        "session_id": session_id,
     }
-
-    # Save the report
-    save_and_display_betting_report(result, base_dir=base_dir, display_md=display_md)
-
-    # Optionally save as latest session
-    if save_as_latest:
-        latest_path = Path(base_dir) / "latest_session.pkl"
-        with open(latest_path, "wb") as f:
-            pickle.dump(result, f)
-
-    return result
 
 
 import os

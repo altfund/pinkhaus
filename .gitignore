@@ -1,3 +1,7 @@
+*.db-shm
+*.db-wal
+
+
 backtests/
 ~lock.*
 *.sql
