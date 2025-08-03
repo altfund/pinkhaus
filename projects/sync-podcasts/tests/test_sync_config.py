@@ -1,16 +1,15 @@
 """Test sync configuration."""
 
-import pytest
 from sync_podcasts.sync import SyncConfig
 
 
 class TestSyncConfig:
     """Test SyncConfig dataclass."""
-    
+
     def test_default_config(self):
         """Test default configuration values."""
         config = SyncConfig()
-        
+
         assert config.feeds_path == "./feeds.toml"
         assert config.db_path == "./podcasts.db"
         assert config.vector_store_path == "./grant_chroma_db"
@@ -21,7 +20,7 @@ class TestSyncConfig:
         assert config.days_back is None
         assert config.ollama_base_url == "http://localhost:11434"
         assert config.verbose is False
-    
+
     def test_custom_config(self):
         """Test custom configuration values."""
         config = SyncConfig(
@@ -34,9 +33,9 @@ class TestSyncConfig:
             date_threshold="2024-01-01T00:00:00Z",
             days_back=30,
             ollama_base_url="http://custom:11434",
-            verbose=True
+            verbose=True,
         )
-        
+
         assert config.feeds_path == "/custom/feeds.toml"
         assert config.db_path == "/custom/db.sqlite"
         assert config.vector_store_path == "/custom/chroma"
