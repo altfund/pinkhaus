@@ -1,6 +1,6 @@
 *.db-shm
 *.db-wal
-
+*.bak
 
 backtests/
 ~lock.*
