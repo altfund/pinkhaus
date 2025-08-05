@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from .sync import PodcastSyncer, SyncConfig
+from .validate_feed import FeedValidator, validate_feeds_toml
 
 
 def setup_logging(verbose: bool = False):
@@ -111,6 +112,103 @@ def main():
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
+
+
+def validate_feed_main():
+    """Entry point for validate-feed command."""
+    parser = argparse.ArgumentParser(
+        description="Validate RSS feeds for podcast compatibility"
+    )
+    parser.add_argument(
+        "input",
+        help="URL of RSS feed or path to TOML file containing feed URLs",
+    )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Enable verbose output",
+    )
+    parser.add_argument(
+        "--move-invalid",
+        action="store_true",
+        help="Move invalid feeds to invalid-feeds.toml (only for TOML input)",
+    )
+    
+    args = parser.parse_args()
+    
+    # Setup logging
+    setup_logging(args.verbose)
+    
+    # Check if input is a file or URL
+    if Path(args.input).exists() and args.input.endswith('.toml'):
+        # Validate all feeds in TOML file
+        print(f"Validating feeds from: {args.input}")
+        results = validate_feeds_toml(args.input, move_invalid=args.move_invalid)
+        
+        # Check for TOML parsing error
+        if "_error" in results:
+            print(f"✗ {results['_error'].error_message}", file=sys.stderr)
+            sys.exit(1)
+        
+        # Display results for each feed
+        total_feeds = len(results)
+        valid_feeds = sum(1 for r in results.values() if r.is_valid)
+        
+        print(f"\nValidating {total_feeds} feed(s)...\n")
+        
+        for feed_url, result in results.items():
+            if result.is_valid:
+                print(f"✓ {feed_url}")
+                print(f"  Title: {result.feed_title}")
+                print(f"  Type: {result.feed_type}")
+                print(f"  Audio episodes: {result.audio_entries}")
+            else:
+                print(f"✗ {feed_url}")
+                print(f"  Error: {result.error_message}")
+                if result.feed_title:
+                    print(f"  Title: {result.feed_title}")
+                if result.total_entries > 0:
+                    print(f"  Total entries: {result.total_entries}")
+            print()
+        
+        # Summary
+        print(f"Summary: {valid_feeds}/{total_feeds} valid feeds")
+        
+        # If we moved invalid feeds, note that
+        if args.move_invalid and valid_feeds < total_feeds:
+            invalid_count = total_feeds - valid_feeds
+            print(f"\n{invalid_count} invalid feed(s) moved to invalid-feeds.toml")
+            print(f"Original feeds.toml updated with {valid_feeds} valid feed(s)")
+        
+        # Exit with error if any feeds are invalid
+        if valid_feeds < total_feeds:
+            sys.exit(1)
+        else:
+            sys.exit(0)
+    else:
+        # Validate single URL
+        if args.move_invalid:
+            print("Warning: --move-invalid is only applicable for TOML files, ignoring this option", file=sys.stderr)
+        
+        validator = FeedValidator()
+        result = validator.validate_feed(args.input)
+        
+        if result.is_valid:
+            print(f"✓ Valid {result.feed_type} feed")
+            print(f"Title: {result.feed_title}")
+            if result.feed_description:
+                print(f"Description: {result.feed_description[:100]}{'...' if len(result.feed_description) > 100 else ''}")
+            print(f"Total entries: {result.total_entries}")
+            print(f"Audio entries: {result.audio_entries}")
+            sys.exit(0)
+        else:
+            print(f"✗ Invalid feed: {result.error_message}", file=sys.stderr)
+            if result.feed_title:
+                print(f"Feed title: {result.feed_title}", file=sys.stderr)
+            if result.total_entries > 0:
+                print(f"Total entries found: {result.total_entries}", file=sys.stderr)
+            sys.exit(1)
 
 
 if __name__ == "__main__":

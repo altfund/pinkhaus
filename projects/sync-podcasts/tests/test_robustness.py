@@ -108,7 +108,8 @@ class TestRobustProcessing:
         """Test that stale processing items are cleaned up."""
         config = SyncConfig(
             db_path=temp_db,
-            stale_minutes=1  # Very short for testing
+            stale_minutes=1,  # Very short for testing
+            skip_validation=True
         )
         
         # Create database and add a stale processing item
@@ -175,7 +176,8 @@ class TestRobustProcessing:
         """Test that items with too many failures are skipped."""
         config = SyncConfig(
             db_path=temp_db,
-            max_failures=3
+            max_failures=3,
+            skip_validation=True
         )
         
         db = TranscriptionDatabase(temp_db)
@@ -203,7 +205,7 @@ class TestRobustProcessing:
     
     def test_process_lock_prevents_multiple_instances(self, temp_db):
         """Test that process lock prevents multiple instances."""
-        config = SyncConfig(db_path=temp_db)
+        config = SyncConfig(db_path=temp_db, skip_validation=True)
         
         with patch('sync_podcasts.sync.TranscriptionService'):
             with patch('sync_podcasts.sync.OllamaClient'):

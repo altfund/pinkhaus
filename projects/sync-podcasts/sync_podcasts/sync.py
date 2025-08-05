@@ -23,6 +23,8 @@ from beige_book.feed_parser import FeedParser
 from grant import RAGPipeline, OllamaClient
 from pinkhaus_models import TranscriptionDatabase
 
+from .validate_feed import validate_feeds_toml
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,6 +44,7 @@ class SyncConfig:
     verbose: bool = False
     max_failures: int = 3  # Maximum retry attempts before marking as permanently failed
     stale_minutes: int = 30  # Minutes before considering a processing task stale
+    skip_validation: bool = False  # Skip feed validation on startup (for testing)
 
 
 class ProcessLock:
@@ -97,6 +100,10 @@ class PodcastSyncer:
         self.hostname = socket.gethostname()
         self.pid = os.getpid()
 
+        # Validate feeds before starting (unless skipped for testing)
+        if not config.skip_validation:
+            self._validate_feeds()
+
         # Determine date threshold
         if config.days_back:
             self.date_threshold = (
@@ -112,6 +119,45 @@ class PodcastSyncer:
         
         # Show startup report
         self._show_startup_report()
+
+    def _validate_feeds(self):
+        """Validate all feeds in the TOML file before processing."""
+        logger.info(f"Validating feeds from: {self.config.feeds_path}")
+        
+        # Validate all feeds
+        results = validate_feeds_toml(self.config.feeds_path, move_invalid=False)
+        
+        # Check for TOML parsing error
+        if "_error" in results:
+            logger.error(f"Error parsing feeds file: {results['_error'].error_message}")
+            raise SystemExit(1)
+        
+        # Check for invalid feeds
+        invalid_feeds = [(url, result) for url, result in results.items() if not result.is_valid]
+        
+        if invalid_feeds:
+            logger.error("=" * 70)
+            logger.error("INVALID FEEDS DETECTED")
+            logger.error("=" * 70)
+            
+            for feed_url, result in invalid_feeds:
+                logger.error(f"✗ {feed_url}")
+                logger.error(f"  Error: {result.error_message}")
+                if result.feed_title:
+                    logger.error(f"  Title: {result.feed_title}")
+            
+            logger.error("=" * 70)
+            logger.error(f"Found {len(invalid_feeds)} invalid feed(s) in {self.config.feeds_path}")
+            logger.error("Please fix or remove these feeds before running sync-podcasts.")
+            logger.error("You can use the 'validate-feed' tool to check and fix feed issues:")
+            logger.error(f"  validate-feed {self.config.feeds_path} --move-invalid")
+            logger.error("=" * 70)
+            
+            raise SystemExit(1)
+        
+        # All feeds valid
+        total_feeds = len(results)
+        logger.info(f"All {total_feeds} feed(s) validated successfully")
 
     def _show_startup_report(self):
         """Show a report of unprocessed and failed items on startup."""
