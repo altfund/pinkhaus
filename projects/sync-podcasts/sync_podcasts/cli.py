@@ -134,29 +134,29 @@ def validate_feed_main():
         action="store_true",
         help="Move invalid feeds to invalid-feeds.toml (only for TOML input)",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Setup logging
     setup_logging(args.verbose)
-    
+
     # Check if input is a file or URL
-    if Path(args.input).exists() and args.input.endswith('.toml'):
+    if Path(args.input).exists() and args.input.endswith(".toml"):
         # Validate all feeds in TOML file
         print(f"Validating feeds from: {args.input}")
         results = validate_feeds_toml(args.input, move_invalid=args.move_invalid)
-        
+
         # Check for TOML parsing error
         if "_error" in results:
             print(f"✗ {results['_error'].error_message}", file=sys.stderr)
             sys.exit(1)
-        
+
         # Display results for each feed
         total_feeds = len(results)
         valid_feeds = sum(1 for r in results.values() if r.is_valid)
-        
+
         print(f"\nValidating {total_feeds} feed(s)...\n")
-        
+
         for feed_url, result in results.items():
             if result.is_valid:
                 print(f"✓ {feed_url}")
@@ -171,16 +171,16 @@ def validate_feed_main():
                 if result.total_entries > 0:
                     print(f"  Total entries: {result.total_entries}")
             print()
-        
+
         # Summary
         print(f"Summary: {valid_feeds}/{total_feeds} valid feeds")
-        
+
         # If we moved invalid feeds, note that
         if args.move_invalid and valid_feeds < total_feeds:
             invalid_count = total_feeds - valid_feeds
             print(f"\n{invalid_count} invalid feed(s) moved to invalid-feeds.toml")
             print(f"Original feeds.toml updated with {valid_feeds} valid feed(s)")
-        
+
         # Exit with error if any feeds are invalid
         if valid_feeds < total_feeds:
             sys.exit(1)
@@ -189,16 +189,21 @@ def validate_feed_main():
     else:
         # Validate single URL
         if args.move_invalid:
-            print("Warning: --move-invalid is only applicable for TOML files, ignoring this option", file=sys.stderr)
-        
+            print(
+                "Warning: --move-invalid is only applicable for TOML files, ignoring this option",
+                file=sys.stderr,
+            )
+
         validator = FeedValidator()
         result = validator.validate_feed(args.input)
-        
+
         if result.is_valid:
             print(f"✓ Valid {result.feed_type} feed")
             print(f"Title: {result.feed_title}")
             if result.feed_description:
-                print(f"Description: {result.feed_description[:100]}{'...' if len(result.feed_description) > 100 else ''}")
+                print(
+                    f"Description: {result.feed_description[:100]}{'...' if len(result.feed_description) > 100 else ''}"
+                )
             print(f"Total entries: {result.total_entries}")
             print(f"Audio entries: {result.audio_entries}")
             sys.exit(0)

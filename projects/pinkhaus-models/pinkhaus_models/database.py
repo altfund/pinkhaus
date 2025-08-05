@@ -116,7 +116,7 @@ class TranscriptionDatabase:
             """)
 
             # Create failed items table
-            cursor.execute(f"""
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS failed_items (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     feed_url TEXT NOT NULL,
@@ -133,7 +133,7 @@ class TranscriptionDatabase:
             """)
 
             # Create processing state table
-            cursor.execute(f"""
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS processing_state (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     feed_url TEXT NOT NULL,
@@ -526,44 +526,62 @@ class TranscriptionDatabase:
         """Record a failed processing attempt for a feed item."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            
+
             # Check if already exists
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, failure_count FROM failed_items
                 WHERE feed_url = ? AND feed_item_id = ?
-            """, (feed_url, feed_item_id))
-            
+            """,
+                (feed_url, feed_item_id),
+            )
+
             existing = cursor.fetchone()
             if existing:
                 # Update existing record
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE failed_items
                     SET failure_count = failure_count + 1,
                         last_failed_at = CURRENT_TIMESTAMP,
                         error_type = ?,
                         error_message = ?
                     WHERE id = ?
-                """, (error_type, error_message, existing["id"]))
+                """,
+                    (error_type, error_message, existing["id"]),
+                )
             else:
                 # Insert new record
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO failed_items
                     (feed_url, feed_item_id, feed_item_title, audio_url, 
                      error_type, error_message)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (feed_url, feed_item_id, feed_item_title, audio_url,
-                      error_type, error_message))
+                """,
+                    (
+                        feed_url,
+                        feed_item_id,
+                        feed_item_title,
+                        audio_url,
+                        error_type,
+                        error_message,
+                    ),
+                )
 
     def get_failed_item(
         self, feed_url: str, feed_item_id: str
     ) -> Optional[Dict[str, Any]]:
         """Get failed item info if it exists."""
         with self._get_connection() as conn:
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 SELECT * FROM failed_items
                 WHERE feed_url = ? AND feed_item_id = ?
-            """, (feed_url, feed_item_id))
-            
+            """,
+                (feed_url, feed_item_id),
+            )
+
             row = cursor.fetchone()
             return dict(row) if row else None
 
@@ -580,37 +598,51 @@ class TranscriptionDatabase:
         """Set the processing state for a feed item."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            
-            cursor.execute("""
+
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO processing_state
                 (feed_url, feed_item_id, feed_item_title, audio_url, 
                  state, started_at, pid, hostname)
                 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
-            """, (feed_url, feed_item_id, feed_item_title, audio_url,
-                  state, pid, hostname))
+            """,
+                (
+                    feed_url,
+                    feed_item_id,
+                    feed_item_title,
+                    audio_url,
+                    state,
+                    pid,
+                    hostname,
+                ),
+            )
 
-    def clear_processing_state(
-        self, feed_url: str, feed_item_id: str
-    ) -> None:
+    def clear_processing_state(self, feed_url: str, feed_item_id: str) -> None:
         """Clear the processing state for a feed item."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 DELETE FROM processing_state
                 WHERE feed_url = ? AND feed_item_id = ?
-            """, (feed_url, feed_item_id))
+            """,
+                (feed_url, feed_item_id),
+            )
 
     def get_stale_processing_items(
         self, stale_minutes: int = 30
     ) -> List[Dict[str, Any]]:
         """Get items that have been in processing state for too long."""
         with self._get_connection() as conn:
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 SELECT * FROM processing_state
                 WHERE datetime(started_at) < datetime('now', '-' || ? || ' minutes')
                 ORDER BY started_at
-            """, (stale_minutes,))
-            
+            """,
+                (stale_minutes,),
+            )
+
             return [dict(row) for row in cursor.fetchall()]
 
     def get_failed_items_summary(self) -> List[Dict[str, Any]]:
@@ -627,7 +659,7 @@ class TranscriptionDatabase:
                 GROUP BY feed_url
                 ORDER BY failed_count DESC
             """)
-            
+
             return [dict(row) for row in cursor.fetchall()]
 
     def get_all_failed_items(self) -> List[Dict[str, Any]]:
@@ -637,5 +669,5 @@ class TranscriptionDatabase:
                 SELECT * FROM failed_items
                 ORDER BY feed_url, last_failed_at DESC
             """)
-            
+
             return [dict(row) for row in cursor.fetchall()]
