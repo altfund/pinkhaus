@@ -74,7 +74,8 @@ rss = [
         
         config = SyncConfig(
             feeds_path=temp_feeds_file,
-            db_path=temp_db
+            db_path=temp_db,
+            skip_validation=True
         )
         
         # Mock the feed parser
@@ -123,7 +124,8 @@ rss = [
         
         config = SyncConfig(
             feeds_path=temp_feeds_file,
-            db_path=temp_db
+            db_path=temp_db,
+            skip_validation=True
         )
         
         with patch('sync_podcasts.sync.TranscriptionService'):
@@ -145,7 +147,8 @@ rss = [
         # Mock that all items are already processed
         config = SyncConfig(
             feeds_path=temp_feeds_file,
-            db_path=temp_db
+            db_path=temp_db,
+            skip_validation=True
         )
         
         # Create empty feed items (simulating all processed)
@@ -163,7 +166,8 @@ rss = [
         """Test startup report handles feed parsing errors gracefully."""
         config = SyncConfig(
             feeds_path=temp_feeds_file,
-            db_path=temp_db
+            db_path=temp_db,
+            skip_validation=True
         )
         
         # Mock feed parser to raise an error

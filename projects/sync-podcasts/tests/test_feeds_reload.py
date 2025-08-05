@@ -44,7 +44,8 @@ rss = [
         config = SyncConfig(
             feeds_path=temp_feeds_file,
             db_path=temp_db,
-            round_robin=False
+            round_robin=False,
+            skip_validation=True
         )
         
         # Track which feeds were parsed
@@ -91,7 +92,8 @@ rss = [
         config = SyncConfig(
             feeds_path=temp_feeds_file,
             db_path=temp_db,
-            daemon=True
+            daemon=True,
+            skip_validation=True
         )
         
         parse_count = 0
@@ -136,8 +138,8 @@ rss = [
             feeds2 = f2.name
         
         try:
-            config1 = SyncConfig(feeds_path=feeds1, db_path=temp_db)
-            config2 = SyncConfig(feeds_path=feeds2, db_path=temp_db)
+            config1 = SyncConfig(feeds_path=feeds1, db_path=temp_db, skip_validation=True)
+            config2 = SyncConfig(feeds_path=feeds2, db_path=temp_db, skip_validation=True)
             
             with patch('sync_podcasts.sync.TranscriptionService'):
                 with patch('sync_podcasts.sync.OllamaClient'):

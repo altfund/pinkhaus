@@ -69,6 +69,7 @@ class TestOlderEpisodes:
             vector_store_path="test_chroma",
             days_back=1,  # Only look for episodes from last day
             round_robin=True,
+            skip_validation=True,
         )
 
         # Create and run syncer
@@ -124,6 +125,7 @@ class TestOlderEpisodes:
             db_path="test.db",
             vector_store_path="test_chroma",
             date_threshold="2024-01-01T00:00:00",  # Old date to ensure all episodes are "new"
+            skip_validation=True,
         )
 
         syncer = PodcastSyncer(config)
@@ -186,6 +188,7 @@ class TestOlderEpisodes:
             vector_store_path="test_chroma",
             daemon=True,
             days_back=7,
+            skip_validation=True,
         )
 
         syncer = PodcastSyncer(config)
@@ -216,7 +219,7 @@ class TestOlderEpisodes:
         if no new episodes are available.
         """
         # This is more of a documentation test to ensure understanding
-        config = SyncConfig(days_back=7)
+        config = SyncConfig(days_back=7, skip_validation=True)
         syncer = PodcastSyncer(config)
 
         # Verify date threshold is set to 7 days ago
