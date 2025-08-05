@@ -115,6 +115,39 @@ class TranscriptionDatabase:
                 WHERE feed_url IS NOT NULL AND feed_item_id IS NOT NULL
             """)
 
+            # Create failed items table
+            cursor.execute(f"""
+                CREATE TABLE IF NOT EXISTS failed_items (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    feed_url TEXT NOT NULL,
+                    feed_item_id TEXT NOT NULL,
+                    feed_item_title TEXT,
+                    audio_url TEXT,
+                    error_type TEXT NOT NULL,
+                    error_message TEXT NOT NULL,
+                    failure_count INTEGER DEFAULT 1,
+                    first_failed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_failed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(feed_url, feed_item_id)
+                )
+            """)
+
+            # Create processing state table
+            cursor.execute(f"""
+                CREATE TABLE IF NOT EXISTS processing_state (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    feed_url TEXT NOT NULL,
+                    feed_item_id TEXT NOT NULL,
+                    feed_item_title TEXT,
+                    audio_url TEXT,
+                    state TEXT NOT NULL CHECK(state IN ('downloading', 'transcribing', 'indexing')),
+                    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    pid INTEGER,
+                    hostname TEXT,
+                    UNIQUE(feed_url, feed_item_id)
+                )
+            """)
+
     def get_all_transcriptions(
         self, metadata_table: str = "transcription_metadata"
     ) -> List[TranscriptionMetadata]:
@@ -480,3 +513,129 @@ class TranscriptionDatabase:
         with self._get_connection() as conn:
             cursor = conn.execute(query, params)
             return [TranscriptionMetadata.from_row(dict(row)) for row in cursor]
+
+    def record_failed_item(
+        self,
+        feed_url: str,
+        feed_item_id: str,
+        error_type: str,
+        error_message: str,
+        feed_item_title: Optional[str] = None,
+        audio_url: Optional[str] = None,
+    ) -> None:
+        """Record a failed processing attempt for a feed item."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Check if already exists
+            cursor.execute("""
+                SELECT id, failure_count FROM failed_items
+                WHERE feed_url = ? AND feed_item_id = ?
+            """, (feed_url, feed_item_id))
+            
+            existing = cursor.fetchone()
+            if existing:
+                # Update existing record
+                cursor.execute("""
+                    UPDATE failed_items
+                    SET failure_count = failure_count + 1,
+                        last_failed_at = CURRENT_TIMESTAMP,
+                        error_type = ?,
+                        error_message = ?
+                    WHERE id = ?
+                """, (error_type, error_message, existing["id"]))
+            else:
+                # Insert new record
+                cursor.execute("""
+                    INSERT INTO failed_items
+                    (feed_url, feed_item_id, feed_item_title, audio_url, 
+                     error_type, error_message)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (feed_url, feed_item_id, feed_item_title, audio_url,
+                      error_type, error_message))
+
+    def get_failed_item(
+        self, feed_url: str, feed_item_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Get failed item info if it exists."""
+        with self._get_connection() as conn:
+            cursor = conn.execute("""
+                SELECT * FROM failed_items
+                WHERE feed_url = ? AND feed_item_id = ?
+            """, (feed_url, feed_item_id))
+            
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def set_processing_state(
+        self,
+        feed_url: str,
+        feed_item_id: str,
+        state: str,
+        feed_item_title: Optional[str] = None,
+        audio_url: Optional[str] = None,
+        pid: Optional[int] = None,
+        hostname: Optional[str] = None,
+    ) -> None:
+        """Set the processing state for a feed item."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                INSERT OR REPLACE INTO processing_state
+                (feed_url, feed_item_id, feed_item_title, audio_url, 
+                 state, started_at, pid, hostname)
+                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
+            """, (feed_url, feed_item_id, feed_item_title, audio_url,
+                  state, pid, hostname))
+
+    def clear_processing_state(
+        self, feed_url: str, feed_item_id: str
+    ) -> None:
+        """Clear the processing state for a feed item."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                DELETE FROM processing_state
+                WHERE feed_url = ? AND feed_item_id = ?
+            """, (feed_url, feed_item_id))
+
+    def get_stale_processing_items(
+        self, stale_minutes: int = 30
+    ) -> List[Dict[str, Any]]:
+        """Get items that have been in processing state for too long."""
+        with self._get_connection() as conn:
+            cursor = conn.execute("""
+                SELECT * FROM processing_state
+                WHERE datetime(started_at) < datetime('now', '-' || ? || ' minutes')
+                ORDER BY started_at
+            """, (stale_minutes,))
+            
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_failed_items_summary(self) -> List[Dict[str, Any]]:
+        """Get summary of failed items grouped by feed."""
+        with self._get_connection() as conn:
+            cursor = conn.execute("""
+                SELECT 
+                    feed_url,
+                    COUNT(*) as failed_count,
+                    MAX(failure_count) as max_failures,
+                    MIN(first_failed_at) as earliest_failure,
+                    MAX(last_failed_at) as latest_failure
+                FROM failed_items
+                GROUP BY feed_url
+                ORDER BY failed_count DESC
+            """)
+            
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_all_failed_items(self) -> List[Dict[str, Any]]:
+        """Get all failed items with details."""
+        with self._get_connection() as conn:
+            cursor = conn.execute("""
+                SELECT * FROM failed_items
+                ORDER BY feed_url, last_failed_at DESC
+            """)
+            
+            return [dict(row) for row in cursor.fetchall()]
