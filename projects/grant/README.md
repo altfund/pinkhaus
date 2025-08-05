@@ -271,6 +271,26 @@ asyncio.run(main())
 
 ## Troubleshooting
 
+### Debug Logging
+
+Enable debug logging to see detailed information about queries, filters, and results:
+
+```bash
+# Enable debug mode with the --debug flag
+uv run grant --debug ask "What was discussed?" --after "2024-01-01"
+
+# Example debug output shows:
+# - Date filtering details with Unix timestamps
+# - ChromaDB where clauses
+# - Number of results retrieved
+```
+
+The debug output includes:
+- Date range conversions (ISO8601 → Unix timestamps)
+- ChromaDB query filters and where clauses
+- Vector search parameters and results
+- HTTP request details to Ollama
+
 ### "Model not found" Error
 ```bash
 # Check available models

@@ -173,47 +173,114 @@ class TranscriptionService:
         skipped = 0
         failed = 0
 
+        # Prepare items for processing
+        feed_items_prepared = {}
         for feed_url, items in feed_items_dict.items():
             # Sort and limit items
             sorted_items = self._sort_and_limit_items(
                 items, request.processing.feed_options
             )
-            total_items += len(sorted_items)
+            if sorted_items:
+                feed_items_prepared[feed_url] = sorted_items
+                total_items += len(sorted_items)
 
-            for item in sorted_items:
-                try:
-                    # Check if already processed
-                    if (
-                        is_resumable
-                        and db
-                        and db.check_feed_item_exists(
-                            item.feed_url,
-                            item.item_id,
-                            request.output.database.metadata_table
-                            if request.output.database
-                            else "transcription_metadata",
-                        )
-                    ):
-                        logger.info(f"Skipping already processed: {item.title}")
-                        skipped += 1
+        # Process items in round-robin or sequential mode
+        if request.processing.feed_options.round_robin:
+            # Round-robin mode: process newest from each feed before moving to next
+            logger.info("Processing feeds in round-robin mode")
+            round_index = 0
+
+            while any(items for items in feed_items_prepared.values()):
+                feeds_processed_this_round = 0
+
+                for feed_url, items in list(feed_items_prepared.items()):
+                    if not items:
                         continue
 
-                    # Process item
-                    result = self._process_feed_item(item, request)
-                    if result:
-                        response.results.append(result)
-                        processed += 1
-                    else:
+                    # Take the first item from this feed
+                    item = items[0]
+                    feeds_processed_this_round += 1
+
+                    try:
+                        # Check if already processed
+                        if (
+                            is_resumable
+                            and db
+                            and db.check_feed_item_exists(
+                                item.feed_url,
+                                item.item_id,
+                                request.output.database.metadata_table
+                                if request.output.database
+                                else "transcription_metadata",
+                            )
+                        ):
+                            logger.info(f"Skipping already processed: {item.title}")
+                            skipped += 1
+                        else:
+                            # Process item
+                            result = self._process_feed_item(item, request)
+                            if result:
+                                response.results.append(result)
+                                processed += 1
+                            else:
+                                failed += 1
+
+                    except Exception as e:
+                        logger.error(f"Failed to process {item.title}: {e}")
+                        response.add_error(
+                            source=item.audio_url,
+                            error_type=type(e).__name__,
+                            message=str(e),
+                        )
                         failed += 1
 
-                except Exception as e:
-                    logger.error(f"Failed to process {item.title}: {e}")
-                    response.add_error(
-                        source=item.audio_url,
-                        error_type=type(e).__name__,
-                        message=str(e),
+                    # Remove processed item
+                    feed_items_prepared[feed_url] = items[1:]
+                    if not feed_items_prepared[feed_url]:
+                        del feed_items_prepared[feed_url]
+
+                round_index += 1
+                if feeds_processed_this_round > 0:
+                    logger.info(
+                        f"Completed round {round_index}, processed {feeds_processed_this_round} feeds"
                     )
-                    failed += 1
+        else:
+            # Sequential mode: process all from one feed before moving to next
+            for feed_url, sorted_items in feed_items_prepared.items():
+                for item in sorted_items:
+                    try:
+                        # Check if already processed
+                        if (
+                            is_resumable
+                            and db
+                            and db.check_feed_item_exists(
+                                item.feed_url,
+                                item.item_id,
+                                request.output.database.metadata_table
+                                if request.output.database
+                                else "transcription_metadata",
+                            )
+                        ):
+                            logger.info(f"Skipping already processed: {item.title}")
+                            skipped += 1
+                            continue
+
+                        # Process item
+                        result = self._process_feed_item(item, request)
+                        if result:
+                            response.results.append(result)
+                            processed += 1
+                        else:
+                            failed += 1
+
+                    except Exception as e:
+                        logger.error(f"Failed to process {item.title}: {e}")
+                        response.add_error(
+                            source=item.audio_url,
+                            error_type=type(e).__name__,
+                            message=str(e),
+                        )
+                        failed += 1
 
         # Set summary
         response.summary = ProcessingSummary(
@@ -292,6 +359,24 @@ class TranscriptionService:
         self, items: List[FeedItem], feed_options
     ) -> List[FeedItem]:
         """Sort and limit feed items based on options"""
+        # Filter by date threshold if specified
+        if feed_options.date_threshold:
+            try:
+                threshold_date = datetime.fromisoformat(
+                    feed_options.date_threshold.replace("Z", "+00:00")
+                )
+                # Filter items published after the threshold
+                items = [
+                    item
+                    for item in items
+                    if item.published and item.published > threshold_date
+                ]
+                logger.info(
+                    f"Filtered to {len(items)} items after {feed_options.date_threshold}"
+                )
+            except ValueError as e:
+                logger.warning(f"Invalid date threshold format: {e}")
+
         # Sort by publication date
         if feed_options.order == FeedOptionsOrder.ORDER_NEWEST:
             sorted_items = sorted(

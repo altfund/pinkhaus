@@ -1,4 +1,5 @@
 [feeds]
 rss = [
 	"https://feeds.megaphone.fm/ESP9520742908",
+	"https://www.theguardian.com/football/series/footballweekly/podcast.xml",
 ]

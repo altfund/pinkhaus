@@ -107,6 +107,9 @@ class PodcastChunker:
                 "published": metadata.feed_item_published.isoformat()
                 if metadata.feed_item_published
                 else None,
+                "published_timestamp": int(metadata.feed_item_published.timestamp())
+                if metadata.feed_item_published
+                else None,
                 "feed_url": metadata.feed_url,
                 "char_start": len(self.encoding.decode(tokens[:start])),
                 "char_end": len(self.encoding.decode(tokens[:end])),
@@ -147,6 +150,9 @@ class PodcastChunker:
             "duration": segments[-1].end_time - segments[0].start_time,
             "title": metadata.feed_item_title,
             "published": metadata.feed_item_published.isoformat()
+            if metadata.feed_item_published
+            else None,
+            "published_timestamp": int(metadata.feed_item_published.timestamp())
             if metadata.feed_item_published
             else None,
             "feed_url": metadata.feed_url,

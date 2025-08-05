@@ -36,13 +36,13 @@ class RAGPipeline:
 
     def __init__(
         self,
-        db_path: str,
         ollama_client: OllamaClient,
         config: RAGConfig = RAGConfig(),
         vector_store_path: str = "./grant_chroma_db",
+        db_path: Optional[str] = None,
     ):
         self.config = config
-        self.db = TranscriptionDatabase(db_path)
+        self.db = TranscriptionDatabase(db_path) if db_path else None
         self.ollama = ollama_client
 
         # Initialize components
@@ -56,6 +56,8 @@ class RAGPipeline:
 
     def index_all_transcriptions(self, batch_size: int = 10):
         """Index all transcriptions in the database."""
+        if not self.db:
+            raise ValueError("Database path is required for indexing operations")
 
         transcriptions = self.db.get_all_transcriptions()
         total = len(transcriptions)
@@ -77,6 +79,8 @@ class RAGPipeline:
 
     def index_transcription(self, transcription_id: int):
         """Index a specific transcription."""
+        if not self.db:
+            raise ValueError("Database path is required for indexing operations")
 
         metadata = self.db.get_transcription_metadata(transcription_id)
         if not metadata:
@@ -90,6 +94,9 @@ class RAGPipeline:
         # Skip if already indexed
         if metadata.id and self._is_transcription_indexed(metadata.id):
             return
+
+        if not self.db:
+            raise ValueError("Database path is required for indexing operations")
 
         # Get segments
         segments = self.db.get_segments_for_transcription(metadata.id)
@@ -334,17 +341,25 @@ Please provide a comprehensive answer based on the context provided. If the cont
 
         vector_stats = self.vector_store.get_collection_stats()
 
-        # Count indexed transcriptions
-        transcriptions = self.db.get_all_transcriptions()
-        indexed_count = sum(
-            1 for t in transcriptions if t.id and self._is_transcription_indexed(t.id)
-        )
-
-        return {
-            "total_transcriptions": len(transcriptions),
-            "indexed_transcriptions": indexed_count,
+        stats = {
             "total_chunks": vector_stats["total_chunks"],
             "embedding_model": self.config.embedding_model,
             "llm_model": self.config.llm_model,
             "chunk_size": self.config.chunk_size,
         }
+
+        # Count indexed transcriptions if database is available
+        if self.db:
+            transcriptions = self.db.get_all_transcriptions()
+            indexed_count = sum(
+                1
+                for t in transcriptions
+                if t.id and self._is_transcription_indexed(t.id)
+            )
+            stats["total_transcriptions"] = len(transcriptions)
+            stats["indexed_transcriptions"] = indexed_count
+        else:
+            stats["total_transcriptions"] = "N/A (no database)"
+            stats["indexed_transcriptions"] = "N/A (no database)"
+
+        return stats
