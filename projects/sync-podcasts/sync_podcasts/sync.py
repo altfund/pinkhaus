@@ -278,7 +278,6 @@ class PodcastSyncer:
 
         return False, ""
 
-
     def process_one_podcast(self) -> bool:
         """Process a single podcast. Returns True if a podcast was processed."""
         # First, clean up any stale processing items
@@ -287,7 +286,7 @@ class PodcastSyncer:
         # Start with limit=1, but if we get skipped items, we'll retry with a higher limit
         limit = 1
         max_retries = 10  # Prevent infinite loops
-        
+
         for attempt in range(max_retries):
             # Create transcription request
             request = TranscriptionRequest(
@@ -318,7 +317,7 @@ class PodcastSyncer:
             # Check if we processed anything
             if response.success and response.summary and response.summary.processed > 0:
                 logger.info(f"Processed {response.summary.processed} podcast(s)")
-                
+
                 # Index the new transcription immediately
                 try:
                     rag_pipeline = RAGPipeline(
@@ -336,11 +335,11 @@ class PodcastSyncer:
                     logger.error(f"Failed to index transcription: {e}")
                     # TODO: Record indexing failure
                     return False
-            
+
             # If we skipped items but processed none, increase limit and retry
             if (
-                response.summary 
-                and response.summary.skipped > 0 
+                response.summary
+                and response.summary.skipped > 0
                 and response.summary.processed == 0
             ):
                 # Increase limit to skip past already-processed items
@@ -350,15 +349,15 @@ class PodcastSyncer:
                     f"Retrying with limit={limit}"
                 )
                 continue
-            
+
             # No items to process (neither processed nor skipped)
             if response.errors:
                 for error in response.errors:
                     logger.error(f"Processing error: {error.message}")
-            
+
             logger.info("No new podcasts to process")
             return False
-        
+
         # If we get here, we've exceeded max retries
         logger.warning(f"Exceeded maximum retry attempts ({max_retries})")
         return False
