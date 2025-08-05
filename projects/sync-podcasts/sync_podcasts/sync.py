@@ -278,73 +278,90 @@ class PodcastSyncer:
 
         return False, ""
 
+
     def process_one_podcast(self) -> bool:
         """Process a single podcast. Returns True if a podcast was processed."""
         # First, clean up any stale processing items
         self._check_and_clean_stale_processing()
 
-        # Create transcription request with our custom processor
-        request = TranscriptionRequest(
-            input=InputConfig(type="feed", source=self.config.feeds_path),
-            processing=ProcessingConfig(
-                model=self.config.model,
-                verbose=self.config.verbose,
-                feed_options=FeedOptions(
-                    limit=1,  # Process only one podcast
-                    order="newest",
-                    date_threshold=self.date_threshold,
-                    round_robin=self.config.round_robin,
+        # Start with limit=1, but if we get skipped items, we'll retry with a higher limit
+        limit = 1
+        max_retries = 10  # Prevent infinite loops
+        
+        for attempt in range(max_retries):
+            # Create transcription request
+            request = TranscriptionRequest(
+                input=InputConfig(type="feed", source=self.config.feeds_path),
+                processing=ProcessingConfig(
+                    model=self.config.model,
+                    verbose=self.config.verbose,
+                    feed_options=FeedOptions(
+                        limit=limit,
+                        order="newest",
+                        date_threshold=self.date_threshold,
+                        round_robin=self.config.round_robin,
+                    ),
                 ),
-            ),
-            output=OutputConfig(
-                format="sqlite",
-                database=DatabaseConfig(
-                    db_path=self.config.db_path,
-                    metadata_table="transcription_metadata",
-                    segments_table="transcription_segments",
+                output=OutputConfig(
+                    format="sqlite",
+                    database=DatabaseConfig(
+                        db_path=self.config.db_path,
+                        metadata_table="transcription_metadata",
+                        segments_table="transcription_segments",
+                    ),
                 ),
-            ),
-        )
+            )
 
-        # We need to intercept the processing to add our state tracking
-        # For now, let's process normally and enhance beige-book later
-        response = self.transcription_service.process(request)
+            # Process the request
+            response = self.transcription_service.process(request)
 
-        # Check if we processed anything
-        if (
-            not response.success
-            or not response.summary
-            or response.summary.processed == 0
-        ):
-            # Check if there were failures
+            # Check if we processed anything
+            if response.success and response.summary and response.summary.processed > 0:
+                logger.info(f"Processed {response.summary.processed} podcast(s)")
+                
+                # Index the new transcription immediately
+                try:
+                    rag_pipeline = RAGPipeline(
+                        ollama_client=self.ollama_client,
+                        db_path=self.config.db_path,
+                        vector_store_path=self.config.vector_store_path,
+                    )
+
+                    # Index all new transcriptions (should be just one)
+                    rag_pipeline.index_all_transcriptions(batch_size=1)
+                    logger.info("Successfully indexed transcription")
+                    return True
+
+                except Exception as e:
+                    logger.error(f"Failed to index transcription: {e}")
+                    # TODO: Record indexing failure
+                    return False
+            
+            # If we skipped items but processed none, increase limit and retry
+            if (
+                response.summary 
+                and response.summary.skipped > 0 
+                and response.summary.processed == 0
+            ):
+                # Increase limit to skip past already-processed items
+                limit = response.summary.skipped + 1
+                logger.debug(
+                    f"Skipped {response.summary.skipped} already-processed items. "
+                    f"Retrying with limit={limit}"
+                )
+                continue
+            
+            # No items to process (neither processed nor skipped)
             if response.errors:
                 for error in response.errors:
                     logger.error(f"Processing error: {error.message}")
-                    # TODO: Extract feed_url and feed_item_id from error context
-                    # This would require enhancing beige-book to provide this info
-
+            
             logger.info("No new podcasts to process")
             return False
-
-        logger.info(f"Processed {response.summary.processed} podcast(s)")
-
-        # Index the new transcription immediately
-        try:
-            rag_pipeline = RAGPipeline(
-                ollama_client=self.ollama_client,
-                db_path=self.config.db_path,
-                vector_store_path=self.config.vector_store_path,
-            )
-
-            # Index all new transcriptions (should be just one)
-            rag_pipeline.index_all_transcriptions(batch_size=1)
-            logger.info("Successfully indexed transcription")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to index transcription: {e}")
-            # TODO: Record indexing failure
-            return False
+        
+        # If we get here, we've exceeded max retries
+        logger.warning(f"Exceeded maximum retry attempts ({max_retries})")
+        return False
 
     def run(self):
         """Run the synchronization process."""
