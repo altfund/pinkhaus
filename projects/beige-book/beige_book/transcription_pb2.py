@@ -4,39 +4,38 @@
 # source: beige_book/transcription.proto
 # Protobuf Python Version: 6.30.2
 """Generated protocol buffer code."""
+
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
 from google.protobuf import runtime_version as _runtime_version
 from google.protobuf import symbol_database as _symbol_database
 from google.protobuf.internal import builder as _builder
+
 _runtime_version.ValidateProtobufRuntimeVersion(
-    _runtime_version.Domain.PUBLIC,
-    6,
-    30,
-    2,
-    '',
-    'beige_book/transcription.proto'
+    _runtime_version.Domain.PUBLIC, 6, 30, 2, "", "beige_book/transcription.proto"
 )
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
 
 
-
-
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1e\x62\x65ige_book/transcription.proto\x12\nbeige_book\"\x83\x01\n\x07Segment\x12\x10\n\x08start_ms\x18\x01 \x01(\x03\x12\x0e\n\x06\x65nd_ms\x18\x02 \x01(\x03\x12\x0c\n\x04text\x18\x03 \x01(\t\x12\x14\n\x07speaker\x18\x04 \x01(\tH\x00\x88\x01\x01\x12\x17\n\nconfidence\x18\x05 \x01(\x02H\x01\x88\x01\x01\x42\n\n\x08_speakerB\r\n\x0b_confidence\"\xfe\x01\n\x13TranscriptionResult\x12\x10\n\x08\x66ilename\x18\x01 \x01(\t\x12\x11\n\tfile_hash\x18\x02 \x01(\t\x12\x10\n\x08language\x18\x03 \x01(\t\x12%\n\x08segments\x18\x04 \x03(\x0b\x32\x13.beige_book.Segment\x12\x11\n\tfull_text\x18\x05 \x01(\t\x12\x12\n\ncreated_at\x18\x06 \x01(\x03\x12\x19\n\x0cnum_speakers\x18\x07 \x01(\x05H\x00\x88\x01\x01\x12\x1f\n\x12has_speaker_labels\x18\x08 \x01(\x08H\x01\x88\x01\x01\x42\x0f\n\r_num_speakersB\x15\n\x13_has_speaker_labels\"f\n\x0c\x46\x65\x65\x64Metadata\x12\x10\n\x08\x66\x65\x65\x64_url\x18\x01 \x01(\t\x12\x0f\n\x07item_id\x18\x02 \x01(\t\x12\r\n\x05title\x18\x03 \x01(\t\x12\x11\n\taudio_url\x18\x04 \x01(\t\x12\x11\n\tpublished\x18\x05 \x01(\t\"\x9d\x01\n\x1b\x45xtendedTranscriptionResult\x12\x36\n\rtranscription\x18\x01 \x01(\x0b\x32\x1f.beige_book.TranscriptionResult\x12\x34\n\rfeed_metadata\x18\x02 \x01(\x0b\x32\x18.beige_book.FeedMetadataH\x00\x88\x01\x01\x42\x10\n\x0e_feed_metadatab\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
+    b'\n\x1e\x62\x65ige_book/transcription.proto\x12\nbeige_book"\x83\x01\n\x07Segment\x12\x10\n\x08start_ms\x18\x01 \x01(\x03\x12\x0e\n\x06\x65nd_ms\x18\x02 \x01(\x03\x12\x0c\n\x04text\x18\x03 \x01(\t\x12\x14\n\x07speaker\x18\x04 \x01(\tH\x00\x88\x01\x01\x12\x17\n\nconfidence\x18\x05 \x01(\x02H\x01\x88\x01\x01\x42\n\n\x08_speakerB\r\n\x0b_confidence"\xfe\x01\n\x13TranscriptionResult\x12\x10\n\x08\x66ilename\x18\x01 \x01(\t\x12\x11\n\tfile_hash\x18\x02 \x01(\t\x12\x10\n\x08language\x18\x03 \x01(\t\x12%\n\x08segments\x18\x04 \x03(\x0b\x32\x13.beige_book.Segment\x12\x11\n\tfull_text\x18\x05 \x01(\t\x12\x12\n\ncreated_at\x18\x06 \x01(\x03\x12\x19\n\x0cnum_speakers\x18\x07 \x01(\x05H\x00\x88\x01\x01\x12\x1f\n\x12has_speaker_labels\x18\x08 \x01(\x08H\x01\x88\x01\x01\x42\x0f\n\r_num_speakersB\x15\n\x13_has_speaker_labels"f\n\x0c\x46\x65\x65\x64Metadata\x12\x10\n\x08\x66\x65\x65\x64_url\x18\x01 \x01(\t\x12\x0f\n\x07item_id\x18\x02 \x01(\t\x12\r\n\x05title\x18\x03 \x01(\t\x12\x11\n\taudio_url\x18\x04 \x01(\t\x12\x11\n\tpublished\x18\x05 \x01(\t"\x9d\x01\n\x1b\x45xtendedTranscriptionResult\x12\x36\n\rtranscription\x18\x01 \x01(\x0b\x32\x1f.beige_book.TranscriptionResult\x12\x34\n\rfeed_metadata\x18\x02 \x01(\x0b\x32\x18.beige_book.FeedMetadataH\x00\x88\x01\x01\x42\x10\n\x0e_feed_metadatab\x06proto3'
+)
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
-_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'beige_book.transcription_pb2', _globals)
+_builder.BuildTopDescriptorsAndMessages(
+    DESCRIPTOR, "beige_book.transcription_pb2", _globals
+)
 if not _descriptor._USE_C_DESCRIPTORS:
-  DESCRIPTOR._loaded_options = None
-  _globals['_SEGMENT']._serialized_start=47
-  _globals['_SEGMENT']._serialized_end=178
-  _globals['_TRANSCRIPTIONRESULT']._serialized_start=181
-  _globals['_TRANSCRIPTIONRESULT']._serialized_end=435
-  _globals['_FEEDMETADATA']._serialized_start=437
-  _globals['_FEEDMETADATA']._serialized_end=539
-  _globals['_EXTENDEDTRANSCRIPTIONRESULT']._serialized_start=542
-  _globals['_EXTENDEDTRANSCRIPTIONRESULT']._serialized_end=699
+    DESCRIPTOR._loaded_options = None
+    _globals["_SEGMENT"]._serialized_start = 47
+    _globals["_SEGMENT"]._serialized_end = 178
+    _globals["_TRANSCRIPTIONRESULT"]._serialized_start = 181
+    _globals["_TRANSCRIPTIONRESULT"]._serialized_end = 435
+    _globals["_FEEDMETADATA"]._serialized_start = 437
+    _globals["_FEEDMETADATA"]._serialized_end = 539
+    _globals["_EXTENDEDTRANSCRIPTIONRESULT"]._serialized_start = 542
+    _globals["_EXTENDEDTRANSCRIPTIONRESULT"]._serialized_end = 699
 # @@protoc_insertion_point(module_scope)
