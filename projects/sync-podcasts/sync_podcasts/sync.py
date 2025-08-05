@@ -19,7 +19,7 @@ from beige_book.models import (
     DatabaseConfig,
 )
 from beige_book.feed_parser import FeedParser
-from grant import RAGPipeline, OllamaClient
+from grant import RAGPipeline, OllamaClient, RAGConfig
 from pinkhaus_models import TranscriptionDatabase
 
 from .validate_feed import validate_feeds_toml
@@ -40,6 +40,7 @@ class SyncConfig:
     date_threshold: Optional[str] = None
     days_back: Optional[int] = None
     ollama_base_url: str = "http://localhost:11434"
+    embedding_model: str = "nomic-embed-text"
     verbose: bool = False
     max_failures: int = 3  # Maximum retry attempts before marking as permanently failed
     stale_minutes: int = 30  # Minutes before considering a processing task stale
@@ -320,8 +321,13 @@ class PodcastSyncer:
 
                 # Index the new transcription immediately
                 try:
+                    rag_config = RAGConfig(
+                        embedding_model=self.config.embedding_model
+                    )
+                    
                     rag_pipeline = RAGPipeline(
                         ollama_client=self.ollama_client,
+                        config=rag_config,
                         db_path=self.config.db_path,
                         vector_store_path=self.config.vector_store_path,
                     )
