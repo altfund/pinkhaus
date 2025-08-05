@@ -1,6 +1,7 @@
 """
 Transcription library using betterproto-generated Protocol Buffers.
 """
+
 import logging
 
 # Extended result support
@@ -50,10 +51,11 @@ class AudioTranscriber:
         return sha256_hash.hexdigest()
 
     def transcribe_file(
-        self, filepath: str,
-            verbose: bool = False,
-            enable_diarization: bool = False,
-            hf_token: str = None,
+        self,
+        filepath: str,
+        verbose: bool = False,
+        enable_diarization: bool = False,
+        hf_token: str = None,
     ) -> TranscriptionResult:
         """
         Transcribe an audio file and return structured result.
@@ -100,25 +102,30 @@ class AudioTranscriber:
                 from .speaker_diarizer import SpeakerDiarizer
 
                 diarizer = SpeakerDiarizer(auth_token=hf_token)
-                # Use mock mode if pyannote not available
-                try:
-                    diarization = diarizer.diarize_file(filepath, use_mock=False)
-                except ImportError:
-                    logger.warning("pyannote-audio not available, using mock diarization");
-                    diarization = diarizer.diarize_file(filepath, use_mock=True)
+                # No fallback - fail if pyannote not available
+                diarization = diarizer.diarize_file(filepath, use_mock=False)
 
                 # Align speakers with segments
-                segments_list = transcription.get_segments_list()
+                segments_list = [
+                    {
+                        "start": seg.start_ms / 1000.0,
+                        "end": seg.end_ms / 1000.0,
+                        "text": seg.text
+                    }
+                    for seg in transcription.segments
+                ]
                 enhanced_segments = diarizer.align_with_transcription(
                     diarization, segments_list
                 )
 
                 # Update protobuf segments with speaker info
-                for i, (seg, enhanced) in enumerate(zip(transcription.segments, enhanced_segments)):
-                    if 'speaker' in enhanced:
-                        seg.speaker = enhanced['speaker']
-                    if 'confidence' in enhanced:
-                        seg.confidence = enhanced.get('confidence', 1.0)
+                for i, (seg, enhanced) in enumerate(
+                    zip(transcription.segments, enhanced_segments)
+                ):
+                    if "speaker" in enhanced:
+                        seg.speaker = enhanced["speaker"]
+                    if "confidence" in enhanced:
+                        seg.confidence = enhanced.get("confidence", 1.0)
 
                 # Update metadata
                 transcription.num_speakers = diarization.num_speakers
@@ -127,7 +134,6 @@ class AudioTranscriber:
             except Exception as e:
                 print(f"Warning: Speaker diarization failed: {e}")
                 # Continue without diarization
-
 
         return transcription
 
