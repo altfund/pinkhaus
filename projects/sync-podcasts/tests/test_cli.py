@@ -65,32 +65,33 @@ class TestCLI:
         config = mock_syncer_class.call_args[0][0]
         assert config.feeds_path == "feeds.toml"
         assert config.days_back == 7
-    
+
     @patch("sync_podcasts.cli.Path")
     def test_main_with_invalid_feeds(self, mock_path):
         """Test that sync-podcasts exits when feeds are invalid."""
         # Mock that feeds file exists
         mock_path.return_value.exists.return_value = True
-        
+
         # Mock validation to return invalid feeds
-        with patch('sync_podcasts.sync.validate_feeds_toml') as mock_validate:
+        with patch("sync_podcasts.sync.validate_feeds_toml") as mock_validate:
             mock_validate.return_value = {
                 "https://example.com/invalid.rss": FeedValidationResult(
                     is_valid=False,
                     error_message="No audio content found",
-                    feed_title="Blog Feed"
+                    feed_title="Blog Feed",
                 ),
                 "https://example.com/broken.rss": FeedValidationResult(
-                    is_valid=False,
-                    error_message="Network error: Connection refused"
-                )
+                    is_valid=False, error_message="Network error: Connection refused"
+                ),
             }
-            
+
             # Mock other dependencies
-            with patch('sync_podcasts.sync.TranscriptionService'):
-                with patch('sync_podcasts.sync.OllamaClient'):
-                    with patch('sync_podcasts.sync.TranscriptionDatabase'):
-                        with patch("sys.argv", ["sync-podcasts", "--feeds", "feeds.toml"]):
+            with patch("sync_podcasts.sync.TranscriptionService"):
+                with patch("sync_podcasts.sync.OllamaClient"):
+                    with patch("sync_podcasts.sync.TranscriptionDatabase"):
+                        with patch(
+                            "sys.argv", ["sync-podcasts", "--feeds", "feeds.toml"]
+                        ):
                             with patch("sys.stderr.write"):
                                 # Should exit with error code 1
                                 with pytest.raises(SystemExit) as exc_info:
