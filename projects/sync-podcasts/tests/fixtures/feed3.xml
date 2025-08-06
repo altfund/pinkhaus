@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+  <channel>
+    <title>Test Podcast Feed 3</title>
+    <link>http://localhost:8000/feed3</link>
+    <description>Test podcast feed for round-robin testing</description>
+    <language>en-us</language>
+    
+    <item>
+      <title>Feed 3 - Episode 3</title>
+      <guid>feed3-episode3</guid>
+      <pubDate>Wed, 03 Jan 2024 14:00:00 GMT</pubDate>
+      <description>Newest episode from Feed 3</description>
+      <enclosure url="http://localhost:8000/harvard.wav" length="1024" type="audio/wav"/>
+    </item>
+    
+    <item>
+      <title>Feed 3 - Episode 2</title>
+      <guid>feed3-episode2</guid>
+      <pubDate>Tue, 02 Jan 2024 14:00:00 GMT</pubDate>
+      <description>Second episode from Feed 3</description>
+      <enclosure url="http://localhost:8000/harvard.wav" length="1024" type="audio/wav"/>
+    </item>
+    
+    <item>
+      <title>Feed 3 - Episode 1</title>
+      <guid>feed3-episode1</guid>
+      <pubDate>Mon, 01 Jan 2024 14:00:00 GMT</pubDate>
+      <description>First episode from Feed 3</description>
+      <enclosure url="http://localhost:8000/harvard.wav" length="1024" type="audio/wav"/>
+    </item>
+  </channel>
+</rss>

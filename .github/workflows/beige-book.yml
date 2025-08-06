@@ -1,5 +1,6 @@
 name: Beige Book Build and Test
 
+# paths b/c beige-book depends on pinkhaus-models
 on:
   push:
     branches: [ main ]
@@ -8,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: "Build and test"
+    name: "Build and test beige book"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout"

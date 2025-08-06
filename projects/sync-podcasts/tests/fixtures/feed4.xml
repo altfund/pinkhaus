@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Test Blog Feed 4</title>
+    <link>http://localhost:8000/blog</link>
+    <description>Test blog feed for text content testing</description>
+    <language>en-us</language>
+    
+    <item>
+      <title>Blog Post 3: The Future of AI</title>
+      <guid>blog-post-3</guid>
+      <link>http://localhost:8000/blog/post3</link>
+      <pubDate>Fri, 05 Jan 2024 14:00:00 GMT</pubDate>
+      <description>A thoughtful exploration of artificial intelligence</description>
+      <content:encoded><![CDATA[
+        <h1>The Future of AI</h1>
+        <p>Artificial intelligence has evolved rapidly in recent years. From simple rule-based systems to complex neural networks, the journey has been remarkable. Today's AI systems can understand natural language, generate creative content, and solve complex problems.</p>
+        
+        <p>Machine learning algorithms now power everything from recommendation systems to autonomous vehicles. Deep learning has revolutionized computer vision, enabling machines to recognize objects and faces with unprecedented accuracy. Natural language processing has made it possible for computers to understand and generate human-like text.</p>
+        
+        <p>The implications for society are profound. AI is transforming healthcare, education, transportation, and countless other fields. As we look to the future, we must consider both the opportunities and challenges that AI presents. Ethical considerations, bias in algorithms, and the impact on employment are all important topics that deserve careful consideration.</p>
+        
+        <p>In conclusion, the future of AI is both exciting and uncertain. By working together, we can harness the power of artificial intelligence to create a better world for all.</p>
+      ]]></content:encoded>
+    </item>
+    
+    <item>
+      <title>Blog Post 2: Understanding Quantum Computing</title>
+      <guid>blog-post-2</guid>
+      <link>http://localhost:8000/blog/post2</link>
+      <pubDate>Thu, 04 Jan 2024 10:00:00 GMT</pubDate>
+      <description>An introduction to quantum computing basics</description>
+      <content:encoded><![CDATA[
+        <h1>Understanding Quantum Computing</h1>
+        <p>Quantum computing represents a fundamental shift in how we process information. Unlike classical computers that use bits representing 0 or 1, quantum computers use quantum bits or qubits.</p>
+        
+        <p>These qubits can exist in a state called superposition, where they are both 0 and 1 simultaneously. This property, along with entanglement, gives quantum computers their power. They can perform certain calculations exponentially faster than classical computers.</p>
+        
+        <p>Applications include cryptography, drug discovery, financial modeling, and optimization problems. However, quantum computers are still in their early stages and face significant challenges like maintaining quantum coherence.</p>
+      ]]></content:encoded>
+    </item>
+    
+    <item>
+      <title>Blog Post 1: Welcome to Our Tech Blog</title>
+      <guid>blog-post-1</guid>
+      <link>http://localhost:8000/blog/post1</link>
+      <pubDate>Wed, 03 Jan 2024 08:00:00 GMT</pubDate>
+      <description>Our first blog post</description>
+      <content:encoded><![CDATA[
+        <h1>Welcome to Our Tech Blog</h1>
+        <p>Welcome to our technology blog! Here we'll explore the latest developments in technology, science, and innovation. Stay tuned for exciting content about AI, quantum computing, and more.</p>
+      ]]></content:encoded>
+    </item>
+  </channel>
+</rss>

@@ -99,6 +99,8 @@ class FeedOptions(betterproto.Message):
     order: "FeedOptionsOrder" = betterproto.enum_field(2)
     max_retries: int = betterproto.int32_field(3)
     initial_delay: float = betterproto.float_field(4)
+    date_threshold: str = betterproto.string_field(5)
+    round_robin: bool = betterproto.bool_field(6)
 
 
 @dataclass

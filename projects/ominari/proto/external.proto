@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package external;
+
+// The request for a *batch* of signals
+message SignalBatchRequest {
+  repeated SignalRequest requests = 1;
+}
+
+// One row’s signal input
+message SignalRequest {
+  string source_id          = 1;  // e.g. your bet ID
+  string normalized_outcome = 2;  // e.g. “HOME_WIN”
+  string as_of_time         = 3;  // ISO-8601 timestamp
+}
+
+// The response: one probability per request
+message SignalBatchResponse {
+  repeated double probabilities = 1;
+}
+
+// The service definition
+service SignalService {
+  // Batch RPC: you send N rows, get N probabilities back in order
+  rpc GetProbabilities(SignalBatchRequest) returns (SignalBatchResponse);
+}

@@ -11,6 +11,7 @@ from .transcriber import (
 from pinkhaus_models import TranscriptionDatabase
 from .feed_parser import FeedParser, FeedItem
 from .downloader import AudioDownloader
+from .blog_processor import BlogProcessor
 from .models import (
     TranscriptionRequest,
     TranscriptionResponse,
@@ -45,6 +46,7 @@ __all__ = [
     "FeedParser",
     "FeedItem",
     "AudioDownloader",
+    "BlogProcessor",
     # New request/response models
     "TranscriptionRequest",
     "TranscriptionResponse",

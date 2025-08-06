@@ -1,5 +1,6 @@
 name: Pinkhaus Models Build and Test
 
+# paths is set b/c pinkhaus-models only depends on itself
 on:
   push:
     branches: [ main ]
@@ -8,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: "Build and test"
+    name: "Build and test pinkhaus-models"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout"

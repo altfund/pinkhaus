@@ -116,6 +116,14 @@ class FeedOptions(_FeedOptions):
             raise ValueError("Max retries cannot be negative")
         if self.initial_delay is not None and self.initial_delay < 0:
             raise ValueError("Initial delay cannot be negative")
+        if self.date_threshold:
+            # Validate ISO8601 format
+            try:
+                from datetime import datetime
+
+                datetime.fromisoformat(self.date_threshold.replace("Z", "+00:00"))
+            except ValueError:
+                raise ValueError(f"Invalid ISO8601 date format: {self.date_threshold}")
 
 
 class ProcessingConfig(_ProcessingConfig):
@@ -357,6 +365,7 @@ def create_feed_request(
     order: str = "newest",
     verbose: bool = False,
     db_path: Optional[str] = None,
+    date_threshold: Optional[str] = None,
 ) -> TranscriptionRequest:
     """Create a request for processing RSS feeds"""
     # Map string values to enums
@@ -382,7 +391,11 @@ def create_feed_request(
 
     database_config = None
     if db_path or format == "sqlite":
-        database_config = DatabaseConfig(db_path=db_path or "beige_book_feeds.db")
+        database_config = DatabaseConfig(
+            db_path=db_path or "beige_book_feeds.db",
+            metadata_table="transcription_metadata",
+            segments_table="transcription_segments",
+        )
 
     return TranscriptionRequest(
         input=InputConfig(type=InputConfigInputType.INPUT_TYPE_FEED, source=toml_path),
@@ -394,6 +407,7 @@ def create_feed_request(
                 order=order_map.get(order, FeedOptionsOrder.ORDER_NEWEST),
                 max_retries=3,
                 initial_delay=1.0,
+                date_threshold=date_threshold or "",
             ),
         ),
         output=OutputConfig(
