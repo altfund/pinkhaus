@@ -249,7 +249,7 @@ def check_unindexed_command(args):
         print(f"Title: {trans['title']}")
         print(f"Feed: {trans['feed_title']}")
         print(f"Published: {trans['published']}")
-        if trans.get('duration'):
+        if trans.get("duration"):
             print(f"Duration: {trans['duration']} seconds")
 
     print("\n" + "=" * 80)

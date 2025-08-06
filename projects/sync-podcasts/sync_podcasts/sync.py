@@ -321,10 +321,8 @@ class PodcastSyncer:
 
                 # Index the new transcription immediately
                 try:
-                    rag_config = RAGConfig(
-                        embedding_model=self.config.embedding_model
-                    )
-                    
+                    rag_config = RAGConfig(embedding_model=self.config.embedding_model)
+
                     rag_pipeline = RAGPipeline(
                         ollama_client=self.ollama_client,
                         config=rag_config,
