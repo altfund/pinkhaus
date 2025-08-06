@@ -20,10 +20,13 @@ class FeedItem:
     feed_url: str
     item_id: str
     title: str
-    audio_url: str
+    audio_url: Optional[str] = None  # Optional for blog posts
     published: Optional[datetime] = None
     description: Optional[str] = None
     duration: Optional[str] = None
+    content: Optional[str] = None  # For blog content
+    link: Optional[str] = None  # For blog post links
+    feed_type: str = "podcast"  # "podcast" or "blog"
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation"""
@@ -35,6 +38,9 @@ class FeedItem:
             "published": self.published.isoformat() if self.published else None,
             "description": self.description,
             "duration": self.duration,
+            "content": self.content,
+            "link": self.link,
+            "feed_type": self.feed_type,
         }
 
 
@@ -164,38 +170,67 @@ class FeedParser:
             for entry in feed.entries:
                 # Extract audio URL from enclosures
                 audio_url = self._extract_audio_url(entry)
-                if not audio_url:
-                    logger.debug(
-                        f"No audio found for entry: {entry.get('title', 'Unknown')}"
+
+                # Determine feed type based on presence of audio
+                if audio_url:
+                    # This is a podcast feed
+                    item_id = entry.get("id", entry.get("link", audio_url))
+
+                    # Parse publication date
+                    published = None
+                    if hasattr(entry, "published_parsed") and entry.published_parsed:
+                        published = datetime(*entry.published_parsed[:6])
+
+                    # Extract duration if available
+                    duration = None
+                    if hasattr(entry, "itunes_duration"):
+                        duration = entry.itunes_duration
+
+                    item = FeedItem(
+                        feed_url=feed_url,
+                        item_id=item_id,
+                        title=entry.get("title", "Untitled"),
+                        audio_url=audio_url,
+                        published=published,
+                        description=entry.get("description", ""),
+                        duration=duration,
+                        feed_type="podcast",
                     )
-                    continue
+                    items.append(item)
+                else:
+                    # This might be a blog feed - check if it has content
+                    content = self._extract_content(entry)
+                    link = entry.get("link", "")
 
-                # Extract item ID (prefer guid, fallback to link)
-                item_id = entry.get("id", entry.get("link", audio_url))
+                    if content or link:
+                        # This is a blog post
+                        item_id = entry.get("id", link)
 
-                # Parse publication date
-                published = None
-                if hasattr(entry, "published_parsed") and entry.published_parsed:
-                    published = datetime(*entry.published_parsed[:6])
+                        # Parse publication date
+                        published = None
+                        if (
+                            hasattr(entry, "published_parsed")
+                            and entry.published_parsed
+                        ):
+                            published = datetime(*entry.published_parsed[:6])
 
-                # Extract duration if available
-                duration = None
-                if hasattr(entry, "itunes_duration"):
-                    duration = entry.itunes_duration
+                        item = FeedItem(
+                            feed_url=feed_url,
+                            item_id=item_id,
+                            title=entry.get("title", "Untitled"),
+                            published=published,
+                            description=entry.get("description", ""),
+                            content=content,
+                            link=link,
+                            feed_type="blog",
+                        )
+                        items.append(item)
+                    else:
+                        logger.debug(
+                            f"No audio or content found for entry: {entry.get('title', 'Unknown')}"
+                        )
 
-                item = FeedItem(
-                    feed_url=feed_url,
-                    item_id=item_id,
-                    title=entry.get("title", "Untitled"),
-                    audio_url=audio_url,
-                    published=published,
-                    description=entry.get("description", ""),
-                    duration=duration,
-                )
-
-                items.append(item)
-
-            logger.info(f"Found {len(items)} audio items in feed")
+            logger.info(f"Found {len(items)} items in feed")
             return items
 
         except Exception as e:
@@ -234,6 +269,33 @@ class FeedParser:
                     return link.get("href")
 
         return None
+
+    def _extract_content(self, entry: Any) -> Optional[str]:
+        """
+        Extract content from a blog feed entry.
+
+        Args:
+            entry: Feed entry object
+
+        Returns:
+            Content text if found, None otherwise
+        """
+        # Try different content fields in order of preference
+        content = None
+
+        # Check for content:encoded (common in WordPress feeds)
+        if hasattr(entry, "content") and entry.content:
+            # content can be a list of dicts
+            if isinstance(entry.content, list) and len(entry.content) > 0:
+                content = entry.content[0].get("value", "")
+            else:
+                content = str(entry.content)
+
+        # Fall back to summary/description if no content
+        if not content:
+            content = entry.get("summary", entry.get("description", ""))
+
+        return content if content else None
 
     def parse_all_feeds(
         self, toml_path: str, max_retries: int = 3
