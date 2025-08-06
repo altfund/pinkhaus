@@ -10,7 +10,6 @@ import threading
 import time
 
 from sync_podcasts.sync import PodcastSyncer, SyncConfig
-from beige_book import TranscriptionService
 from pinkhaus_models import TranscriptionDatabase
 
 
@@ -56,6 +55,7 @@ class TestBlogRoundRobin:
 
         # Read and parse as if from URL
         import feedparser
+
         feed = feedparser.parse(str(feed_path))
 
         assert len(feed.entries) == 3
@@ -80,12 +80,14 @@ class TestBlogRoundRobin:
 
         # Create syncer with test configuration
         config = SyncConfig(
-            feeds_path=str(Path(__file__).parent / "fixtures" / "test_feeds_with_blog.toml"),
+            feeds_path=str(
+                Path(__file__).parent / "fixtures" / "test_feeds_with_blog.toml"
+            ),
             db_path=db_path,
             vector_store_path=os.path.join(temp_dir, "vector_store"),
             round_robin=True,
             days_back=365,  # Get all test items
-            verbose=True
+            verbose=True,
         )
 
         syncer = PodcastSyncer(config)
@@ -113,7 +115,8 @@ class TestBlogRoundRobin:
 
         # Check for blog content
         blog_transcriptions = [
-            t for t in transcriptions
+            t
+            for t in transcriptions
             if "blog" in t.feed_url.lower() or "feed4" in t.feed_url
         ]
 
@@ -147,9 +150,7 @@ class TestBlogRoundRobin:
         """
 
         result = processor.process_blog_content(
-            content=html_content,
-            filename="test_blog.html",
-            title="Test Blog Post"
+            content=html_content, filename="test_blog.html", title="Test Blog Post"
         )
 
         assert len(result.segments) >= 1

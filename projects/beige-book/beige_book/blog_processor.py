@@ -80,8 +80,8 @@ class BlogProcessor:
         text = parser.get_text()
 
         # Clean up excessive whitespace
-        text = re.sub(r'\s+', ' ', text)
-        text = re.sub(r'\n\s*\n', '\n\n', text)
+        text = re.sub(r"\s+", " ", text)
+        text = re.sub(r"\n\s*\n", "\n\n", text)
 
         return text.strip()
 
@@ -96,7 +96,7 @@ class BlogProcessor:
             List of text segments
         """
         # Split into sentences first to avoid breaking mid-sentence
-        sentences = re.split(r'(?<=[.!?])\s+', text)
+        sentences = re.split(r"(?<=[.!?])\s+", text)
 
         segments = []
         current_segment = []
@@ -107,8 +107,11 @@ class BlogProcessor:
             sentence_word_count = len(words)
 
             # If adding this sentence would exceed our limit, start a new segment
-            if current_word_count + sentence_word_count > self.words_per_segment and current_segment:
-                segments.append(' '.join(current_segment))
+            if (
+                current_word_count + sentence_word_count > self.words_per_segment
+                and current_segment
+            ):
+                segments.append(" ".join(current_segment))
                 current_segment = [sentence]
                 current_word_count = sentence_word_count
             else:
@@ -117,7 +120,7 @@ class BlogProcessor:
 
         # Add the last segment
         if current_segment:
-            segments.append(' '.join(current_segment))
+            segments.append(" ".join(current_segment))
 
         return segments
 
@@ -144,7 +147,9 @@ class BlogProcessor:
 
         return timings
 
-    def process_blog_content(self, content: str, filename: str, title: str = "") -> TranscriptionResult:
+    def process_blog_content(
+        self, content: str, filename: str, title: str = ""
+    ) -> TranscriptionResult:
         """
         Process blog content into a TranscriptionResult.
 
@@ -157,7 +162,7 @@ class BlogProcessor:
             TranscriptionResult object
         """
         # Extract plain text if content appears to be HTML
-        if '<' in content and '>' in content:
+        if "<" in content and ">" in content:
             text = self.extract_text_from_html(content)
         else:
             text = content
@@ -167,7 +172,7 @@ class BlogProcessor:
             text = f"{title}\n\n{text}"
 
         # Generate file hash
-        file_hash = hashlib.sha256(text.encode('utf-8')).hexdigest()
+        file_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
 
         # Segment the text
         text_segments = self.segment_text(text)
@@ -177,12 +182,10 @@ class BlogProcessor:
 
         # Create Segment objects
         segments = []
-        for i, (segment_text, (start_time, end_time)) in enumerate(zip(text_segments, timings)):
-            segment = Segment(
-                start=start_time,
-                end=end_time,
-                text=segment_text.strip()
-            )
+        for i, (segment_text, (start_time, end_time)) in enumerate(
+            zip(text_segments, timings)
+        ):
+            segment = Segment(start=start_time, end=end_time, text=segment_text.strip())
             segments.append(segment)
 
         # Create TranscriptionResult
@@ -191,7 +194,7 @@ class BlogProcessor:
             file_hash=file_hash,
             language="en",  # Assume English for now
             segments=segments,
-            full_text=text
+            full_text=text,
         )
 
         return result

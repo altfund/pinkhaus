@@ -394,7 +394,7 @@ def create_feed_request(
         database_config = DatabaseConfig(
             db_path=db_path or "beige_book_feeds.db",
             metadata_table="transcription_metadata",
-            segments_table="transcription_segments"
+            segments_table="transcription_segments",
         )
 
     return TranscriptionRequest(

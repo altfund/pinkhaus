@@ -311,7 +311,7 @@ class TranscriptionService:
             result = self.blog_processor.process_blog_content(
                 content=item.content,
                 filename=item.link or item.item_id,
-                title=item.title
+                title=item.title,
             )
 
             # Save to database if configured
@@ -342,7 +342,9 @@ class TranscriptionService:
                 # Transcribe
                 result = self.transcriber.transcribe_file(
                     temp_path,
-                    verbose=(request.processing.verbose and not request.output.destination),
+                    verbose=(
+                        request.processing.verbose and not request.output.destination
+                    ),
                 )
 
                 # Save to database if configured
@@ -393,16 +395,24 @@ class TranscriptionService:
     ):
         """Validate that data was properly saved to the database"""
         if not transcription_id:
-            logger.warning(f"Failed to save transcription for {item.title} - no ID returned")
+            logger.warning(
+                f"Failed to save transcription for {item.title} - no ID returned"
+            )
             return
 
         db_config = request.output.database
-        metadata_table = db_config.metadata_table if db_config else "transcription_metadata"
-        segments_table = db_config.segments_table if db_config else "transcription_segments"
+        metadata_table = (
+            db_config.metadata_table if db_config else "transcription_metadata"
+        )
+        segments_table = (
+            db_config.segments_table if db_config else "transcription_segments"
+        )
 
         try:
             # Check metadata was saved
-            metadata = self.database.get_transcription_metadata(transcription_id, metadata_table)
+            metadata = self.database.get_transcription_metadata(
+                transcription_id, metadata_table
+            )
             if not metadata:
                 logger.warning(
                     f"WARNING: No metadata found for transcription ID {transcription_id} ({item.title})"
@@ -410,7 +420,9 @@ class TranscriptionService:
                 return
 
             # Check segments were saved
-            segments = self.database.get_segments_for_transcription(transcription_id, segments_table)
+            segments = self.database.get_segments_for_transcription(
+                transcription_id, segments_table
+            )
             if not segments:
                 logger.warning(
                     f"WARNING: No segments found for transcription ID {transcription_id} ({item.title})"
