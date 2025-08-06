@@ -208,7 +208,10 @@ class FeedParser:
 
                         # Parse publication date
                         published = None
-                        if hasattr(entry, "published_parsed") and entry.published_parsed:
+                        if (
+                            hasattr(entry, "published_parsed")
+                            and entry.published_parsed
+                        ):
                             published = datetime(*entry.published_parsed[:6])
 
                         item = FeedItem(
