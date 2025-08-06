@@ -1,3 +1,7 @@
+"""
+Database operations for storing transcription data in SQLite.
+"""
+
 import sqlite3
 import aiosqlite
 from typing import Optional, List, Dict, Any
@@ -60,12 +64,20 @@ class TranscriptionDatabase:
         self,
         metadata_table: str = "transcription_metadata",
         segments_table: str = "transcription_segments",
+        speakers_table: str = "speakers",
     ):
-        """Create the database tables if they don't exist."""
+        """
+        Create the database tables if they don't exist.
+
+        Args:
+            metadata_table: Name of the metadata table
+            segments_table: Name of the segments table
+            speakers_table: Name of the speakers table
+        """
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
-            # Create metadata table
+            # Create metadata table with speaker diarization fields
             cursor.execute(f"""
                 CREATE TABLE IF NOT EXISTS {metadata_table} (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,12 +90,30 @@ class TranscriptionDatabase:
                     feed_item_id TEXT,
                     feed_item_title TEXT,
                     feed_item_published TIMESTAMP,
+                    num_speakers INTEGER,
+                    has_speaker_labels BOOLEAN DEFAULT 0,
+                    diarization_mode TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(file_hash, model_name)
                 )
             """)
 
-            # Create segments table
+            # Create speakers table
+            cursor.execute(f"""
+                CREATE TABLE IF NOT EXISTS {speakers_table} (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    transcription_id INTEGER NOT NULL,
+                    speaker_label TEXT NOT NULL,
+                    total_segments INTEGER DEFAULT 0,
+                    total_duration REAL DEFAULT 0.0,
+                    first_appearance REAL,
+                    last_appearance REAL,
+                    FOREIGN KEY (transcription_id) REFERENCES {metadata_table}(id),
+                    UNIQUE(transcription_id, speaker_label)
+                )
+            """)
+
+            # Create segments table with speaker support
             cursor.execute(f"""
                 CREATE TABLE IF NOT EXISTS {segments_table} (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -93,7 +123,10 @@ class TranscriptionDatabase:
                     end_time REAL NOT NULL,
                     duration REAL NOT NULL,
                     text TEXT NOT NULL,
+                    speaker_id INTEGER,
+                    speaker_confidence REAL,
                     FOREIGN KEY (transcription_id) REFERENCES {metadata_table}(id),
+                    FOREIGN KEY (speaker_id) REFERENCES {speakers_table}(id),
                     UNIQUE(transcription_id, segment_index)
                 )
             """)
@@ -113,6 +146,142 @@ class TranscriptionDatabase:
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_{metadata_table}_feed_item
                 ON {metadata_table}(feed_url, feed_item_id)
                 WHERE feed_url IS NOT NULL AND feed_item_id IS NOT NULL
+            """)
+
+
+            # Create indexes for speaker queries
+            cursor.execute(f"""
+                CREATE INDEX IF NOT EXISTS idx_{speakers_table}_transcription_id
+                ON {speakers_table}(transcription_id)
+            """)
+
+            cursor.execute(f"""
+                CREATE INDEX IF NOT EXISTS idx_{segments_table}_speaker_id
+                ON {segments_table}(speaker_id)
+            """)
+
+    def create_speaker_identity_tables(
+        self,
+        profiles_table: str = "speaker_profiles",
+        embeddings_table: str = "speaker_embeddings",
+        occurrences_table: str = "speaker_occurrences",
+        profile_metadata_table: str = "speaker_metadata",
+        segments_table: str = "transcription_segments",
+    ):
+        """
+        Create tables for persistent speaker identity tracking.
+
+        Args:
+            profiles_table: Name of the speaker profiles table
+            embeddings_table: Name of the voice embeddings table
+            occurrences_table: Name of the speaker occurrences table
+            profile_metadata_table: Name of the profile metadata table
+            segments_table: Name of the segments table to update
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            # Create speaker profiles table
+            cursor.execute(f"""
+                CREATE TABLE IF NOT EXISTS {profiles_table} (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    feed_url TEXT,
+                    display_name TEXT NOT NULL,
+                    canonical_label TEXT,
+                    first_seen TIMESTAMP,
+                    last_seen TIMESTAMP,
+                    total_appearances INTEGER DEFAULT 0,
+                    total_duration_seconds REAL DEFAULT 0.0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(feed_url, display_name)
+                )
+            """)
+
+            # Create voice embeddings table
+            cursor.execute(f"""
+                CREATE TABLE IF NOT EXISTS {embeddings_table} (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    profile_id INTEGER NOT NULL,
+                    embedding BLOB NOT NULL,
+                    embedding_dimension INTEGER NOT NULL,
+                    source_transcription_id INTEGER,
+                    source_segment_indices TEXT,
+                    duration_seconds REAL,
+                    quality_score REAL,
+                    extraction_method TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (profile_id) REFERENCES {profiles_table}(id),
+                    FOREIGN KEY (source_transcription_id) REFERENCES transcription_metadata(id)
+                )
+            """)
+
+            # Create speaker occurrences table
+            cursor.execute(f"""
+                CREATE TABLE IF NOT EXISTS {occurrences_table} (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    transcription_id INTEGER NOT NULL,
+                    temporary_label TEXT NOT NULL,
+                    profile_id INTEGER,
+                    confidence REAL,
+                    is_verified BOOLEAN DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (transcription_id) REFERENCES transcription_metadata(id),
+                    FOREIGN KEY (profile_id) REFERENCES {profiles_table}(id),
+                    UNIQUE(transcription_id, temporary_label)
+                )
+            """)
+
+            # Create speaker metadata table
+            cursor.execute(f"""
+                CREATE TABLE IF NOT EXISTS {profile_metadata_table} (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    profile_id INTEGER NOT NULL,
+                    key TEXT NOT NULL,
+                    value TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (profile_id) REFERENCES {profiles_table}(id),
+                    UNIQUE(profile_id, key)
+                )
+            """)
+
+            # Add profile_id to segments table if it doesn't exist
+            cursor.execute(f"""
+                PRAGMA table_info({segments_table})
+            """)
+            columns = [col[1] for col in cursor.fetchall()]
+
+            if 'profile_id' not in columns:
+                cursor.execute(f"""
+                    ALTER TABLE {segments_table} 
+                    ADD COLUMN profile_id INTEGER 
+                    REFERENCES {profiles_table}(id)
+                """)
+
+            # Create indexes for efficient queries
+            cursor.execute(f"""
+                CREATE INDEX IF NOT EXISTS idx_{profiles_table}_feed_url
+                ON {profiles_table}(feed_url)
+            """)
+
+            cursor.execute(f"""
+                CREATE INDEX IF NOT EXISTS idx_{embeddings_table}_profile_id
+                ON {embeddings_table}(profile_id)
+            """)
+
+            cursor.execute(f"""
+                CREATE INDEX IF NOT EXISTS idx_{occurrences_table}_transcription_id
+                ON {occurrences_table}(transcription_id)
+            """)
+
+            cursor.execute(f"""
+                CREATE INDEX IF NOT EXISTS idx_{occurrences_table}_profile_id
+                ON {occurrences_table}(profile_id)
+            """)
+
+            cursor.execute(f"""
+                CREATE INDEX IF NOT EXISTS idx_{segments_table}_profile_id
+                ON {segments_table}(profile_id)
             """)
 
             # Create failed items table
@@ -149,7 +318,7 @@ class TranscriptionDatabase:
             """)
 
     def get_all_transcriptions(
-        self, metadata_table: str = "transcription_metadata"
+            self, metadata_table: str = "transcription_metadata"
     ) -> List[TranscriptionMetadata]:
         """Get all transcriptions from the database."""
         with self._get_connection() as conn:
@@ -161,7 +330,7 @@ class TranscriptionDatabase:
             return [TranscriptionMetadata.from_row(dict(row)) for row in cursor]
 
     async def get_all_transcriptions_async(
-        self, metadata_table: str = "transcription_metadata"
+            self, metadata_table: str = "transcription_metadata"
     ) -> List[TranscriptionMetadata]:
         """Get all transcriptions from the database asynchronously."""
         async with self._get_async_connection() as conn:
@@ -174,7 +343,7 @@ class TranscriptionDatabase:
             return [TranscriptionMetadata.from_row(dict(row)) for row in rows]
 
     def get_transcription_metadata(
-        self, transcription_id: int, metadata_table: str = "transcription_metadata"
+            self, transcription_id: int, metadata_table: str = "transcription_metadata"
     ) -> Optional[TranscriptionMetadata]:
         """Get metadata for a specific transcription."""
         with self._get_connection() as conn:
@@ -189,7 +358,7 @@ class TranscriptionDatabase:
             return TranscriptionMetadata.from_row(dict(row)) if row else None
 
     def get_segments_for_transcription(
-        self, transcription_id: int, segments_table: str = "transcription_segments"
+            self, transcription_id: int, segments_table: str = "transcription_segments"
     ) -> List[TranscriptionSegment]:
         """Get all segments for a transcription."""
         with self._get_connection() as conn:
@@ -205,7 +374,7 @@ class TranscriptionDatabase:
             return [TranscriptionSegment.from_row(dict(row)) for row in cursor]
 
     async def get_segments_for_transcription_async(
-        self, transcription_id: int, segments_table: str = "transcription_segments"
+            self, transcription_id: int, segments_table: str = "transcription_segments"
     ) -> List[TranscriptionSegment]:
         """Get all segments for a transcription asynchronously."""
         async with self._get_async_connection() as conn:
@@ -220,67 +389,35 @@ class TranscriptionDatabase:
 
             rows = await cursor.fetchall()
             return [TranscriptionSegment.from_row(dict(row)) for row in rows]
-
-    def get_transcription(
-        self,
-        transcription_id: int,
-        metadata_table: str = "transcription_metadata",
-        segments_table: str = "transcription_segments",
-    ) -> Optional[Dict[str, Any]]:
-        """Get complete transcription with metadata and segments."""
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-
-            # Get metadata
-            cursor.execute(
-                f"""
-                SELECT * FROM {metadata_table} WHERE id = ?
-            """,
-                (transcription_id,),
-            )
-
-            metadata = cursor.fetchone()
-            if not metadata:
-                return None
-
-            # Get segments
-            cursor.execute(
-                f"""
-                SELECT * FROM {segments_table}
-                WHERE transcription_id = ?
-                ORDER BY segment_index
-            """,
-                (transcription_id,),
-            )
-
-            segments = cursor.fetchall()
-
-            return {
-                "metadata": dict(metadata),
-                "segments": [dict(seg) for seg in segments],
-            }
-
-    def get_full_transcription(
-        self,
-        transcription_id: int,
-        metadata_table: str = "transcription_metadata",
-        segments_table: str = "transcription_segments",
-    ) -> Optional[Dict[str, Any]]:
-        """Alias for get_transcription for backward compatibility."""
-        return self.get_transcription(transcription_id, metadata_table, segments_table)
-
     def save_transcription(
         self,
         result: TranscriptionResult,
         model_name: str = "unknown",
         metadata_table: str = "transcription_metadata",
         segments_table: str = "transcription_segments",
+        speakers_table: str = "speakers",
         feed_url: Optional[str] = None,
         feed_item_id: Optional[str] = None,
         feed_item_title: Optional[str] = None,
         feed_item_published: Optional[str] = None,
     ) -> int:
-        """Save a transcription result to the database."""
+        """
+        Save a transcription result to the database with speaker support.
+
+        Args:
+            result: TranscriptionResult object to save
+            model_name: Name of the model used for transcription
+            metadata_table: Name of the metadata table
+            segments_table: Name of the segments table
+            speakers_table: Name of the speakers table
+            feed_url: URL of the RSS feed (optional)
+            feed_item_id: Unique ID of the feed item (optional)
+            feed_item_title: Title of the feed item (optional)
+            feed_item_published: Publication date of the feed item (optional)
+
+        Returns:
+            The transcription_id of the saved record
+        """
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
@@ -297,13 +434,28 @@ class TranscriptionDatabase:
             if existing:
                 return existing["id"]
 
-            # Insert metadata
+            # Get result as dict to access speaker metadata
+            result_dict = result.to_dict()
+
+            # Detect if we're using mock diarization
+            diarization_mode = None
+            if result_dict.get('has_speaker_labels'):
+                # Check if any speaker has confidence exactly 1.0 and label format SPEAKER_N
+                has_mock_pattern = any(
+                    seg.get('speaker', '').startswith('SPEAKER_') and
+                    seg.get('confidence', 0) == 1.0
+                    for seg in result_dict['segments'] if seg.get('speaker')
+                )
+                diarization_mode = 'mock' if has_mock_pattern else 'real'
+
+            # Insert metadata with speaker fields
             cursor.execute(
                 f"""
                 INSERT INTO {metadata_table}
                 (filename, file_hash, language, full_text, model_name,
-                 feed_url, feed_item_id, feed_item_title, feed_item_published)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 feed_url, feed_item_id, feed_item_title, feed_item_published,
+                 num_speakers, has_speaker_labels, diarization_mode)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     result.filename,
@@ -315,12 +467,35 @@ class TranscriptionDatabase:
                     feed_item_id,
                     feed_item_title,
                     feed_item_published,
+                    result_dict.get('num_speakers'),
+                    1 if result_dict.get('has_speaker_labels', False) else 0,
+                    diarization_mode,
                 ),
             )
 
             transcription_id = cursor.lastrowid
 
-            # Insert segments
+            # Create speaker entries if we have speaker labels
+            speaker_ids = {}
+            if result_dict.get('has_speaker_labels'):
+                # Get unique speakers from segments
+                unique_speakers = set()
+                for seg in result.segments:
+                    if hasattr(seg, 'speaker') and seg.speaker:
+                        unique_speakers.add(seg.speaker)
+
+                # Create speaker entries
+                for speaker_label in unique_speakers:
+                    cursor.execute(
+                        f"""
+                        INSERT INTO {speakers_table} (transcription_id, speaker_label)
+                        VALUES (?, ?)
+                    """,
+                        (transcription_id, speaker_label),
+                    )
+                    speaker_ids[speaker_label] = cursor.lastrowid
+
+            # Insert segments with speaker support
             for idx, segment in enumerate(result.segments):
                 # Handle both regular segments and protobuf segments
                 if hasattr(segment, "start_ms"):
@@ -336,11 +511,20 @@ class TranscriptionDatabase:
 
                 duration = end_time - start_time
 
+                # Get speaker info if available
+                speaker_id = None
+                speaker_confidence = None
+                if hasattr(segment, 'speaker') and segment.speaker:
+                    speaker_id = speaker_ids.get(segment.speaker)
+                    if hasattr(segment, 'confidence'):
+                        speaker_confidence = segment.confidence
+
                 cursor.execute(
                     f"""
                     INSERT INTO {segments_table}
-                    (transcription_id, segment_index, start_time, end_time, duration, text)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    (transcription_id, segment_index, start_time, end_time, duration, text,
+                     speaker_id, speaker_confidence)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                     (
                         transcription_id,
@@ -349,27 +533,152 @@ class TranscriptionDatabase:
                         end_time,
                         duration,
                         text.strip(),
+                        speaker_id,
+                        speaker_confidence,
                     ),
                 )
 
+            # Update speaker statistics
+            if speaker_ids:
+                cursor.execute(
+                    f"""
+                    UPDATE {speakers_table}
+                    SET total_segments = (
+                        SELECT COUNT(*) FROM {segments_table} 
+                        WHERE speaker_id = {speakers_table}.id
+                    ),
+                    total_duration = (
+                        SELECT SUM(duration) FROM {segments_table} 
+                        WHERE speaker_id = {speakers_table}.id
+                    ),
+                    first_appearance = (
+                        SELECT MIN(start_time) FROM {segments_table} 
+                        WHERE speaker_id = {speakers_table}.id
+                    ),
+                    last_appearance = (
+                        SELECT MAX(end_time) FROM {segments_table} 
+                        WHERE speaker_id = {speakers_table}.id
+                    )
+                    WHERE transcription_id = ?
+                """,
+                    (transcription_id,),
+                )
+
+            # Handle speaker identification if embeddings are present
+            if hasattr(result, '_speaker_embeddings') and result._speaker_embeddings:
+                try:
+                    # Import here to avoid circular dependency
+                    from beige_book.speaker_matcher import SpeakerMatcher
+
+                    # Create matcher with this database instance
+                    matcher = SpeakerMatcher(self, embedding_method="mock")
+
+                    # Get feed URL if provided
+                    feed_url_for_matching = getattr(result, '_feed_url', None) or feed_url
+
+                    # Identify speakers and link to profiles
+                    speaker_mappings = matcher.identify_speakers_in_transcription(
+                        transcription_id=transcription_id,
+                        audio_path=result.filename,  # This might need to be full path
+                        embeddings=result._speaker_embeddings,
+                        feed_url=feed_url_for_matching
+                    )
+
+                    print(f"Identified {len(speaker_mappings)} speakers with persistent profiles")
+
+                except Exception as e:
+                    print(f"Warning: Speaker identification during save failed: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    # Continue without identification
+
             return transcription_id
 
-    def search_transcriptions(
+    def get_transcription(
         self,
-        query: str,
+        transcription_id: int,
         metadata_table: str = "transcription_metadata",
-        limit: int = 10,
-    ) -> List[TranscriptionMetadata]:
-        """Search transcriptions by text content."""
+        segments_table: str = "transcription_segments",
+        speakers_table: str = "speakers",
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve a transcription by ID with speaker information.
+
+        Args:
+            transcription_id: ID of the transcription to retrieve
+            metadata_table: Name of the metadata table
+            segments_table: Name of the segments table
+            speakers_table: Name of the speakers table
+
+        Returns:
+            Dictionary with transcription data or None if not found
+        """
         with self._get_connection() as conn:
-            cursor = conn.execute(
+            cursor = conn.cursor()
+
+            # Get metadata
+            cursor.execute(
                 f"""
-                SELECT * FROM {metadata_table}
-                WHERE full_text LIKE ?
-                ORDER BY feed_item_published DESC, created_at DESC
-                LIMIT ?
+                SELECT * FROM {metadata_table} WHERE id = ?
             """,
-                (f"%{query}%", limit),
+                (transcription_id,),
+            )
+
+            metadata = cursor.fetchone()
+            if not metadata:
+                return None
+
+            # Get segments with speaker information
+            cursor.execute(
+                f"""
+                SELECT seg.*, spk.speaker_label 
+                FROM {segments_table} seg
+                LEFT JOIN {speakers_table} spk ON seg.speaker_id = spk.id
+                WHERE seg.transcription_id = ?
+                ORDER BY seg.segment_index
+            """,
+                (transcription_id,),
+            )
+
+            segments = cursor.fetchall()
+
+            # Get speakers if available
+            speakers = []
+            if metadata['has_speaker_labels']:
+                speakers = self.get_speakers(transcription_id, speakers_table)
+
+            return {
+                "metadata": dict(metadata),
+                "segments": [dict(seg) for seg in segments],
+                "speakers": speakers,
+            }
+
+    def check_feed_item_exists(
+        self,
+        feed_url: str,
+        feed_item_id: str,
+        metadata_table: str = "transcription_metadata",
+    ) -> bool:
+        """
+        Check if a feed item has already been processed.
+
+        Args:
+            feed_url: URL of the RSS feed
+            feed_item_id: Unique ID of the feed item
+            metadata_table: Name of the metadata table
+
+        Returns:
+            True if the feed item exists, False otherwise
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                f"""
+                SELECT COUNT(*) as count FROM {metadata_table}
+                WHERE feed_url = ? AND feed_item_id = ?
+            """,
+                (feed_url, feed_item_id),
             )
 
             return [TranscriptionMetadata.from_row(dict(row)) for row in cursor]
@@ -392,13 +701,115 @@ class TranscriptionDatabase:
 
             return [dict(row) for row in cursor.fetchall()]
 
+    def get_recent_transcriptions(
+        self, limit: int = 10, metadata_table: str = "transcription_metadata"
+    ) -> List[Dict[str, Any]]:
+        """
+        Get the most recent transcriptions.
+
+        Args:
+            limit: Maximum number of transcriptions to return
+            metadata_table: Name of the metadata table
+
+        Returns:
+            List of transcription metadata dictionaries
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                f"""
+                SELECT * FROM {metadata_table}
+                ORDER BY created_at DESC, id DESC
+                LIMIT ?
+            """,
+                (limit,),
+            )
+
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_speakers(
+        self,
+        transcription_id: int,
+        speakers_table: str = "speakers",
+    ) -> List[Dict[str, Any]]:
+        """
+        Get all speakers for a transcription.
+
+        Args:
+            transcription_id: ID of the transcription
+            speakers_table: Name of the speakers table
+
+        Returns:
+            List of speaker dictionaries with statistics
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                f"""
+                SELECT * FROM {speakers_table}
+                WHERE transcription_id = ?
+                ORDER BY total_duration DESC
+            """,
+                (transcription_id,),
+            )
+
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_segments_by_speaker(
+        self,
+        transcription_id: int,
+        speaker_label: str,
+        segments_table: str = "transcription_segments",
+        speakers_table: str = "speakers",
+    ) -> List[Dict[str, Any]]:
+        """
+        Get all segments for a specific speaker.
+
+        Args:
+            transcription_id: ID of the transcription
+            speaker_label: Label of the speaker (e.g., "SPEAKER_0")
+            segments_table: Name of the segments table
+            speakers_table: Name of the speakers table
+
+        Returns:
+            List of segment dictionaries for the speaker
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                f"""
+                SELECT seg.* FROM {segments_table} seg
+                JOIN {speakers_table} spk ON seg.speaker_id = spk.id
+                WHERE seg.transcription_id = ? AND spk.speaker_label = ?
+                ORDER BY seg.segment_index
+            """,
+                (transcription_id, speaker_label),
+            )
+
+            return [dict(row) for row in cursor.fetchall()]
+
     def delete_transcription(
         self,
         transcription_id: int,
         metadata_table: str = "transcription_metadata",
         segments_table: str = "transcription_segments",
+        speakers_table: str = "speakers",
     ) -> bool:
-        """Delete a transcription and its segments."""
+        """
+        Delete a transcription and its segments and speakers.
+
+        Args:
+            transcription_id: ID of the transcription to delete
+            metadata_table: Name of the metadata table
+            segments_table: Name of the segments table
+            speakers_table: Name of the speakers table
+
+        Returns:
+            True if deleted, False if not found
+        """
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
@@ -406,6 +817,14 @@ class TranscriptionDatabase:
             cursor.execute(
                 f"""
                 DELETE FROM {segments_table} WHERE transcription_id = ?
+            """,
+                (transcription_id,),
+            )
+
+            # Delete speakers
+            cursor.execute(
+                f"""
+                DELETE FROM {speakers_table} WHERE transcription_id = ?
             """,
                 (transcription_id,),
             )
@@ -425,9 +844,21 @@ class TranscriptionDatabase:
         transcription_id: int,
         metadata_table: str = "transcription_metadata",
         segments_table: str = "transcription_segments",
+        speakers_table: str = "speakers",
     ) -> Optional[TranscriptionResult]:
-        """Export a transcription from database back to TranscriptionResult object."""
-        data = self.get_transcription(transcription_id, metadata_table, segments_table)
+        """
+        Export a transcription from database back to TranscriptionResult object with speaker support.
+
+        Args:
+            transcription_id: ID of the transcription
+            metadata_table: Name of the metadata table
+            segments_table: Name of the segments table
+            speakers_table: Name of the speakers table
+
+        Returns:
+            TranscriptionResult object or None if not found
+        """
+        data = self.get_transcription(transcription_id, metadata_table, segments_table, speakers_table)
         if not data:
             return None
 
@@ -435,6 +866,15 @@ class TranscriptionDatabase:
         segments = []
 
         for seg in data["segments"]:
+            # Create segment with basic info
+            segment = Segment(start=seg["start_time"], end=seg["end_time"], text=seg["text"])
+
+            # Add speaker info if available
+            if seg.get("speaker_label"):
+                segment.speaker = seg["speaker_label"]
+            if seg.get("speaker_confidence") is not None:
+                segment.confidence = seg["speaker_confidence"]
+
             segments.append(
                 Segment(
                     start=seg["start_time"],
@@ -443,13 +883,442 @@ class TranscriptionDatabase:
                 )
             )
 
-        return TranscriptionResult(
+        # Create result
+        result = TranscriptionResult(
             filename=metadata["filename"],
             file_hash=metadata["file_hash"],
             language=metadata["language"],
             segments=segments,
             full_text=metadata["full_text"],
         )
+
+        # Add speaker metadata if available
+        if metadata.get("num_speakers"):
+            result._proto.num_speakers = metadata["num_speakers"]
+        if metadata.get("has_speaker_labels"):
+            result._proto.has_speaker_labels = metadata["has_speaker_labels"]
+
+        return result
+
+    def import_from_json(
+        self,
+        json_str: str,
+        model_name: str = "unknown",
+        **kwargs
+    ) -> int:
+        """
+        Import transcription from JSON string and save to database.
+
+        Args:
+            json_str: JSON string containing transcription data
+            model_name: Name of the model used for transcription
+            **kwargs: Additional arguments passed to save_transcription
+
+        Returns:
+            The transcription_id of the saved record
+        """
+        result = TranscriptionResult.from_json(json_str)
+        return self.save_transcription(result, model_name, **kwargs)
+
+    def import_from_csv(
+        self,
+        csv_str: str,
+        filename: str,
+        file_hash: str,
+        language: str = "en",
+        model_name: str = "unknown",
+        **kwargs
+    ) -> int:
+        """
+        Import transcription from CSV string and save to database.
+        Note: CSV format loses some metadata, so basic info must be provided.
+
+        Args:
+            csv_str: CSV string containing transcription data
+            filename: Original filename
+            file_hash: SHA256 hash of the original file
+            language: Language code
+            model_name: Name of the model used for transcription
+            **kwargs: Additional arguments passed to save_transcription
+
+        Returns:
+            The transcription_id of the saved record
+        """
+        # Parse CSV to create TranscriptionResult
+        import csv
+        import io
+
+        # Skip comment lines and find header
+        lines = csv_str.strip().split('\n')
+        data_lines = []
+        for line in lines:
+            if not line.startswith('#'):
+                data_lines.append(line)
+
+        reader = csv.DictReader(io.StringIO('\n'.join(data_lines)))
+        segments = []
+        full_text_parts = []
+
+        for row in reader:
+            # Parse time format HH:MM:SS.sss to seconds
+            def parse_time(time_str):
+                parts = time_str.split(':')
+                hours = int(parts[0])
+                minutes = int(parts[1])
+                seconds = float(parts[2])
+                return hours * 3600 + minutes * 60 + seconds
+
+            start = parse_time(row['Start'])
+            end = parse_time(row['End'])
+            text = row['Text']
+
+            segment = Segment(start=start, end=end, text=text)
+
+            # Add speaker info if present
+            if 'Speaker' in row:
+                segment.speaker = row['Speaker']
+                # CSV doesn't include confidence, so we don't set it
+
+            segments.append(segment)
+            full_text_parts.append(text)
+
+        # Create TranscriptionResult
+        result = TranscriptionResult(
+            filename=filename,
+            file_hash=file_hash,
+            language=language,
+            segments=segments,
+            full_text=' '.join(full_text_parts)
+        )
+
+        # Check if we have speaker info to set metadata
+        if any(hasattr(seg, 'speaker') for seg in segments):
+            result._proto.has_speaker_labels = True
+            # Count unique speakers
+            unique_speakers = set(seg.speaker for seg in segments if hasattr(seg, 'speaker') and seg.speaker)
+            result._proto.num_speakers = len(unique_speakers)
+
+        return self.save_transcription(result, model_name, **kwargs)
+
+    def import_from_toml(
+        self,
+        toml_str: str,
+        model_name: str = "unknown",
+        **kwargs
+    ) -> int:
+        """
+        Import transcription from TOML string and save to database.
+
+        Args:
+            toml_str: TOML string containing transcription data
+            model_name: Name of the model used for transcription
+            **kwargs: Additional arguments passed to save_transcription
+
+        Returns:
+            The transcription_id of the saved record
+        """
+        result = TranscriptionResult.from_toml(toml_str)
+        return self.save_transcription(result, model_name, **kwargs)
+
+    def create_speaker_profile(
+        self,
+        display_name: str,
+        feed_url: Optional[str] = None,
+        canonical_label: Optional[str] = None,
+        profiles_table: str = "speaker_profiles",
+    ) -> int:
+        """
+        Create a new persistent speaker profile.
+
+        Args:
+            display_name: Display name for the speaker
+            feed_url: Optional feed URL to scope the profile to
+            canonical_label: Optional canonical label (e.g., "HOST", "GUEST_1")
+            profiles_table: Name of the profiles table
+
+        Returns:
+            Profile ID of the created profile
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            # Check if profile already exists
+            cursor.execute(
+                f"""
+                SELECT id FROM {profiles_table}
+                WHERE display_name = ? AND (feed_url = ? OR (feed_url IS NULL AND ? IS NULL))
+                """,
+                (display_name, feed_url, feed_url),
+            )
+
+            existing = cursor.fetchone()
+            if existing:
+                return existing["id"]
+
+            # Create new profile
+            cursor.execute(
+                f"""
+                INSERT INTO {profiles_table}
+                (display_name, feed_url, canonical_label, first_seen, last_seen)
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """,
+                (display_name, feed_url, canonical_label),
+            )
+
+            return cursor.lastrowid
+
+    def add_speaker_embedding(
+        self,
+        profile_id: int,
+        embedding: bytes,  # Serialized numpy array
+        embedding_dimension: int,
+        source_transcription_id: Optional[int] = None,
+        source_segment_indices: Optional[List[int]] = None,
+        duration_seconds: Optional[float] = None,
+        quality_score: Optional[float] = None,
+        extraction_method: str = "speechbrain",
+        embeddings_table: str = "speaker_embeddings",
+    ) -> int:
+        """
+        Add a voice embedding to a speaker profile.
+
+        Args:
+            profile_id: ID of the speaker profile
+            embedding: Serialized embedding vector (numpy array as bytes)
+            embedding_dimension: Dimension of the embedding
+            source_transcription_id: Optional source transcription
+            source_segment_indices: Optional list of segment indices used
+            duration_seconds: Total duration of audio used
+            quality_score: Quality/confidence score
+            extraction_method: Method used to extract embedding
+            embeddings_table: Name of the embeddings table
+
+        Returns:
+            Embedding ID
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            # Convert segment indices to JSON string
+            indices_json = None
+            if source_segment_indices:
+                import json
+                indices_json = json.dumps(source_segment_indices)
+
+            cursor.execute(
+                f"""
+                INSERT INTO {embeddings_table}
+                (profile_id, embedding, embedding_dimension, source_transcription_id,
+                 source_segment_indices, duration_seconds, quality_score, extraction_method)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    profile_id,
+                    embedding,
+                    embedding_dimension,
+                    source_transcription_id,
+                    indices_json,
+                    duration_seconds,
+                    quality_score,
+                    extraction_method,
+                ),
+            )
+
+            return cursor.lastrowid
+
+    def link_speaker_occurrence(
+        self,
+        transcription_id: int,
+        temporary_label: str,
+        profile_id: int,
+        confidence: float,
+        is_verified: bool = False,
+        occurrences_table: str = "speaker_occurrences",
+        profiles_table: str = "speaker_profiles",
+    ) -> int:
+        """
+        Link a temporary speaker label to a permanent profile.
+
+        Args:
+            transcription_id: ID of the transcription
+            temporary_label: Temporary label from diarization (e.g., "SPEAKER_0")
+            profile_id: ID of the matched speaker profile
+            confidence: Confidence score of the match
+            is_verified: Whether this match has been human-verified
+            occurrences_table: Name of the occurrences table
+            profiles_table: Name of the profiles table
+
+        Returns:
+            Occurrence ID
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                f"""
+                INSERT OR REPLACE INTO {occurrences_table}
+                (transcription_id, temporary_label, profile_id, confidence, is_verified)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (transcription_id, temporary_label, profile_id, confidence, 1 if is_verified else 0),
+            )
+
+            occurrence_id = cursor.lastrowid
+
+            # Update profile statistics
+            cursor.execute(
+                f"""
+                UPDATE {profiles_table}
+                SET total_appearances = total_appearances + 1,
+                    last_seen = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                (profile_id,),
+            )
+
+            return occurrence_id
+
+    def get_speaker_embeddings(
+        self,
+        profile_id: int,
+        embeddings_table: str = "speaker_embeddings",
+    ) -> List[Dict[str, Any]]:
+        """
+        Get all embeddings for a speaker profile.
+
+        Args:
+            profile_id: ID of the speaker profile
+            embeddings_table: Name of the embeddings table
+
+        Returns:
+            List of embedding records
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                f"""
+                SELECT * FROM {embeddings_table}
+                WHERE profile_id = ?
+                ORDER BY created_at DESC
+                """,
+                (profile_id,),
+            )
+
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_speaker_profiles_for_feed(
+        self,
+        feed_url: str,
+        profiles_table: str = "speaker_profiles",
+    ) -> List[Dict[str, Any]]:
+        """
+        Get all speaker profiles for a specific feed.
+
+        Args:
+            feed_url: URL of the feed
+            profiles_table: Name of the profiles table
+
+        Returns:
+            List of speaker profiles
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                f"""
+                SELECT * FROM {profiles_table}
+                WHERE feed_url = ?
+                ORDER BY total_appearances DESC
+                """,
+                (feed_url,),
+            )
+
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_speaker_history(
+        self,
+        profile_id: int,
+        limit: int = 100,
+        occurrences_table: str = "speaker_occurrences",
+        metadata_table: str = "transcription_metadata",
+    ) -> List[Dict[str, Any]]:
+        """
+        Get appearance history for a speaker.
+
+        Args:
+            profile_id: ID of the speaker profile
+            limit: Maximum number of appearances to return
+            occurrences_table: Name of the occurrences table
+            metadata_table: Name of the metadata table
+
+        Returns:
+            List of appearances with transcription info
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                f"""
+                SELECT o.*, t.filename, t.created_at as transcription_date
+                FROM {occurrences_table} o
+                JOIN {metadata_table} t ON o.transcription_id = t.id
+                WHERE o.profile_id = ?
+                ORDER BY t.created_at DESC
+                LIMIT ?
+                """,
+                (profile_id, limit),
+            )
+
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_speaker_statements(
+        self,
+        profile_id: int,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        segments_table: str = "transcription_segments",
+        metadata_table: str = "transcription_metadata",
+    ) -> List[Dict[str, Any]]:
+        """
+        Get all statements made by a speaker.
+
+        Args:
+            profile_id: ID of the speaker profile
+            start_date: Optional start date filter
+            end_date: Optional end date filter
+            segments_table: Name of the segments table
+            metadata_table: Name of the metadata table
+
+        Returns:
+            List of segments with transcription context
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            query = f"""
+                SELECT s.*, t.filename, t.created_at as transcription_date, t.feed_url
+                FROM {segments_table} s
+                JOIN {metadata_table} t ON s.transcription_id = t.id
+                WHERE s.profile_id = ?
+            """
+
+            params = [profile_id]
+
+            if start_date:
+                query += " AND t.created_at >= ?"
+                params.append(start_date)
+
+            if end_date:
+                query += " AND t.created_at <= ?"
+                params.append(end_date)
+
+            query += " ORDER BY t.created_at, s.start_time"
+
+            cursor.execute(query, params)
+
+            return [dict(row) for row in cursor.fetchall()]
 
     def get_recent_transcriptions(
         self, limit: int = 10, metadata_table: str = "transcription_metadata"
