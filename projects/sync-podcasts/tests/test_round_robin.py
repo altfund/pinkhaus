@@ -78,6 +78,7 @@ class TestRoundRobin:
             db_path=str(Path(temp_dir) / "test.db"),
             vector_store_path=str(Path(temp_dir) / "chroma"),
             round_robin=True,
+            skip_validation=True,
             date_threshold="2024-01-01T00:00:00",
         )
 
@@ -111,6 +112,7 @@ class TestRoundRobin:
             db_path=str(Path(temp_dir) / "test.db"),
             vector_store_path=str(Path(temp_dir) / "chroma"),
             round_robin=False,  # Sequential mode
+            skip_validation=True,
             date_threshold="2024-01-01T00:00:00",
         )
 
@@ -138,6 +140,7 @@ class TestRoundRobin:
             db_path=str(Path(temp_dir) / "test.db"),
             vector_store_path=str(Path(temp_dir) / "chroma"),
             days_back=7,
+            skip_validation=True,
         )
 
         syncer = PodcastSyncer(config)
@@ -162,6 +165,7 @@ class TestRoundRobin:
             db_path=str(Path(temp_dir) / "test.db"),
             vector_store_path=str(Path(temp_dir) / "chroma"),
             daemon=True,
+            skip_validation=True,
         )
 
         syncer = PodcastSyncer(config)

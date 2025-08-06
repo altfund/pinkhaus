@@ -12,6 +12,7 @@ dependencies = [
 
 [project.scripts]
 sync-podcasts = "sync_podcasts.cli:main"
+validate-feed = "sync_podcasts.cli:validate_feed_main"
 
 [build-system]
 requires = ["hatchling"]
