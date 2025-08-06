@@ -1,4 +1,17 @@
 [feeds]
 rss = [
 	"https://feeds.megaphone.fm/ESP9520742908",
+	"https://feeds.acast.com/public/shows/681ccd8a24b1daf01a7207ba",
+	"https://feeds.simplecast.com/KV1aCFKS",
+	"https://feeds.acast.com/public/shows/6818be7d1d28d62313ac8ef3",
+	"https://podcast.global.com/show/3382902/episodes/feed",
+	"https://feeds.acast.com/public/shows/6818cfc81d28d62313b34379",
+	"https://podcasts.files.bbci.co.uk/p02nrsln.rss",
+	"https://www.theguardian.com/football/series/footballweekly/podcast.xml",
+	"https://feeds.acast.com/public/shows/681887451d28d623139a0fc9",
+	"https://feeds.acast.com/public/shows/681cc9bc5acb8b715f1eb2f6",
+	"https://feeds.acast.com/public/shows/681ccb505acb8b715f1f1330",
+	"https://feeds.acast.com/public/shows/6819aed5eb146d8e3506a450",
+	"https://feeds.acast.com/public/shows/681ccc398b1f3232bc1e68ae",
+	"https://kieranhealy.org/index.xml",
 ]

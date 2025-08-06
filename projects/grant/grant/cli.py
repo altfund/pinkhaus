@@ -1,10 +1,24 @@
 import argparse
 import sys
+import logging
 from pathlib import Path
 
 from .ollama_client import OllamaClient
 from .rag import RAGPipeline, RAGConfig
 from .embeddings import EmbeddingService
+
+DEFAULT_CHROMA_DB = "./grant_chroma_db"
+DEFAULT_FC_DB = "../../resources/fc/fc.db"
+
+
+def setup_logging(debug: bool = False):
+    """Configure logging based on debug flag."""
+    level = logging.DEBUG if debug else logging.WARNING
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
 
 
 def list_models(client: OllamaClient) -> None:
@@ -78,10 +92,10 @@ def index_command(args):
     )
 
     rag = RAGPipeline(
-        db_path=args.db,
         ollama_client=client,
         config=config,
         vector_store_path=args.vector_store,
+        db_path=args.db,
     )
 
     # Check if embedding model is available
@@ -114,11 +128,6 @@ def ask_command(args):
     """Handle the ask command."""
     client = OllamaClient(base_url=args.base_url)
 
-    # Check if database exists
-    if not Path(args.db).exists():
-        print(f"Error: Database not found: {args.db}", file=sys.stderr)
-        sys.exit(1)
-
     # Initialize RAG pipeline
     config = RAGConfig(
         embedding_model=args.embedding_model,
@@ -128,10 +137,10 @@ def ask_command(args):
     )
 
     rag = RAGPipeline(
-        db_path=args.db,
         ollama_client=client,
         config=config,
         vector_store_path=args.vector_store,
+        # No db_path needed for ask command
     )
 
     # Check if models are available
@@ -186,7 +195,9 @@ def stats_command(args):
 
     # Initialize RAG pipeline
     rag = RAGPipeline(
-        db_path=args.db, ollama_client=client, vector_store_path=args.vector_store
+        ollama_client=client,
+        vector_store_path=args.vector_store,
+        db_path=args.db,
     )
 
     stats = rag.get_stats()
@@ -205,12 +216,59 @@ def stats_command(args):
     print(f"  Chunk size: {stats['chunk_size']} tokens")
 
 
+def check_unindexed_command(args):
+    """Handle the check-unindexed command."""
+    client = OllamaClient(base_url=args.base_url)
+
+    # Check if database exists
+    if not Path(args.db).exists():
+        print(f"Error: Database not found: {args.db}", file=sys.stderr)
+        sys.exit(1)
+
+    # Initialize RAG pipeline
+    rag = RAGPipeline(
+        ollama_client=client,
+        vector_store_path=args.vector_store,
+        db_path=args.db,
+    )
+
+    # Get unindexed transcriptions
+    unindexed = rag.get_unindexed_transcriptions()
+
+    if not unindexed:
+        print("All transcriptions have been indexed! ✓")
+        sys.exit(0)
+
+    # Display summary
+    print(f"Found {len(unindexed)} unindexed transcription(s)")
+    print("=" * 80)
+
+    # Display details
+    for trans in unindexed:
+        print(f"\nID: {trans['id']}")
+        print(f"Title: {trans['title']}")
+        print(f"Feed: {trans['feed_title']}")
+        print(f"Published: {trans['published']}")
+        if trans.get("duration"):
+            print(f"Duration: {trans['duration']} seconds")
+
+    print("\n" + "=" * 80)
+    print(f"Total unindexed: {len(unindexed)}")
+    print("\nTo index these transcriptions, run:")
+    print(f"  grant index --db {args.db} --vector-store {args.vector_store}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Grant - RAG tool using Ollama")
     parser.add_argument(
         "--base-url",
         default="http://localhost:11434",
         help="Ollama API base URL (default: http://localhost:11434)",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug logging",
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -234,12 +292,12 @@ def main():
     index_parser = subparsers.add_parser("index", help="Index podcast transcriptions")
     index_parser.add_argument(
         "--db",
-        default="../../resources/fc.db",
+        default=DEFAULT_FC_DB,
         help="Path to transcriptions database",
     )
     index_parser.add_argument(
         "--vector-store",
-        default="./grant_chroma_db",
+        default=DEFAULT_CHROMA_DB,
         help="Path to vector store directory",
     )
     index_parser.add_argument(
@@ -264,13 +322,8 @@ def main():
     )
     ask_parser.add_argument("question", help="Question to ask")
     ask_parser.add_argument(
-        "--db",
-        default="../../resources/fc.db",
-        help="Path to transcriptions database",
-    )
-    ask_parser.add_argument(
         "--vector-store",
-        default="./grant_chroma_db",
+        default=DEFAULT_CHROMA_DB,
         help="Path to vector store directory",
     )
     ask_parser.add_argument(
@@ -288,8 +341,14 @@ def main():
     ask_parser.add_argument(
         "--transcription-id", type=int, help="Limit to specific transcription"
     )
-    ask_parser.add_argument("--after", help="Only search after date (YYYY-MM-DD)")
-    ask_parser.add_argument("--before", help="Only search before date (YYYY-MM-DD)")
+    ask_parser.add_argument(
+        "--after",
+        help="Only search content published after this date (ISO8601 format, e.g., 2024-01-15 or 2024-01-15T12:00:00)",
+    )
+    ask_parser.add_argument(
+        "--before",
+        help="Only search content published before this date (ISO8601 format, e.g., 2024-01-15 or 2024-01-15T12:00:00)",
+    )
     ask_parser.add_argument(
         "--show-sources", action="store_true", help="Show source information"
     )
@@ -298,16 +357,34 @@ def main():
     stats_parser = subparsers.add_parser("stats", help="Show RAG system statistics")
     stats_parser.add_argument(
         "--db",
-        default="../beige-book/protobuf_transcriptions.db",
+        default=DEFAULT_FC_DB,
         help="Path to transcriptions database",
     )
     stats_parser.add_argument(
         "--vector-store",
-        default="./grant_chroma_db",
+        default=DEFAULT_CHROMA_DB,
+        help="Path to vector store directory",
+    )
+
+    # Check-unindexed command
+    check_parser = subparsers.add_parser(
+        "check-unindexed", help="Check for transcriptions not yet indexed"
+    )
+    check_parser.add_argument(
+        "--db",
+        default=DEFAULT_FC_DB,
+        help="Path to transcriptions database",
+    )
+    check_parser.add_argument(
+        "--vector-store",
+        default=DEFAULT_CHROMA_DB,
         help="Path to vector store directory",
     )
 
     args = parser.parse_args()
+
+    # Setup logging
+    setup_logging(args.debug)
 
     if not args.command:
         parser.print_help()
@@ -328,6 +405,8 @@ def main():
         ask_command(args)
     elif args.command == "stats":
         stats_command(args)
+    elif args.command == "check-unindexed":
+        check_unindexed_command(args)
 
 
 if __name__ == "__main__":

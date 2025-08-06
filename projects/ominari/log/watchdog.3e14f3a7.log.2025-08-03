@@ -1,0 +1,8 @@
+2025-08-03T21:20:08.461460Z DEBUG flox_watchdog::sentry: Initializing Sentry with DSN: https://85c9526795f5047c99a5247aab616295:@o4506548203094016.ingest.us.sentry.io/4506548241825792
+2025-08-03T21:20:08.470951Z DEBUG sentry: enabled sentry client for DSN https://85c9526795f5047c99a5247aab616295:@o4506548203094016.ingest.us.sentry.io/4506548241825792    
+2025-08-03T21:20:08.471206Z DEBUG watchdog{socket="/run/user/1000/flox.3e0db42c.sock" log_dir="/home/ess/Documents/apps/ominari/.flox/log"}: flox_watchdog: starting
+2025-08-03T21:20:08.471629Z DEBUG watchdog{socket="/run/user/1000/flox.3e0db42c.sock" log_dir="/home/ess/Documents/apps/ominari/.flox/log"}: flox_watchdog: checked socket path="/run/user/1000/flox.3e0db42c.sock" exists=false
+2025-08-03T21:20:08.471635Z  INFO watchdog{socket="/run/user/1000/flox.3e0db42c.sock" log_dir="/home/ess/Documents/apps/ominari/.flox/log"}: flox_watchdog: watchdog is on duty this_pid=841238 target_activation_id="3e14f3a7"
+2025-08-03T21:20:08.471691Z DEBUG watchdog{socket="/run/user/1000/flox.3e0db42c.sock" log_dir="/home/ess/Documents/apps/ominari/.flox/log"}: flox_watchdog: waiting for termination
+2025-08-03T21:20:08.471856Z DEBUG flox_watchdog::logger: still watching, woof woof
+2025-08-03T22:20:08.472128Z DEBUG flox_watchdog::logger: still watching, woof woof

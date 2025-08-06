@@ -26,6 +26,7 @@ from .proto_models import (
 )
 from .feed_parser import FeedParser, FeedItem
 from .downloader import AudioDownloader
+from .blog_processor import BlogProcessor
 
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,7 @@ class TranscriptionService:
         self.database = None
         self.feed_parser = FeedParser()
         self.downloader = AudioDownloader()
+        self.blog_processor = BlogProcessor()
 
     def process(self, request: TranscriptionRequest) -> TranscriptionResponse:
         """
@@ -173,47 +175,114 @@ class TranscriptionService:
         skipped = 0
         failed = 0
 
+        # Prepare items for processing
+        feed_items_prepared = {}
         for feed_url, items in feed_items_dict.items():
             # Sort and limit items
             sorted_items = self._sort_and_limit_items(
                 items, request.processing.feed_options
             )
-            total_items += len(sorted_items)
+            if sorted_items:
+                feed_items_prepared[feed_url] = sorted_items
+                total_items += len(sorted_items)
 
-            for item in sorted_items:
-                try:
-                    # Check if already processed
-                    if (
-                        is_resumable
-                        and db
-                        and db.check_feed_item_exists(
-                            item.feed_url,
-                            item.item_id,
-                            request.output.database.metadata_table
-                            if request.output.database
-                            else "transcription_metadata",
-                        )
-                    ):
-                        logger.info(f"Skipping already processed: {item.title}")
-                        skipped += 1
+        # Process items in round-robin or sequential mode
+        if request.processing.feed_options.round_robin:
+            # Round-robin mode: process newest from each feed before moving to next
+            logger.info("Processing feeds in round-robin mode")
+            round_index = 0
+
+            while any(items for items in feed_items_prepared.values()):
+                feeds_processed_this_round = 0
+
+                for feed_url, items in list(feed_items_prepared.items()):
+                    if not items:
                         continue
 
-                    # Process item
-                    result = self._process_feed_item(item, request)
-                    if result:
-                        response.results.append(result)
-                        processed += 1
-                    else:
+                    # Take the first item from this feed
+                    item = items[0]
+                    feeds_processed_this_round += 1
+
+                    try:
+                        # Check if already processed
+                        if (
+                            is_resumable
+                            and db
+                            and db.check_feed_item_exists(
+                                item.feed_url,
+                                item.item_id,
+                                request.output.database.metadata_table
+                                if request.output.database
+                                else "transcription_metadata",
+                            )
+                        ):
+                            logger.info(f"Skipping already processed: {item.title}")
+                            skipped += 1
+                        else:
+                            # Process item
+                            result = self._process_feed_item(item, request)
+                            if result:
+                                response.results.append(result)
+                                processed += 1
+                            else:
+                                failed += 1
+
+                    except Exception as e:
+                        logger.error(f"Failed to process {item.title}: {e}")
+                        response.add_error(
+                            source=item.audio_url or item.link or item.item_id,
+                            error_type=type(e).__name__,
+                            message=str(e),
+                        )
                         failed += 1
 
-                except Exception as e:
-                    logger.error(f"Failed to process {item.title}: {e}")
-                    response.add_error(
-                        source=item.audio_url,
-                        error_type=type(e).__name__,
-                        message=str(e),
+                    # Remove processed item
+                    feed_items_prepared[feed_url] = items[1:]
+                    if not feed_items_prepared[feed_url]:
+                        del feed_items_prepared[feed_url]
+
+                round_index += 1
+                if feeds_processed_this_round > 0:
+                    logger.info(
+                        f"Completed round {round_index}, processed {feeds_processed_this_round} feeds"
                     )
-                    failed += 1
+        else:
+            # Sequential mode: process all from one feed before moving to next
+            for feed_url, sorted_items in feed_items_prepared.items():
+                for item in sorted_items:
+                    try:
+                        # Check if already processed
+                        if (
+                            is_resumable
+                            and db
+                            and db.check_feed_item_exists(
+                                item.feed_url,
+                                item.item_id,
+                                request.output.database.metadata_table
+                                if request.output.database
+                                else "transcription_metadata",
+                            )
+                        ):
+                            logger.info(f"Skipping already processed: {item.title}")
+                            skipped += 1
+                            continue
+
+                        # Process item
+                        result = self._process_feed_item(item, request)
+                        if result:
+                            response.results.append(result)
+                            processed += 1
+                        else:
+                            failed += 1
+
+                    except Exception as e:
+                        logger.error(f"Failed to process {item.title}: {e}")
+                        response.add_error(
+                            source=item.audio_url or item.link or item.item_id,
+                            error_type=type(e).__name__,
+                            message=str(e),
+                        )
+                        failed += 1
 
         # Set summary
         response.summary = ProcessingSummary(
@@ -231,49 +300,81 @@ class TranscriptionService:
         self, item: FeedItem, request: TranscriptionRequest
     ) -> Optional[TranscriptionResult]:
         """Process a single feed item"""
-        logger.info(f"Processing: {item.title}")
+        logger.info(f"Processing: {item.title} (type: {item.feed_type})")
 
-        # Download audio
-        temp_path, file_hash = self.downloader.download_with_retry(
-            item.audio_url,
-            max_retries=request.processing.feed_options.max_retries,
-            initial_delay=request.processing.feed_options.initial_delay,
-        )
-
-        try:
-            # Transcribe
-            result = self.transcriber.transcribe_file(
-                temp_path,
-                verbose=(request.processing.verbose and not request.output.destination),
+        if item.feed_type == "blog":
+            # Process blog content
+            if not item.content:
+                logger.warning(f"Blog item has no content: {item.title}")
+                return None
+            # Process blog content into transcription format
+            result = self.blog_processor.process_blog_content(
+                content=item.content,
+                filename=item.link or item.item_id,
+                title=item.title,
             )
 
             # Save to database if configured
             if self.database:
-                self._save_to_database(result, item, request)
+                transcription_id = self._save_to_database(result, item, request)
+                self._validate_database_save(transcription_id, item, request)
 
             # Add feed metadata to result for output formatting
             result.feed_metadata = {
                 "feed_url": item.feed_url,
                 "item_id": item.item_id,
                 "title": item.title,
-                "audio_url": item.audio_url,
+                "link": item.link,
                 "published": item.published.isoformat() if item.published else None,
             }
 
             return result
+        else:
+            # Process podcast audio
+            # Download audio
+            temp_path, file_hash = self.downloader.download_with_retry(
+                item.audio_url,
+                max_retries=request.processing.feed_options.max_retries,
+                initial_delay=request.processing.feed_options.initial_delay,
+            )
 
-        finally:
-            # Clean up temp file
-            self.downloader.cleanup_temp_file(temp_path)
+            try:
+                # Transcribe
+                result = self.transcriber.transcribe_file(
+                    temp_path,
+                    verbose=(
+                        request.processing.verbose and not request.output.destination
+                    ),
+                )
+
+                # Save to database if configured
+                if self.database:
+                    transcription_id = self._save_to_database(result, item, request)
+                    self._validate_database_save(transcription_id, item, request)
+
+                # Add feed metadata to result for output formatting
+                result.feed_metadata = {
+                    "feed_url": item.feed_url,
+                    "item_id": item.item_id,
+                    "title": item.title,
+                    "audio_url": item.audio_url,
+                    "published": item.published.isoformat() if item.published else None,
+                }
+
+                return result
+
+            finally:
+                # Clean up temp file
+                self.downloader.cleanup_temp_file(temp_path)
 
     def _save_to_database(
         self, result: TranscriptionResult, item: FeedItem, request: TranscriptionRequest
-    ):
+    ) -> int:
         """Save transcription to database with feed metadata"""
         db_config = request.output.database
         # Convert enum to string for database
         model_name = self.MODEL_NAME_MAP.get(request.processing.model, "tiny")
-        self.database.save_transcription(
+        transcription_id = self.database.save_transcription(
             result,
             model_name=model_name,
             metadata_table=db_config.metadata_table
@@ -287,11 +388,98 @@ class TranscriptionService:
             feed_item_title=item.title,
             feed_item_published=item.published.isoformat() if item.published else None,
         )
+        return transcription_id
+
+    def _validate_database_save(
+        self, transcription_id: int, item: FeedItem, request: TranscriptionRequest
+    ):
+        """Validate that data was properly saved to the database"""
+        if not transcription_id:
+            logger.warning(
+                f"Failed to save transcription for {item.title} - no ID returned"
+            )
+            return
+
+        db_config = request.output.database
+        metadata_table = (
+            db_config.metadata_table if db_config else "transcription_metadata"
+        )
+        segments_table = (
+            db_config.segments_table if db_config else "transcription_segments"
+        )
+
+        try:
+            # Check metadata was saved
+            metadata = self.database.get_transcription_metadata(
+                transcription_id, metadata_table
+            )
+            if not metadata:
+                logger.warning(
+                    f"WARNING: No metadata found for transcription ID {transcription_id} ({item.title})"
+                )
+                return
+
+            # Check segments were saved
+            segments = self.database.get_segments_for_transcription(
+                transcription_id, segments_table
+            )
+            if not segments:
+                logger.warning(
+                    f"WARNING: No segments found for transcription ID {transcription_id} ({item.title})"
+                )
+                return
+
+            # Validate data integrity
+            if not metadata.full_text:
+                logger.warning(
+                    f"WARNING: Empty full_text for transcription ID {transcription_id} ({item.title})"
+                )
+
+            if metadata.feed_item_id != item.item_id:
+                logger.warning(
+                    f"WARNING: Mismatched item ID for transcription ID {transcription_id} "
+                    f"(expected: {item.item_id}, got: {metadata.feed_item_id})"
+                )
+
+            # Log success for blog items (since they're new)
+            if item.feed_type == "blog":
+                logger.info(
+                    f"✓ Blog post saved: ID={transcription_id}, title='{item.title}', "
+                    f"segments={len(segments)}, text_length={len(metadata.full_text)}"
+                )
+            else:
+                logger.debug(
+                    f"✓ Podcast saved: ID={transcription_id}, title='{item.title}', "
+                    f"segments={len(segments)}"
+                )
+
+        except Exception as e:
+            logger.warning(
+                f"WARNING: Could not validate database save for {item.title}: {e}"
+            )
 
     def _sort_and_limit_items(
         self, items: List[FeedItem], feed_options
     ) -> List[FeedItem]:
         """Sort and limit feed items based on options"""
+        # Filter by date threshold if specified
+        if feed_options.date_threshold:
+            try:
+                threshold_date = datetime.fromisoformat(
+                    feed_options.date_threshold.replace("Z", "+00:00")
+                )
+                # Filter items published after the threshold
+                items = [
+                    item
+                    for item in items
+                    if item.published and item.published > threshold_date
+                ]
+                logger.info(
+                    f"Filtered to {len(items)} items after {feed_options.date_threshold}"
+                )
+            except ValueError as e:
+                logger.warning(f"Invalid date threshold format: {e}")
+
         # Sort by publication date
         if feed_options.order == FeedOptionsOrder.ORDER_NEWEST:
             sorted_items = sorted(
