@@ -1,0 +1,1 @@
+"""Beige book proto definitions."""

@@ -7,6 +7,9 @@ requires-python = ">=3.10"
 dependencies = [
     "pydantic>=2.0.0",
     "aiosqlite>=0.20.0",
+    "protobuf>=6.31.0",
+    "betterproto>=1.2.5",
+    "grpcio-tools>=1.68.1",
 ]
 
 [build-system]

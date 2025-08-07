@@ -1,6 +1,8 @@
 # pinkhaus-models
 
-Shared database models and schemas for pinkhaus projects. This package provides SQLAlchemy models and database utilities for storing and retrieving podcast transcriptions.
+Shared database models, schemas, and protocol buffer definitions for pinkhaus projects. This package provides:
+- SQLAlchemy models and database utilities for storing and retrieving podcast transcriptions
+- Protocol buffer definitions for cross-project data exchange
 
 ## Installation
 
@@ -219,6 +221,43 @@ english_transcriptions = db.session.query(TranscriptionMetadata).filter(
 ### Relationships
 - One-to-many relationship between metadata and segments
 - Segments are automatically deleted when parent transcription is deleted
+
+## Protocol Buffer Support
+
+### Available Proto Definitions
+
+The package includes proto definitions organized by project:
+
+- **beige_book**
+  - `transcription.proto`: Core transcription data structures
+  - `requests.proto`: API request/response definitions
+- **ominari**
+  - `external.proto`: External signal service definitions
+
+### Using Proto Definitions
+
+```python
+# Import proto definitions from pinkhaus-models
+from pinkhaus_models.proto.beige_book.transcription_pb2 import TranscriptionResult, Segment
+from pinkhaus_models.proto.beige_book.requests_pb2 import TranscriptionRequest
+
+# Create a transcription result
+result = TranscriptionResult()
+result.filename = "audio.mp3"
+result.language = "en"
+```
+
+### Generating Proto Files
+
+Proto files are pre-generated and included in the package. To regenerate:
+
+```bash
+# From pinkhaus-models directory
+just proto-generate
+
+# To verify generated files match checked-in versions
+just proto-verify
+```
 
 ## Integration with Other Projects
 
