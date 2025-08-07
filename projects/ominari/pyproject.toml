@@ -5,24 +5,23 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-	alembic==1.16.4
-	eth_utils==5.1.0
-	fuzzywuzzy==0.18.0
-	grpcio==1.73.1
-	grpcio==1.69.0
-	ipython==8.12.3
-	Markdown==3.8.2
-	markdown2==2.5.4
-	matplotlib==3.10.5
-	numpy==2.3.2
-	pandas==2.3.1
-	pdfkit==1.0.0
-	protobuf==6.31.1
-	python-dotenv==1.1.1
-	python_dateutil==2.9.0.post0
-	Requests==2.32.4
-	scipy==1.16.1
-	SQLAlchemy==2.0.36
+	"alembic==1.16.4",
+	"eth_utils==5.1.0",
+	"fuzzywuzzy==0.18.0",
+	"grpcio==1.73.1",
+	"ipython==8.12.3",
+	"Markdown==3.8.2",
+	"markdown2==2.5.4",
+	"matplotlib==3.10.5",
+	"numpy==2.3.2",
+	"pandas==2.3.1",
+	"pdfkit==1.0.0",
+	"protobuf==6.31.1",
+	"python-dotenv==1.1.1",
+	"python_dateutil==2.9.0.post0",
+	"Requests==2.32.4",
+	"scipy==1.16.1",
+	"SQLAlchemy==2.0.36",
 ]
 
 [project.scripts]

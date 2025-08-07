@@ -8,7 +8,7 @@ Created on Fri Aug  1 01:39:20 2025
 
 # performance.py
 import pandas as pd
-from sqlalchemy import create_engine, text, select, func
+from sqlalchemy import select, func
 from typing import List, Optional, Tuple
 from sqlalchemy.orm import Session
 from models import Bet, BettingSession, Market
@@ -18,29 +18,25 @@ from database import engine
 
 
 def get_latest_session_ids(
-    session_type: Optional[str] = None,
-    only_this:Optional[str] = None
+    session_type: Optional[str] = None, only_this: Optional[str] = None
 ) -> List[int]:
     """
     Return the latest (max id) session_id for each unique strategy_name,
     optionally filtering by session_type (e.g. 'backtest').
     """
     with Session(engine) as sess:
-        q = sess.query(
-            func.max(BettingSession.id).label("latest_id")
-        )
+        q = sess.query(func.max(BettingSession.id).label("latest_id"))
         if session_type:
             q = q.filter(BettingSession.session_type == session_type)
         q = q.group_by(BettingSession.strategy_name)
-        
+
         if only_this:
             q = q.filter(BettingSession.strategy_name == only_this)
-        
+
         return [row.latest_id for row in q.all()]
 
-def load_bets_with_results(
-    session_ids: Optional[List[int]] = None
-) -> pd.DataFrame:
+
+def load_bets_with_results(session_ids: Optional[List[int]] = None) -> pd.DataFrame:
     """
     Pull bets JOINed to their market’s computed `resolved_outcome`.
     """
@@ -75,50 +71,57 @@ def score_bets(df: pd.DataFrame) -> pd.DataFrame:
       - status: 'win' / 'loss' / 'pending'
       - net: P&L per bet, zero for pending
     """
+
     def _score(row):
         if pd.isna(row.market_outcome):
             return pd.Series({"status": "pending", "net": 0.0})
         elif row.bet_outcome == row.market_outcome:
             gross = row.execution_stake * (row.odds - 1)
-            net   = gross - row.fee_amount
+            net = gross - row.fee_amount
             return pd.Series({"status": "win", "net": net})
         else:
-            net = - row.execution_stake - row.fee_amount
+            net = -row.execution_stake - row.fee_amount
             return pd.Series({"status": "loss", "net": net})
 
     scored = df.join(df.apply(_score, axis=1))
     return scored
 
 
-def summarize_performance(
-    scored: pd.DataFrame
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def summarize_performance(scored: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Returns two DataFrames:
       1) per-bet: the scored bets
       2) per-session: aggregated metrics by session_id, strategy_name, session_type
     """
     # 1) per-session aggregation
-    agg = scored.groupby(
-        ["session_id", "strategy_name", "session_type", "as_of"],
-        dropna=False
-    ).agg(
-        total_staked    = ("execution_stake", "sum"),
-        total_fee       = ("fee_amount", "sum"),
-        total_net       = ("net", "sum"),
-        wins            = ("status", lambda s: (s=="win").sum()),
-        losses          = ("status", lambda s: (s=="loss").sum()),
-        pending         = ("status", lambda s: (s=="pending").sum()),
-        roi             = ("net", lambda x: x.sum() / scored.loc[x.index, "execution_stake"].sum()
-                                       if scored.loc[x.index, "execution_stake"].sum() else 0.0)
-    ).reset_index()
+    agg = (
+        scored.groupby(
+            ["session_id", "strategy_name", "session_type", "as_of"], dropna=False
+        )
+        .agg(
+            total_staked=("execution_stake", "sum"),
+            total_fee=("fee_amount", "sum"),
+            total_net=("net", "sum"),
+            wins=("status", lambda s: (s == "win").sum()),
+            losses=("status", lambda s: (s == "loss").sum()),
+            pending=("status", lambda s: (s == "pending").sum()),
+            roi=(
+                "net",
+                lambda x: x.sum() / scored.loc[x.index, "execution_stake"].sum()
+                if scored.loc[x.index, "execution_stake"].sum()
+                else 0.0,
+            ),
+        )
+        .reset_index()
+    )
 
     return scored, agg
+
 
 def summarize_backtest_performance(
     strat_name: Optional[str] = None,
     session_ids: Optional[List[int]] = None,
-    print_per_session: bool = True
+    print_per_session: bool = True,
 ) -> pd.DataFrame:
     """
     Summarizes performance for a backtest. You may supply either:
@@ -132,7 +135,7 @@ def summarize_backtest_performance(
         with Session(engine) as sess:
             stmt = select(BettingSession.id).where(
                 BettingSession.strategy_name == strat_name,
-                BettingSession.session_type == "backtest"
+                BettingSession.session_type == "backtest",
             )
             session_ids = sess.execute(stmt).scalars().all()
     if not session_ids:
@@ -148,13 +151,13 @@ def summarize_backtest_performance(
         print(per_session_df.to_string(index=False))
 
         # Overall aggregate
-        total_staked = per_session_df['total_staked'].sum()
-        total_fee = per_session_df['total_fee'].sum()
-        total_net = per_session_df['total_net'].sum()
-        wins = per_session_df['wins'].sum()
-        losses = per_session_df['losses'].sum()
-        pending = per_session_df['pending'].sum()
-        overall_roi = (total_net / total_staked) if total_staked else float('nan')
+        total_staked = per_session_df["total_staked"].sum()
+        total_fee = per_session_df["total_fee"].sum()
+        total_net = per_session_df["total_net"].sum()
+        wins = per_session_df["wins"].sum()
+        losses = per_session_df["losses"].sum()
+        pending = per_session_df["pending"].sum()
+        overall_roi = (total_net / total_staked) if total_staked else float("nan")
 
         print("\n=== OVERALL BACKTEST PERFORMANCE ===")
         print(f"Total Staked: {total_staked:.2f}")

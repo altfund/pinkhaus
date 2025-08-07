@@ -10,7 +10,7 @@ import os
 # directory containing this script
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-DB_PATH = os.path.join(BASE_DIR, "sport_odds.db")   # <— your actual filename here
+DB_PATH = os.path.join(BASE_DIR, "sport_odds.db")  # <— your actual filename here
 
 CHUNK_SIZE = 1000
 
@@ -26,6 +26,7 @@ BACKFILL_SQL = """
                  AND o.market_type  = 'winner'
                  LIMIT ?
                 """
+
 
 def backfill_positions(db_path, preview=False, limit=10, chunk_size=CHUNK_SIZE):
     """
@@ -64,27 +65,32 @@ def backfill_positions(db_path, preview=False, limit=10, chunk_size=CHUNK_SIZE):
         df = pd.read_sql(sample_sql, conn, params=(limit,))
 
         # 2) Deserialize only the few JSON blobs
-        df["position_names"] = df["position_names"].apply(lambda s: json.loads(s or "[]"))
+        df["position_names"] = df["position_names"].apply(
+            lambda s: json.loads(s or "[]")
+        )
 
         # 3) Compute inferred_position
         # build a simple Python list of inferred positions
         inferred = []
         for _, row in df.iterrows():
             inferred.append(infer_position(row["position_names"], row["outcome"]))
-        
+
         # assign that list back as a single column
         df["inferred_position"] = inferred
 
-
         # 4) Show what would be updated
-        print(df[[
-            "id",
-            "source_id",
-            "position_names",
-            "outcome",
-            "current_position",
-            "inferred_position"
-        ]])
+        print(
+            df[
+                [
+                    "id",
+                    "source_id",
+                    "position_names",
+                    "outcome",
+                    "current_position",
+                    "inferred_position",
+                ]
+            ]
+        )
         conn.close()
         return
 
@@ -103,7 +109,7 @@ def backfill_positions(db_path, preview=False, limit=10, chunk_size=CHUNK_SIZE):
 
         updates = []
         for row in batch:
-            names   = mapping.get(row["source_id"], [])
+            names = mapping.get(row["source_id"], [])
             outcome = row["outcome"]
             pos = infer_position(names, outcome)
             if pos is not None:
@@ -122,19 +128,25 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(
         description="Backfill or preview positions in your odds table"
     )
-    p.add_argument("--preview", "-p", action="store_true",
-                   help="Show a sample of inferred positions without writing")
-    p.add_argument("--limit",  "-n", type=int, default=10,
-                   help="Number of rows to preview when using --preview")
-    p.add_argument("--db",     "-d", default=DB_PATH,
-                   help="Path to your SQLite DB file")
-    p.add_argument("--chunk",  "-c", type=int, default=1000,
-                   help="Chunk size for full backfill")
+    p.add_argument(
+        "--preview",
+        "-p",
+        action="store_true",
+        help="Show a sample of inferred positions without writing",
+    )
+    p.add_argument(
+        "--limit",
+        "-n",
+        type=int,
+        default=10,
+        help="Number of rows to preview when using --preview",
+    )
+    p.add_argument("--db", "-d", default=DB_PATH, help="Path to your SQLite DB file")
+    p.add_argument(
+        "--chunk", "-c", type=int, default=1000, help="Chunk size for full backfill"
+    )
     args = p.parse_args()
 
     backfill_positions(
-        db_path=args.db,
-        preview=args.preview,
-        limit=args.limit,
-        chunk_size=args.chunk
+        db_path=args.db, preview=args.preview, limit=args.limit, chunk_size=args.chunk
     )

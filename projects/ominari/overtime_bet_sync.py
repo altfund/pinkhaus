@@ -7,7 +7,6 @@ Created on Thu Apr  3 23:20:28 2025
 """
 
 import sqlite3
-import json
 from pathlib import Path
 
 # Connect to existing database
@@ -51,7 +50,6 @@ conn.close()
 
 import requests
 import sqlite3
-import time
 from datetime import datetime
 from eth_utils import to_checksum_address
 
@@ -61,16 +59,19 @@ DB_PATH = "sport_odds.db"
 WALLET_ADDRESS = "0xE271ae7C87e87c2Ef897c6113999aE7A462bE2D2"
 WALLET_ADDRESS = WALLET_ADDRESS.lower()
 WALLET_ADDRESS = to_checksum_address(WALLET_ADDRESS)
-network_id=10
+network_id = 10
 API_URL = f"https://overtimemarketsv2.xyz/overtime-v2/networks/{network_id}/users/{WALLET_ADDRESS}/history"
+
 
 def fetch_overtime_portfolio():
     response = requests.get(API_URL)
     response.raise_for_status()
     return response.json()
 
+
 def timestamp_to_iso(ms):
     return datetime.utcfromtimestamp(ms / 1000).isoformat()
+
 
 def insert_bets(bets_by_type):
     conn = sqlite3.connect(DB_PATH)
@@ -111,7 +112,8 @@ def insert_bets(bets_by_type):
                 cancelled = market.get("isCancelled", False)
                 game_status = market.get("gameStatus")
 
-                cur.execute("""
+                cur.execute(
+                    """
                     INSERT OR REPLACE INTO bet (
                         bet_id, bet_timestamp, expiry, buy_in_amount, fees, total_quote, payout,
                         collateral, account, is_user_winner, is_claimable, is_lost, is_resolved, final_payout,
@@ -120,17 +122,43 @@ def insert_bets(bets_by_type):
                         sport, league, match_id
                     )
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    bet_id, ts, expiry, buy_in, fees, quote, payout,
-                    collateral, account, int(is_winner), int(is_claimable), int(is_lost), int(is_resolved), final_payout,
-                    match_id, market_type, position, odds, implied,
-                    home_team, away_team, home_score, away_score, maturity, game_status,
-                    sport, league, match_id  # also link to match(overtime_source_id)
-                ))
+                """,
+                    (
+                        bet_id,
+                        ts,
+                        expiry,
+                        buy_in,
+                        fees,
+                        quote,
+                        payout,
+                        collateral,
+                        account,
+                        int(is_winner),
+                        int(is_claimable),
+                        int(is_lost),
+                        int(is_resolved),
+                        final_payout,
+                        match_id,
+                        market_type,
+                        position,
+                        odds,
+                        implied,
+                        home_team,
+                        away_team,
+                        home_score,
+                        away_score,
+                        maturity,
+                        game_status,
+                        sport,
+                        league,
+                        match_id,  # also link to match(overtime_source_id)
+                    ),
+                )
 
     conn.commit()
     conn.close()
     print("✅ Bet data successfully imported into sport_odds.db")
+
 
 def main():
     print("⏳ Fetching Overtime user portfolio...")
@@ -139,11 +167,14 @@ def main():
     bets_by_type = {
         "open": data.get("open", []),
         "claimable": data.get("claimable", []),
-        "closed": data.get("closed", [])
+        "closed": data.get("closed", []),
     }
 
-    print(f"🔢 Found {sum(len(v) for v in bets_by_type.values())} bets across all states.")
+    print(
+        f"🔢 Found {sum(len(v) for v in bets_by_type.values())} bets across all states."
+    )
     insert_bets(bets_by_type)
+
 
 if __name__ == "__main__":
     main()
