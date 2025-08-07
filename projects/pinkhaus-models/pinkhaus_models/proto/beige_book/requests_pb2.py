@@ -4,54 +4,59 @@
 # source: requests.proto
 # Protobuf Python Version: 6.31.1
 """Generated protocol buffer code."""
-
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
 from google.protobuf import runtime_version as _runtime_version
 from google.protobuf import symbol_database as _symbol_database
 from google.protobuf.internal import builder as _builder
-
 _runtime_version.ValidateProtobufRuntimeVersion(
-    _runtime_version.Domain.PUBLIC, 6, 31, 1, "", "requests.proto"
+    _runtime_version.Domain.PUBLIC,
+    6,
+    31,
+    1,
+    '',
+    'requests.proto'
 )
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
-    b'\n\x0erequests.proto\x12\nbeige_book\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x13transcription.proto"\xa1\x01\n\x0bInputConfig\x12/\n\x04type\x18\x01 \x01(\x0e\x32!.beige_book.InputConfig.InputType\x12\x0e\n\x06source\x18\x02 \x01(\t"Q\n\tInputType\x12\x1a\n\x16INPUT_TYPE_UNSPECIFIED\x10\x00\x12\x13\n\x0fINPUT_TYPE_FILE\x10\x01\x12\x13\n\x0fINPUT_TYPE_FEED\x10\x02"\x89\x02\n\x0b\x46\x65\x65\x64Options\x12\r\n\x05limit\x18\x01 \x01(\x05\x12,\n\x05order\x18\x02 \x01(\x0e\x32\x1d.beige_book.FeedOptions.Order\x12\x13\n\x0bmax_retries\x18\x03 \x01(\x05\x12\x15\n\rinitial_delay\x18\x04 \x01(\x02\x12\x16\n\x0e\x64\x61te_threshold\x18\x05 \x01(\t\x12\x13\n\x0bround_robin\x18\x06 \x01(\x08\x12 \n\x18refresh_interval_minutes\x18\x07 \x01(\x05"B\n\x05Order\x12\x15\n\x11ORDER_UNSPECIFIED\x10\x00\x12\x10\n\x0cORDER_NEWEST\x10\x01\x12\x10\n\x0cORDER_OLDEST\x10\x02"\xf9\x01\n\x10ProcessingConfig\x12\x31\n\x05model\x18\x01 \x01(\x0e\x32".beige_book.ProcessingConfig.Model\x12\x0f\n\x07verbose\x18\x02 \x01(\x08\x12-\n\x0c\x66\x65\x65\x64_options\x18\x03 \x01(\x0b\x32\x17.beige_book.FeedOptions"r\n\x05Model\x12\x15\n\x11MODEL_UNSPECIFIED\x10\x00\x12\x0e\n\nMODEL_TINY\x10\x01\x12\x0e\n\nMODEL_BASE\x10\x02\x12\x0f\n\x0bMODEL_SMALL\x10\x03\x12\x10\n\x0cMODEL_MEDIUM\x10\x04\x12\x0f\n\x0bMODEL_LARGE\x10\x05"Q\n\x0e\x44\x61tabaseConfig\x12\x0f\n\x07\x64\x62_path\x18\x01 \x01(\t\x12\x16\n\x0emetadata_table\x18\x02 \x01(\t\x12\x16\n\x0esegments_table\x18\x03 \x01(\t"\x8d\x02\n\x0cOutputConfig\x12/\n\x06\x66ormat\x18\x01 \x01(\x0e\x32\x1f.beige_book.OutputConfig.Format\x12\x13\n\x0b\x64\x65stination\x18\x02 \x01(\t\x12,\n\x08\x64\x61tabase\x18\x03 \x01(\x0b\x32\x1a.beige_book.DatabaseConfig"\x88\x01\n\x06\x46ormat\x12\x16\n\x12\x46ORMAT_UNSPECIFIED\x10\x00\x12\x0f\n\x0b\x46ORMAT_TEXT\x10\x01\x12\x0f\n\x0b\x46ORMAT_JSON\x10\x02\x12\x10\n\x0c\x46ORMAT_TABLE\x10\x03\x12\x0e\n\nFORMAT_CSV\x10\x04\x12\x0f\n\x0b\x46ORMAT_TOML\x10\x05\x12\x11\n\rFORMAT_SQLITE\x10\x06"\x9a\x01\n\x14TranscriptionRequest\x12&\n\x05input\x18\x01 \x01(\x0b\x32\x17.beige_book.InputConfig\x12\x30\n\nprocessing\x18\x02 \x01(\x0b\x32\x1c.beige_book.ProcessingConfig\x12(\n\x06output\x18\x03 \x01(\x0b\x32\x18.beige_book.OutputConfig"u\n\x0fProcessingError\x12\x0e\n\x06source\x18\x01 \x01(\t\x12\x12\n\nerror_type\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\x12-\n\ttimestamp\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp"r\n\x11ProcessingSummary\x12\x13\n\x0btotal_items\x18\x01 \x01(\x05\x12\x11\n\tprocessed\x18\x02 \x01(\x05\x12\x0f\n\x07skipped\x18\x03 \x01(\x05\x12\x0e\n\x06\x66\x61iled\x18\x04 \x01(\x05\x12\x14\n\x0c\x65lapsed_time\x18\x05 \x01(\x02"\xb7\x01\n\x15TranscriptionResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x30\n\x07results\x18\x02 \x03(\x0b\x32\x1f.beige_book.TranscriptionResult\x12+\n\x06\x65rrors\x18\x03 \x03(\x0b\x32\x1b.beige_book.ProcessingError\x12.\n\x07summary\x18\x04 \x01(\x0b\x32\x1d.beige_book.ProcessingSummaryb\x06proto3'
-)
+from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
+import transcription_pb2 as transcription__pb2
+
+
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0erequests.proto\x12\nbeige_book\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x13transcription.proto\"\xa1\x01\n\x0bInputConfig\x12/\n\x04type\x18\x01 \x01(\x0e\x32!.beige_book.InputConfig.InputType\x12\x0e\n\x06source\x18\x02 \x01(\t\"Q\n\tInputType\x12\x1a\n\x16INPUT_TYPE_UNSPECIFIED\x10\x00\x12\x13\n\x0fINPUT_TYPE_FILE\x10\x01\x12\x13\n\x0fINPUT_TYPE_FEED\x10\x02\"\x89\x02\n\x0b\x46\x65\x65\x64Options\x12\r\n\x05limit\x18\x01 \x01(\x05\x12,\n\x05order\x18\x02 \x01(\x0e\x32\x1d.beige_book.FeedOptions.Order\x12\x13\n\x0bmax_retries\x18\x03 \x01(\x05\x12\x15\n\rinitial_delay\x18\x04 \x01(\x02\x12\x16\n\x0e\x64\x61te_threshold\x18\x05 \x01(\t\x12\x13\n\x0bround_robin\x18\x06 \x01(\x08\x12 \n\x18refresh_interval_minutes\x18\x07 \x01(\x05\"B\n\x05Order\x12\x15\n\x11ORDER_UNSPECIFIED\x10\x00\x12\x10\n\x0cORDER_NEWEST\x10\x01\x12\x10\n\x0cORDER_OLDEST\x10\x02\"\xf9\x01\n\x10ProcessingConfig\x12\x31\n\x05model\x18\x01 \x01(\x0e\x32\".beige_book.ProcessingConfig.Model\x12\x0f\n\x07verbose\x18\x02 \x01(\x08\x12-\n\x0c\x66\x65\x65\x64_options\x18\x03 \x01(\x0b\x32\x17.beige_book.FeedOptions\"r\n\x05Model\x12\x15\n\x11MODEL_UNSPECIFIED\x10\x00\x12\x0e\n\nMODEL_TINY\x10\x01\x12\x0e\n\nMODEL_BASE\x10\x02\x12\x0f\n\x0bMODEL_SMALL\x10\x03\x12\x10\n\x0cMODEL_MEDIUM\x10\x04\x12\x0f\n\x0bMODEL_LARGE\x10\x05\"Q\n\x0e\x44\x61tabaseConfig\x12\x0f\n\x07\x64\x62_path\x18\x01 \x01(\t\x12\x16\n\x0emetadata_table\x18\x02 \x01(\t\x12\x16\n\x0esegments_table\x18\x03 \x01(\t\"\x8d\x02\n\x0cOutputConfig\x12/\n\x06\x66ormat\x18\x01 \x01(\x0e\x32\x1f.beige_book.OutputConfig.Format\x12\x13\n\x0b\x64\x65stination\x18\x02 \x01(\t\x12,\n\x08\x64\x61tabase\x18\x03 \x01(\x0b\x32\x1a.beige_book.DatabaseConfig\"\x88\x01\n\x06\x46ormat\x12\x16\n\x12\x46ORMAT_UNSPECIFIED\x10\x00\x12\x0f\n\x0b\x46ORMAT_TEXT\x10\x01\x12\x0f\n\x0b\x46ORMAT_JSON\x10\x02\x12\x10\n\x0c\x46ORMAT_TABLE\x10\x03\x12\x0e\n\nFORMAT_CSV\x10\x04\x12\x0f\n\x0b\x46ORMAT_TOML\x10\x05\x12\x11\n\rFORMAT_SQLITE\x10\x06\"\x9a\x01\n\x14TranscriptionRequest\x12&\n\x05input\x18\x01 \x01(\x0b\x32\x17.beige_book.InputConfig\x12\x30\n\nprocessing\x18\x02 \x01(\x0b\x32\x1c.beige_book.ProcessingConfig\x12(\n\x06output\x18\x03 \x01(\x0b\x32\x18.beige_book.OutputConfig\"u\n\x0fProcessingError\x12\x0e\n\x06source\x18\x01 \x01(\t\x12\x12\n\nerror_type\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\x12-\n\ttimestamp\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"r\n\x11ProcessingSummary\x12\x13\n\x0btotal_items\x18\x01 \x01(\x05\x12\x11\n\tprocessed\x18\x02 \x01(\x05\x12\x0f\n\x07skipped\x18\x03 \x01(\x05\x12\x0e\n\x06\x66\x61iled\x18\x04 \x01(\x05\x12\x14\n\x0c\x65lapsed_time\x18\x05 \x01(\x02\"\xb7\x01\n\x15TranscriptionResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x30\n\x07results\x18\x02 \x03(\x0b\x32\x1f.beige_book.TranscriptionResult\x12+\n\x06\x65rrors\x18\x03 \x03(\x0b\x32\x1b.beige_book.ProcessingError\x12.\n\x07summary\x18\x04 \x01(\x0b\x32\x1d.beige_book.ProcessingSummaryb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
-_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, "requests_pb2", _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'requests_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
-    DESCRIPTOR._loaded_options = None
-    _globals["_INPUTCONFIG"]._serialized_start = 85
-    _globals["_INPUTCONFIG"]._serialized_end = 246
-    _globals["_INPUTCONFIG_INPUTTYPE"]._serialized_start = 165
-    _globals["_INPUTCONFIG_INPUTTYPE"]._serialized_end = 246
-    _globals["_FEEDOPTIONS"]._serialized_start = 249
-    _globals["_FEEDOPTIONS"]._serialized_end = 514
-    _globals["_FEEDOPTIONS_ORDER"]._serialized_start = 448
-    _globals["_FEEDOPTIONS_ORDER"]._serialized_end = 514
-    _globals["_PROCESSINGCONFIG"]._serialized_start = 517
-    _globals["_PROCESSINGCONFIG"]._serialized_end = 766
-    _globals["_PROCESSINGCONFIG_MODEL"]._serialized_start = 652
-    _globals["_PROCESSINGCONFIG_MODEL"]._serialized_end = 766
-    _globals["_DATABASECONFIG"]._serialized_start = 768
-    _globals["_DATABASECONFIG"]._serialized_end = 849
-    _globals["_OUTPUTCONFIG"]._serialized_start = 852
-    _globals["_OUTPUTCONFIG"]._serialized_end = 1121
-    _globals["_OUTPUTCONFIG_FORMAT"]._serialized_start = 985
-    _globals["_OUTPUTCONFIG_FORMAT"]._serialized_end = 1121
-    _globals["_TRANSCRIPTIONREQUEST"]._serialized_start = 1124
-    _globals["_TRANSCRIPTIONREQUEST"]._serialized_end = 1278
-    _globals["_PROCESSINGERROR"]._serialized_start = 1280
-    _globals["_PROCESSINGERROR"]._serialized_end = 1397
-    _globals["_PROCESSINGSUMMARY"]._serialized_start = 1399
-    _globals["_PROCESSINGSUMMARY"]._serialized_end = 1513
-    _globals["_TRANSCRIPTIONRESPONSE"]._serialized_start = 1516
-    _globals["_TRANSCRIPTIONRESPONSE"]._serialized_end = 1699
+  DESCRIPTOR._loaded_options = None
+  _globals['_INPUTCONFIG']._serialized_start=85
+  _globals['_INPUTCONFIG']._serialized_end=246
+  _globals['_INPUTCONFIG_INPUTTYPE']._serialized_start=165
+  _globals['_INPUTCONFIG_INPUTTYPE']._serialized_end=246
+  _globals['_FEEDOPTIONS']._serialized_start=249
+  _globals['_FEEDOPTIONS']._serialized_end=514
+  _globals['_FEEDOPTIONS_ORDER']._serialized_start=448
+  _globals['_FEEDOPTIONS_ORDER']._serialized_end=514
+  _globals['_PROCESSINGCONFIG']._serialized_start=517
+  _globals['_PROCESSINGCONFIG']._serialized_end=766
+  _globals['_PROCESSINGCONFIG_MODEL']._serialized_start=652
+  _globals['_PROCESSINGCONFIG_MODEL']._serialized_end=766
+  _globals['_DATABASECONFIG']._serialized_start=768
+  _globals['_DATABASECONFIG']._serialized_end=849
+  _globals['_OUTPUTCONFIG']._serialized_start=852
+  _globals['_OUTPUTCONFIG']._serialized_end=1121
+  _globals['_OUTPUTCONFIG_FORMAT']._serialized_start=985
+  _globals['_OUTPUTCONFIG_FORMAT']._serialized_end=1121
+  _globals['_TRANSCRIPTIONREQUEST']._serialized_start=1124
+  _globals['_TRANSCRIPTIONREQUEST']._serialized_end=1278
+  _globals['_PROCESSINGERROR']._serialized_start=1280
+  _globals['_PROCESSINGERROR']._serialized_end=1397
+  _globals['_PROCESSINGSUMMARY']._serialized_start=1399
+  _globals['_PROCESSINGSUMMARY']._serialized_end=1513
+  _globals['_TRANSCRIPTIONRESPONSE']._serialized_start=1516
+  _globals['_TRANSCRIPTIONRESPONSE']._serialized_end=1699
 # @@protoc_insertion_point(module_scope)
