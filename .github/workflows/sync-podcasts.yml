@@ -1,4 +1,4 @@
-name: Sync Podcasts CI
+name: Podcast Sync Build and Test
 
 # paths is set b/c sync-podcasts depends on everything
 on:
