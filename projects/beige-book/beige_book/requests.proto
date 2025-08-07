@@ -31,6 +31,7 @@ message FeedOptions {
   float initial_delay = 4;  // Initial delay in seconds between retries
   string date_threshold = 5;  // ISO8601 date string - only process items published after this date
   bool round_robin = 6;  // Process feeds in round-robin fashion (newest episode from each feed before moving to next)
+  int32 refresh_interval_minutes = 7;  // Interval in minutes to refresh feeds for new items (default: 10)
 }
 
 // Processing Configuration

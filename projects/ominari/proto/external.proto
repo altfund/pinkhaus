@@ -12,6 +12,7 @@ message SignalRequest {
   string source_id          = 1;  // e.g. your bet ID
   string normalized_outcome = 2;  // e.g. “HOME_WIN”
   string as_of_time         = 3;  // ISO-8601 timestamp
+  string query              = 4;  // Query for the model
 }
 
 // The response: one probability per request

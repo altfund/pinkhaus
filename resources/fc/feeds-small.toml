@@ -1,0 +1,5 @@
+[feeds]
+rss = [
+	"https://feeds.npr.org/510325/podcast.xml",
+	"https://feeds.npr.org/510289/podcast.xml",
+]
