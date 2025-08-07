@@ -154,7 +154,19 @@ class TranscriptionService:
             )
             self.database = db
 
-        # Parse feeds
+        # Initialize feed refresh tracking
+        last_feed_refresh = time.time()
+        # Get refresh interval - default to 10 minutes if not specified
+        refresh_interval_minutes = 10
+        if (
+            hasattr(request.processing.feed_options, "refresh_interval_minutes")
+            and request.processing.feed_options.refresh_interval_minutes
+        ):
+            refresh_interval_minutes = (
+                request.processing.feed_options.refresh_interval_minutes
+            )
+        feed_refresh_interval = refresh_interval_minutes * 60
+        # Parse feeds initially
         try:
             feed_items_dict = self.feed_parser.parse_all_feeds(
                 request.input.source,
@@ -175,16 +187,22 @@ class TranscriptionService:
         skipped = 0
         failed = 0
 
-        # Prepare items for processing
-        feed_items_prepared = {}
-        for feed_url, items in feed_items_dict.items():
-            # Sort and limit items
-            sorted_items = self._sort_and_limit_items(
-                items, request.processing.feed_options
-            )
-            if sorted_items:
-                feed_items_prepared[feed_url] = sorted_items
-                total_items += len(sorted_items)
+        # Prepare items for processing with refresh capability
+        def prepare_feed_items():
+            """Prepare feed items from current feed_items_dict"""
+            prepared = {}
+            item_count = 0
+            for feed_url, items in feed_items_dict.items():
+                # Sort and limit items
+                sorted_items = self._sort_and_limit_items(
+                    items, request.processing.feed_options
+                )
+                if sorted_items:
+                    prepared[feed_url] = sorted_items
+                    item_count += len(sorted_items)
+            return prepared, item_count
+
+        feed_items_prepared, total_items = prepare_feed_items()
 
         # Process items in round-robin or sequential mode
         if request.processing.feed_options.round_robin:
@@ -193,6 +211,49 @@ class TranscriptionService:
             round_index = 0
 
             while any(items for items in feed_items_prepared.values()):
+                # Check if we need to refresh feeds
+                current_time = time.time()
+                if current_time - last_feed_refresh > feed_refresh_interval:
+                    logger.info("Refreshing feeds to check for new items...")
+                    try:
+                        # Re-parse all feeds
+                        new_feed_items_dict = self.feed_parser.parse_all_feeds(
+                            request.input.source,
+                            max_retries=request.processing.feed_options.max_retries,
+                        )
+
+                        # Merge new items into existing structure
+                        for feed_url, new_items in new_feed_items_dict.items():
+                            if feed_url in feed_items_dict:
+                                # Get current item IDs to avoid duplicates
+                                existing_ids = {
+                                    item.item_id for item in feed_items_dict[feed_url]
+                                }
+                                # Add truly new items
+                                for new_item in new_items:
+                                    if new_item.item_id not in existing_ids:
+                                        feed_items_dict[feed_url].append(new_item)
+                                        logger.info(
+                                            f"Found new item in {feed_url}: {new_item.title}"
+                                        )
+                            else:
+                                # New feed added to TOML file
+                                feed_items_dict[feed_url] = new_items
+                                logger.info(
+                                    f"Found new feed: {feed_url} with {len(new_items)} items"
+                                )
+
+                        # Re-prepare items with new data
+                        feed_items_prepared, new_total = prepare_feed_items()
+                        if new_total > total_items:
+                            logger.info(
+                                f"Found {new_total - total_items} new items after refresh"
+                            )
+                            total_items = new_total
+                        last_feed_refresh = current_time
+                    except Exception as e:
+                        logger.warning(f"Failed to refresh feeds: {e}")
+
                 feeds_processed_this_round = 0
 
                 for feed_url, items in list(feed_items_prepared.items()):
@@ -250,6 +311,43 @@ class TranscriptionService:
             # Sequential mode: process all from one feed before moving to next
             for feed_url, sorted_items in feed_items_prepared.items():
                 for item in sorted_items:
+                    # Check if we need to refresh feeds
+                    current_time = time.time()
+                    if current_time - last_feed_refresh > feed_refresh_interval:
+                        logger.info("Refreshing feeds to check for new items...")
+                        try:
+                            # Re-parse all feeds
+                            new_feed_items_dict = self.feed_parser.parse_all_feeds(
+                                request.input.source,
+                                max_retries=request.processing.feed_options.max_retries,
+                            )
+
+                            # Update feed_items_dict with new items
+                            for url, new_items in new_feed_items_dict.items():
+                                if url in feed_items_dict:
+                                    existing_ids = {
+                                        item.item_id for item in feed_items_dict[url]
+                                    }
+                                    for new_item in new_items:
+                                        if new_item.item_id not in existing_ids:
+                                            feed_items_dict[url].append(new_item)
+                                            # If this is the current feed, add to sorted_items
+                                            if url == feed_url:
+                                                sorted_new = self._sort_and_limit_items(
+                                                    [new_item],
+                                                    request.processing.feed_options,
+                                                )
+                                                if sorted_new:
+                                                    sorted_items.extend(sorted_new)
+                                                    logger.info(
+                                                        f"Added new item to current feed: {new_item.title}"
+                                                    )
+                                else:
+                                    feed_items_dict[url] = new_items
+
+                            last_feed_refresh = current_time
+                        except Exception as e:
+                            logger.warning(f"Failed to refresh feeds: {e}")
                     try:
                         # Check if already processed
                         if (

@@ -5,45 +5,9 @@ Blog content processor for converting blog posts to transcription-like format.
 import re
 import hashlib
 from typing import List, Tuple
-from html import unescape
-from html.parser import HTMLParser
+import trafilatura
 
 from pinkhaus_models import TranscriptionResult, Segment
-
-
-class HTMLTextExtractor(HTMLParser):
-    """Extract plain text from HTML content."""
-
-    def __init__(self):
-        super().__init__()
-        self.text_parts = []
-        self.in_script = False
-        self.in_style = False
-
-    def handle_starttag(self, tag: str, attrs: List[Tuple[str, str]]):
-        if tag == "script":
-            self.in_script = True
-        elif tag == "style":
-            self.in_style = True
-        elif tag in ["p", "br", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li"]:
-            # Add spacing for block elements
-            if self.text_parts and self.text_parts[-1] != "\n\n":
-                self.text_parts.append("\n\n")
-
-    def handle_endtag(self, tag: str):
-        if tag == "script":
-            self.in_script = False
-        elif tag == "style":
-            self.in_style = False
-
-    def handle_data(self, data: str):
-        if not self.in_script and not self.in_style:
-            text = data.strip()
-            if text:
-                self.text_parts.append(text)
-
-    def get_text(self) -> str:
-        return " ".join(self.text_parts)
 
 
 class BlogProcessor:
@@ -63,7 +27,7 @@ class BlogProcessor:
 
     def extract_text_from_html(self, html_content: str) -> str:
         """
-        Extract plain text from HTML content.
+        Extract plain text from HTML content using trafilatura.
 
         Args:
             html_content: HTML content string
@@ -71,19 +35,23 @@ class BlogProcessor:
         Returns:
             Plain text extracted from HTML
         """
-        # First unescape HTML entities
-        html_content = unescape(html_content)
+        # Use trafilatura to extract text
+        # It automatically handles HTML entities, scripts, styles, etc.
+        text = trafilatura.extract(
+            html_content, include_comments=False, include_tables=True, no_fallback=False
+        )
 
-        # Use our HTML parser to extract text
-        parser = HTMLTextExtractor()
-        parser.feed(html_content)
-        text = parser.get_text()
+        if text is None:
+            # Fallback to basic extraction if trafilatura fails
+            text = trafilatura.extract(
+                html_content, favor_precision=False, favor_recall=True
+            )
+            if text is None:
+                # Last resort - strip all HTML tags
+                text = re.sub(r"<[^>]+>", " ", html_content)
+                text = re.sub(r"\s+", " ", text).strip()
 
-        # Clean up excessive whitespace
-        text = re.sub(r"\s+", " ", text)
-        text = re.sub(r"\n\s*\n", "\n\n", text)
-
-        return text.strip()
+        return text
 
     def segment_text(self, text: str) -> List[str]:
         """
