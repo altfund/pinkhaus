@@ -158,8 +158,13 @@ class TranscriptionService:
         last_feed_refresh = time.time()
         # Get refresh interval - default to 10 minutes if not specified
         refresh_interval_minutes = 10
-        if hasattr(request.processing.feed_options, 'refresh_interval_minutes') and request.processing.feed_options.refresh_interval_minutes:
-            refresh_interval_minutes = request.processing.feed_options.refresh_interval_minutes
+        if (
+            hasattr(request.processing.feed_options, "refresh_interval_minutes")
+            and request.processing.feed_options.refresh_interval_minutes
+        ):
+            refresh_interval_minutes = (
+                request.processing.feed_options.refresh_interval_minutes
+            )
         feed_refresh_interval = refresh_interval_minutes * 60
         # Parse feeds initially
         try:
@@ -221,21 +226,29 @@ class TranscriptionService:
                         for feed_url, new_items in new_feed_items_dict.items():
                             if feed_url in feed_items_dict:
                                 # Get current item IDs to avoid duplicates
-                                existing_ids = {item.item_id for item in feed_items_dict[feed_url]}
+                                existing_ids = {
+                                    item.item_id for item in feed_items_dict[feed_url]
+                                }
                                 # Add truly new items
                                 for new_item in new_items:
                                     if new_item.item_id not in existing_ids:
                                         feed_items_dict[feed_url].append(new_item)
-                                        logger.info(f"Found new item in {feed_url}: {new_item.title}")
+                                        logger.info(
+                                            f"Found new item in {feed_url}: {new_item.title}"
+                                        )
                             else:
                                 # New feed added to TOML file
                                 feed_items_dict[feed_url] = new_items
-                                logger.info(f"Found new feed: {feed_url} with {len(new_items)} items")
+                                logger.info(
+                                    f"Found new feed: {feed_url} with {len(new_items)} items"
+                                )
 
                         # Re-prepare items with new data
                         feed_items_prepared, new_total = prepare_feed_items()
                         if new_total > total_items:
-                            logger.info(f"Found {new_total - total_items} new items after refresh")
+                            logger.info(
+                                f"Found {new_total - total_items} new items after refresh"
+                            )
                             total_items = new_total
                         last_feed_refresh = current_time
                     except Exception as e:
@@ -296,8 +309,6 @@ class TranscriptionService:
                     )
         else:
             # Sequential mode: process all from one feed before moving to next
-            items_processed_since_refresh = 0
-
             for feed_url, sorted_items in feed_items_prepared.items():
                 for item in sorted_items:
                     # Check if we need to refresh feeds
@@ -314,26 +325,29 @@ class TranscriptionService:
                             # Update feed_items_dict with new items
                             for url, new_items in new_feed_items_dict.items():
                                 if url in feed_items_dict:
-                                    existing_ids = {item.item_id for item in feed_items_dict[url]}
+                                    existing_ids = {
+                                        item.item_id for item in feed_items_dict[url]
+                                    }
                                     for new_item in new_items:
                                         if new_item.item_id not in existing_ids:
                                             feed_items_dict[url].append(new_item)
                                             # If this is the current feed, add to sorted_items
                                             if url == feed_url:
                                                 sorted_new = self._sort_and_limit_items(
-                                                    [new_item], request.processing.feed_options
+                                                    [new_item],
+                                                    request.processing.feed_options,
                                                 )
                                                 if sorted_new:
                                                     sorted_items.extend(sorted_new)
-                                                    logger.info(f"Added new item to current feed: {new_item.title}")
+                                                    logger.info(
+                                                        f"Added new item to current feed: {new_item.title}"
+                                                    )
                                 else:
                                     feed_items_dict[url] = new_items
 
                             last_feed_refresh = current_time
                         except Exception as e:
                             logger.warning(f"Failed to refresh feeds: {e}")
-
-                        items_processed_since_refresh = 0
                     try:
                         # Check if already processed
                         if (
