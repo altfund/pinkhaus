@@ -29,6 +29,9 @@ test:
 # Generate Python code from proto files
 proto-generate:
     uv run python scripts/generate_proto.py
+    # Copy generated files to the proto directory
+    cp -r pinkhaus_models/proto_gen/* pinkhaus_models/proto/
+    rm -rf pinkhaus_models/proto_gen
 
 # Verify that generated proto files match checked-in versions
 proto-verify:
