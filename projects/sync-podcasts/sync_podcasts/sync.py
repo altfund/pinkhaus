@@ -379,9 +379,6 @@ class PodcastSyncer:
 
     def _process_round_robin_batch(self) -> bool:
         """Process a batch of items in round-robin mode."""
-        # Process a larger batch to handle historical data efficiently
-        batch_size = 10  # Process up to 10 items per batch
-        
         # Create transcription request with no limit to get all available items
         request = TranscriptionRequest(
             input=InputConfig(type="feed", source=self.config.feeds_path),
@@ -410,7 +407,9 @@ class PodcastSyncer:
 
         # Check if we processed anything
         if response.success and response.summary and response.summary.processed > 0:
-            logger.info(f"Processed {response.summary.processed} items in round-robin batch")
+            logger.info(
+                f"Processed {response.summary.processed} items in round-robin batch"
+            )
 
             # Index the new transcriptions
             try:
@@ -424,8 +423,12 @@ class PodcastSyncer:
                 )
 
                 # Index all new transcriptions
-                rag_pipeline.index_all_transcriptions(batch_size=response.summary.processed)
-                logger.info(f"Successfully indexed {response.summary.processed} transcriptions")
+                rag_pipeline.index_all_transcriptions(
+                    batch_size=response.summary.processed
+                )
+                logger.info(
+                    f"Successfully indexed {response.summary.processed} transcriptions"
+                )
                 return True
 
             except Exception as e:
@@ -434,14 +437,22 @@ class PodcastSyncer:
 
         # Check if we have more items to process (skipped items indicate more work)
         if response.summary and response.summary.skipped > 0:
-            total_items = response.summary.processed + response.summary.skipped + response.summary.failed
-            logger.info(f"Processed batch complete. Total items in feeds: {total_items}, "
-                       f"processed this batch: {response.summary.processed}, "
-                       f"already processed: {response.summary.skipped}, "
-                       f"failed: {response.summary.failed}")
+            total_items = (
+                response.summary.processed
+                + response.summary.skipped
+                + response.summary.failed
+            )
+            logger.info(
+                f"Processed batch complete. Total items in feeds: {total_items}, "
+                f"processed this batch: {response.summary.processed}, "
+                f"already processed: {response.summary.skipped}, "
+                f"failed: {response.summary.failed}"
+            )
             # Even though we skipped items, we didn't process any new ones
             if response.summary.processed == 0:
-                logger.info("All available items within date threshold have been processed")
+                logger.info(
+                    "All available items within date threshold have been processed"
+                )
                 return False
             return True
 
