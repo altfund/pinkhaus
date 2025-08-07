@@ -37,21 +37,21 @@ class BlogProcessor:
         """
         # Use trafilatura to extract text
         # It automatically handles HTML entities, scripts, styles, etc.
-        text = trafilatura.extract(html_content, 
+        text = trafilatura.extract(html_content,
                                   include_comments=False,
                                   include_tables=True,
                                   no_fallback=False)
-        
+
         if text is None:
             # Fallback to basic extraction if trafilatura fails
-            text = trafilatura.extract(html_content, 
+            text = trafilatura.extract(html_content,
                                      favor_precision=False,
                                      favor_recall=True)
             if text is None:
                 # Last resort - strip all HTML tags
                 text = re.sub(r'<[^>]+>', ' ', html_content)
                 text = re.sub(r'\s+', ' ', text).strip()
-        
+
         return text
 
     def segment_text(self, text: str) -> List[str]:

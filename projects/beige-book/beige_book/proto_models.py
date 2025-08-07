@@ -99,6 +99,7 @@ class FeedOptions(betterproto.Message):
     initial_delay: float = betterproto.float_field(4)
     date_threshold: str = betterproto.string_field(5)
     round_robin: bool = betterproto.bool_field(6)
+    refresh_interval_minutes: int = betterproto.int32_field(7)
 
 
 @dataclass

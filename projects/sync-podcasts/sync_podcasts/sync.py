@@ -284,6 +284,17 @@ class PodcastSyncer:
         # First, clean up any stale processing items
         self._check_and_clean_stale_processing()
 
+        # When in round-robin mode with historical data, we want to process ALL items
+        # not just new ones. So we don't limit to 1 item, we process in batches.
+        if self.config.round_robin and self.date_threshold:
+            # In round-robin mode, process items from all feeds until exhausted
+            return self._process_round_robin_batch()
+        else:
+            # Original single-item processing logic
+            return self._process_single_item()
+
+    def _process_single_item(self) -> bool:
+        """Process a single item (original logic)."""
         # Start with limit=1, but if we get skipped items, we'll retry with a higher limit
         limit = 1
         max_retries = 10  # Prevent infinite loops
@@ -299,7 +310,7 @@ class PodcastSyncer:
                         limit=limit,
                         order="newest",
                         date_threshold=self.date_threshold,
-                        round_robin=self.config.round_robin,
+                        round_robin=False,  # Disable round-robin for single item
                     ),
                 ),
                 output=OutputConfig(
@@ -364,6 +375,82 @@ class PodcastSyncer:
 
         # If we get here, we've exceeded max retries
         logger.warning(f"Exceeded maximum retry attempts ({max_retries})")
+        return False
+
+    def _process_round_robin_batch(self) -> bool:
+        """Process a batch of items in round-robin mode."""
+        # Process a larger batch to handle historical data efficiently
+        batch_size = 10  # Process up to 10 items per batch
+        
+        # Create transcription request with no limit to get all available items
+        request = TranscriptionRequest(
+            input=InputConfig(type="feed", source=self.config.feeds_path),
+            processing=ProcessingConfig(
+                model=self.config.model,
+                verbose=self.config.verbose,
+                feed_options=FeedOptions(
+                    limit=None,  # No limit - get all items within date threshold
+                    order="newest",
+                    date_threshold=self.date_threshold,
+                    round_robin=self.config.round_robin,
+                ),
+            ),
+            output=OutputConfig(
+                format="sqlite",
+                database=DatabaseConfig(
+                    db_path=self.config.db_path,
+                    metadata_table="transcription_metadata",
+                    segments_table="transcription_segments",
+                ),
+            ),
+        )
+
+        # Process the request
+        response = self.transcription_service.process(request)
+
+        # Check if we processed anything
+        if response.success and response.summary and response.summary.processed > 0:
+            logger.info(f"Processed {response.summary.processed} items in round-robin batch")
+
+            # Index the new transcriptions
+            try:
+                rag_config = RAGConfig(embedding_model=self.config.embedding_model)
+
+                rag_pipeline = RAGPipeline(
+                    ollama_client=self.ollama_client,
+                    config=rag_config,
+                    db_path=self.config.db_path,
+                    vector_store_path=self.config.vector_store_path,
+                )
+
+                # Index all new transcriptions
+                rag_pipeline.index_all_transcriptions(batch_size=response.summary.processed)
+                logger.info(f"Successfully indexed {response.summary.processed} transcriptions")
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to index transcriptions: {e}")
+                return False
+
+        # Check if we have more items to process (skipped items indicate more work)
+        if response.summary and response.summary.skipped > 0:
+            total_items = response.summary.processed + response.summary.skipped + response.summary.failed
+            logger.info(f"Processed batch complete. Total items in feeds: {total_items}, "
+                       f"processed this batch: {response.summary.processed}, "
+                       f"already processed: {response.summary.skipped}, "
+                       f"failed: {response.summary.failed}")
+            # Even though we skipped items, we didn't process any new ones
+            if response.summary.processed == 0:
+                logger.info("All available items within date threshold have been processed")
+                return False
+            return True
+
+        # No items to process
+        if response.errors:
+            for error in response.errors:
+                logger.error(f"Processing error: {error.message}")
+
+        logger.info("No items to process within date threshold")
         return False
 
     def run(self):

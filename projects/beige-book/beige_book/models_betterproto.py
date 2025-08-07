@@ -100,6 +100,7 @@ class FeedOptions(_FeedOptions):
         kwargs.setdefault("limit", 0)
         kwargs.setdefault("max_retries", 3)
         kwargs.setdefault("initial_delay", 1.0)
+        kwargs.setdefault("refresh_interval_minutes", 10)
         super().__init__(**kwargs)
 
     def validate(self):

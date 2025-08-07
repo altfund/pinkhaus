@@ -1,0 +1,6 @@
+[feeds]
+rss = [
+	"https://kieranhealy.org/index.xml",
+	"https://myme.no/atom-feed.xml",
+	"https://rss.marketingtools.apple.com/api/v2/us/music/most-played/50/albums.rss",
+]
