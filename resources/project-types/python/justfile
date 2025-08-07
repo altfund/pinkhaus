@@ -25,3 +25,11 @@ check:
 # test
 test:
     uv run pytest
+
+# Generate Python code from proto files
+proto-generate:
+    uv run python scripts/generate_proto.py
+
+# Verify that generated proto files match checked-in versions
+proto-verify:
+    uv run python scripts/verify_proto.py

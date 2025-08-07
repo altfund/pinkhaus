@@ -29,8 +29,8 @@ from .service import TranscriptionService, OutputFormatter
 from .database_io import DatabaseIO
 
 # Protobuf support is now built into TranscriptionResult
-# Import generated protobuf classes
-from .transcription_pb2 import (
+# Import generated protobuf classes from pinkhaus-models
+from pinkhaus_models.proto.beige_book.transcription_pb2 import (
     TranscriptionResult as TranscriptionResultProto,
     Segment as SegmentProto,
     FeedMetadata,

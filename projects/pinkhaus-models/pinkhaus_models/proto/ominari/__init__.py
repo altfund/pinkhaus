@@ -1,0 +1,1 @@
+"""Ominari proto definitions."""

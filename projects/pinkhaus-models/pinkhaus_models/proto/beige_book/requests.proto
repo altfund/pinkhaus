@@ -3,7 +3,7 @@ syntax = "proto3";
 package beige_book;
 
 import "google/protobuf/timestamp.proto";
-import "beige_book/transcription.proto";
+import "transcription.proto";
 
 // Input Configuration
 message InputConfig {
