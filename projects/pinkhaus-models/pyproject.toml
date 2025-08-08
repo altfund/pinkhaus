@@ -7,6 +7,9 @@ requires-python = ">=3.10"
 dependencies = [
     "pydantic>=2.0.0",
     "aiosqlite>=0.20.0",
+    "protobuf>=6.31.0",
+    "betterproto>=1.2.5",
+    "grpcio-tools>=1.68.1",
 ]
 
 [build-system]
@@ -28,4 +31,18 @@ dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
     "ruff>=0.1.0",
+]
+
+[tool.ruff]
+exclude = [
+    # Exclude auto-generated protobuf files
+    "*_pb2.py",
+    "*_pb2_grpc.py",
+]
+
+[tool.ruff.format]
+exclude = [
+    # Exclude auto-generated protobuf files from formatting
+    "*_pb2.py",
+    "*_pb2_grpc.py",
 ]
