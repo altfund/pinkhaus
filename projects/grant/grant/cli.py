@@ -430,6 +430,7 @@ def main():
 def serve_command(args):
     """Handle the serve command."""
     from grant.grpc_server import serve
+
     serve(port=args.port, ollama_base_url=args.base_url)
 
 
