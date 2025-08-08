@@ -7,12 +7,13 @@ message SignalBatchRequest {
   repeated SignalRequest requests = 1;
 }
 
-// One row’s signal input
+// One row's signal input
 message SignalRequest {
   string source_id          = 1;  // e.g. your bet ID
-  string normalized_outcome = 2;  // e.g. “HOME_WIN”
+  string normalized_outcome = 2;  // e.g. "HOME_WIN"
   string as_of_time         = 3;  // ISO-8601 timestamp
   string query              = 4;  // Query for the model
+  string model              = 5;  // Model to use (e.g. "llama3.2", "mistral")
 }
 
 // The response: one probability per request

@@ -47,8 +47,8 @@ on-activate = '''
   fi
   
   uv python install 3.13
-  uv venv
-  source "${FLOX_ENV_PROJECT}/.venv/bin/activate"
+  #uv venv
+  #source "${FLOX_ENV_PROJECT}/.venv/bin/activate"
   uv sync
   
   echo "Grant RAG environment activated"
