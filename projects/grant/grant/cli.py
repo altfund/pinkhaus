@@ -381,6 +381,22 @@ def main():
         help="Path to vector store directory",
     )
 
+    # Serve command (gRPC server)
+    serve_parser = subparsers.add_parser(
+        "serve", help="Start the gRPC server for SignalService"
+    )
+    serve_parser.add_argument(
+        "--port",
+        type=int,
+        default=50051,
+        help="Port to listen on (default: 50051)",
+    )
+    serve_parser.add_argument(
+        "--vector-store",
+        default=DEFAULT_CHROMA_DB,
+        help="Path to vector store directory",
+    )
+
     args = parser.parse_args()
 
     # Setup logging
@@ -407,6 +423,14 @@ def main():
         stats_command(args)
     elif args.command == "check-unindexed":
         check_unindexed_command(args)
+    elif args.command == "serve":
+        serve_command(args)
+
+
+def serve_command(args):
+    """Handle the serve command."""
+    from grant.grpc_server import serve
+    serve(port=args.port, ollama_base_url=args.base_url)
 
 
 if __name__ == "__main__":
