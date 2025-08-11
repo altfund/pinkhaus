@@ -31,6 +31,9 @@
         "pkg-path": "uv"
       }
     },
+    "vars": {
+      "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"
+    },
     "hook": {
       "on-activate": "if [[ ! -z $DEV ]]; then\n\texport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n\tmkdir -p \"${GOBIN}\"\n\tgo install \"github.com/isaacphi/mcp-language-server@latest\"\n\texport PATH=\"${GOBIN}:${PATH}\"\nfi\nuv venv\necho \"RUN \"\necho \"source \\\"${FLOX_ENV_PROJECT}/.venv/bin/activate\\\"\"\nuv sync\n\n  uv python install 3.13\n  uv venv\n#  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n\n  echo \"Sync-podcasts environment activated\"\n"
     },
@@ -1174,6 +1177,9 @@
         "sqlite": {
           "pkg-path": "sqlite"
         }
+      },
+      "vars": {
+        "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"
       },
       "hook": {
         "on-activate": "  uv python install 3.13\n  uv venv\n#  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n\n  echo \"Sync-podcasts environment activated\"\n"

@@ -247,10 +247,9 @@ def check_unindexed_command(args):
     for trans in unindexed:
         print(f"\nID: {trans['id']}")
         print(f"Title: {trans['title']}")
-        print(f"Feed: {trans['feed_title']}")
+        print(f"Feed: {trans['feed_url']}")
         print(f"Published: {trans['published']}")
-        if trans.get('duration'):
-            print(f"Duration: {trans['duration']} seconds")
+        print(f"Filename: {trans['filename']}")
 
     print("\n" + "=" * 80)
     print(f"Total unindexed: {len(unindexed)}")

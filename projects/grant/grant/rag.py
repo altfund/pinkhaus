@@ -376,10 +376,10 @@ Please provide a comprehensive answer based on the context provided. If the cont
             if trans.id and not self._is_transcription_indexed(trans.id):
                 unindexed.append({
                     "id": trans.id,
-                    "title": trans.title or "Untitled",
-                    "feed_title": trans.feed_title or "Unknown Feed",
-                    "published": trans.published.isoformat() if trans.published else "Unknown",
-                    "duration": trans.duration,
+                    "title": trans.feed_item_title or "Untitled",
+                    "feed_url": trans.feed_url or "Unknown Feed",
+                    "published": trans.feed_item_published.isoformat() if trans.feed_item_published else "Unknown",
+                    "filename": trans.filename,
                 })
 
         # Sort by published date (newest first)

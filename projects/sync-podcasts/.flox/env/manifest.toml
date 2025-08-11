@@ -28,6 +28,7 @@ ollama.pkg-path = "ollama"
 ## -------------------------------------------------------------------
 [vars]
 # INTRO_MESSAGE = "It's gettin' Flox in here"
+PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True"
 
 
 ## Activation Hook ---------------------------------------------------
