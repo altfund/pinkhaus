@@ -29,7 +29,7 @@
       }
     },
     "hook": {
-      "on-activate": "if [[ ! -z $DEV ]]; then\n\texport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n\tmkdir -p \"${GOBIN}\"\n\tgo install \"github.com/isaacphi/mcp-language-server@latest\"\n\texport PATH=\"${GOBIN}:${PATH}\"\nfi\nuv sync\necho \"RUN \"\necho \"source \\\"${FLOX_ENV_PROJECT}/.venv/bin/activate\\\"\"\n\n  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Grant RAG environment activated\"\n  echo \"\"\n  echo \"To start Ollama service:\"\n  echo \"  flox services start ollama\"\n  echo \"\"\n  echo \"Or start all services with:\"\n  echo \"  flox services start\"\n  echo \"\"\n  echo \"Check service status with:\"\n  echo \"  flox services status\"\n"
+      "on-activate": "if [[ ! -z $DEV ]]; then\n\texport GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n\tmkdir -p \"${GOBIN}\"\n\tgo install \"github.com/isaacphi/mcp-language-server@latest\"\n\texport PATH=\"${GOBIN}:${PATH}\"\nfi\nuv sync\necho \"RUN \"\necho \"source \\\"${FLOX_ENV_PROJECT}/.venv/bin/activate\\\"\"\n\n  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  #uv venv\n  #source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Grant RAG environment activated\"\n  echo \"\"\n  echo \"To start Ollama service:\"\n  echo \"  flox services start ollama\"\n  echo \"\"\n  echo \"Or start all services with:\"\n  echo \"  flox services start\"\n  echo \"\"\n  echo \"Check service status with:\"\n  echo \"  flox services status\"\n"
     },
     "profile": {},
     "options": {
@@ -54,27 +54,27 @@
     {
       "attr_path": "claude-code",
       "broken": false,
-      "derivation": "/nix/store/r43aqxgcy5cqhs40cy643972vl15g9p2-claude-code-1.0.61.drv",
+      "derivation": "/nix/store/5cylbzk75lsx50gpm3acjk075hhi79g9-claude-code-1.0.65.drv",
       "description": "Agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster",
       "install_id": "claude-code",
       "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "name": "claude-code-1.0.61",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "name": "claude-code-1.0.65",
       "pname": "claude-code",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:28:04.987120Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:29:20.769387Z",
       "stabilities": [
         "unstable"
       ],
       "unfree": true,
-      "version": "1.0.61",
+      "version": "1.0.65",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/fkvhfn800hr0qjp71w21d5zvg04400r7-claude-code-1.0.61"
+        "out": "/nix/store/k9plndkra1kqb4i79vrri5bmzh3akk4k-claude-code-1.0.65"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -83,27 +83,27 @@
     {
       "attr_path": "claude-code",
       "broken": false,
-      "derivation": "/nix/store/l0ck2m453g656f03mkh3mnd0a23yqgyq-claude-code-1.0.61.drv",
+      "derivation": "/nix/store/aw2ms942bi4xp8vgac5z575mkfld0jar-claude-code-1.0.65.drv",
       "description": "Agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster",
       "install_id": "claude-code",
       "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "name": "claude-code-1.0.61",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "name": "claude-code-1.0.65",
       "pname": "claude-code",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:47:40.570845Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:49:14.720218Z",
       "stabilities": [
         "unstable"
       ],
       "unfree": true,
-      "version": "1.0.61",
+      "version": "1.0.65",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/g70rd2ghc45nlmigfn5i6kc24d30c3kp-claude-code-1.0.61"
+        "out": "/nix/store/5mrnfls4vvl5c7qcjzl5gplzb25wv2dl-claude-code-1.0.65"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -112,27 +112,27 @@
     {
       "attr_path": "claude-code",
       "broken": false,
-      "derivation": "/nix/store/l88rvhr9kjbg4ywy5c0f945fqpbxww3v-claude-code-1.0.61.drv",
+      "derivation": "/nix/store/brycndk5dqyqv4sjy6lf7qc19xch93qb-claude-code-1.0.65.drv",
       "description": "Agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster",
       "install_id": "claude-code",
       "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "name": "claude-code-1.0.61",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "name": "claude-code-1.0.65",
       "pname": "claude-code",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:07:25.297496Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:08:48.928034Z",
       "stabilities": [
         "unstable"
       ],
       "unfree": true,
-      "version": "1.0.61",
+      "version": "1.0.65",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/lshl7xm8rnx7gc63s7g6wvkrbh1401gj-claude-code-1.0.61"
+        "out": "/nix/store/3ka3yz7vk1ncmh6vs7p6gcyf1rzj6gj2-claude-code-1.0.65"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -141,27 +141,27 @@
     {
       "attr_path": "claude-code",
       "broken": false,
-      "derivation": "/nix/store/48sdbfbbhf7cgjs4brrs7qjqdrw6nnq4-claude-code-1.0.61.drv",
+      "derivation": "/nix/store/9ckp2iyrb2sks49ivm2d8rarzrx2n1bj-claude-code-1.0.65.drv",
       "description": "Agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster",
       "install_id": "claude-code",
       "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "name": "claude-code-1.0.61",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "name": "claude-code-1.0.65",
       "pname": "claude-code",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:31:20.452798Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:32:57.514785Z",
       "stabilities": [
         "unstable"
       ],
       "unfree": true,
-      "version": "1.0.61",
+      "version": "1.0.65",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/0zcsmzpnxz30zj225ddbdgxv1p8ml524-claude-code-1.0.61"
+        "out": "/nix/store/6az2kacav2wcqw7dsla169yzx492dzlj-claude-code-1.0.65"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -174,13 +174,13 @@
       "description": "Distributed version control system",
       "install_id": "git",
       "license": "GPL-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "git-2.50.1",
       "pname": "git",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:28:05.538108Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:29:21.325445Z",
       "stabilities": [
         "unstable"
       ],
@@ -204,13 +204,13 @@
       "description": "Distributed version control system",
       "install_id": "git",
       "license": "GPL-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "git-2.50.1",
       "pname": "git",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:47:41.527135Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:49:15.679402Z",
       "stabilities": [
         "unstable"
       ],
@@ -235,13 +235,13 @@
       "description": "Distributed version control system",
       "install_id": "git",
       "license": "GPL-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "git-2.50.1",
       "pname": "git",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:07:25.854540Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:08:49.485296Z",
       "stabilities": [
         "unstable"
       ],
@@ -265,13 +265,13 @@
       "description": "Distributed version control system",
       "install_id": "git",
       "license": "GPL-2.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "git-2.50.1",
       "pname": "git",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:31:21.515818Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:32:58.634214Z",
       "stabilities": [
         "unstable"
       ],
@@ -296,13 +296,13 @@
       "description": "Go Programming language",
       "install_id": "go",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "go-1.24.5",
       "pname": "go",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:28:05.624816Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:29:21.420126Z",
       "stabilities": [
         "unstable"
       ],
@@ -325,13 +325,13 @@
       "description": "Go Programming language",
       "install_id": "go",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "go-1.24.5",
       "pname": "go",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:47:41.947414Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:49:16.100405Z",
       "stabilities": [
         "unstable"
       ],
@@ -354,13 +354,13 @@
       "description": "Go Programming language",
       "install_id": "go",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "go-1.24.5",
       "pname": "go",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:07:25.976298Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:08:49.607740Z",
       "stabilities": [
         "unstable"
       ],
@@ -383,13 +383,13 @@
       "description": "Go Programming language",
       "install_id": "go",
       "license": "BSD-3-Clause",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "go-1.24.5",
       "pname": "go",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:31:21.989538Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:32:59.111899Z",
       "stabilities": [
         "unstable"
       ],
@@ -412,13 +412,13 @@
       "description": "Handy way to save and run project-specific commands",
       "install_id": "just",
       "license": "CC0-1.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "just-1.42.4",
       "pname": "just",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:28:06.124112Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:29:21.923029Z",
       "stabilities": [
         "unstable"
       ],
@@ -444,13 +444,13 @@
       "description": "Handy way to save and run project-specific commands",
       "install_id": "just",
       "license": "CC0-1.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "just-1.42.4",
       "pname": "just",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:47:43.345276Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:49:17.490279Z",
       "stabilities": [
         "unstable"
       ],
@@ -476,13 +476,13 @@
       "description": "Handy way to save and run project-specific commands",
       "install_id": "just",
       "license": "CC0-1.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "just-1.42.4",
       "pname": "just",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:07:26.488332Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:08:50.121552Z",
       "stabilities": [
         "unstable"
       ],
@@ -508,13 +508,13 @@
       "description": "Handy way to save and run project-specific commands",
       "install_id": "just",
       "license": "CC0-1.0",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "just-1.42.4",
       "pname": "just",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:31:23.482900Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:33:00.628090Z",
       "stabilities": [
         "unstable"
       ],
@@ -536,27 +536,27 @@
     {
       "attr_path": "ollama",
       "broken": false,
-      "derivation": "/nix/store/pz2fv992khrif4nazlqkm87jxb2d09r3-ollama-0.9.6.drv",
+      "derivation": "/nix/store/axjbrfnw0hzd49rpkiimf7q77ja77sqz-ollama-0.10.0.drv",
       "description": "Get up and running with large language models locally",
       "install_id": "ollama",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "name": "ollama-0.9.6",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "name": "ollama-0.10.0",
       "pname": "ollama",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:28:08.907478Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:29:24.741816Z",
       "stabilities": [
         "unstable"
       ],
       "unfree": false,
-      "version": "0.9.6",
+      "version": "0.10.0",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/59gspzvfr4g1ihzlp7rl7jn1bwvaqyv7-ollama-0.9.6"
+        "out": "/nix/store/2x1v2ny8783ybrz7bbay5bs06plgpdgh-ollama-0.10.0"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -565,27 +565,27 @@
     {
       "attr_path": "ollama",
       "broken": false,
-      "derivation": "/nix/store/g230q9vrp6mnqzwrdn13yzwgz2ggnr55-ollama-0.9.6.drv",
+      "derivation": "/nix/store/arvnj8p4bkghmik6lh4xrqzz92kbmbrw-ollama-0.10.0.drv",
       "description": "Get up and running with large language models locally",
       "install_id": "ollama",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "name": "ollama-0.9.6",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "name": "ollama-0.10.0",
       "pname": "ollama",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:47:52.276829Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:49:26.604353Z",
       "stabilities": [
         "unstable"
       ],
       "unfree": false,
-      "version": "0.9.6",
+      "version": "0.10.0",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/ziaib9yzgig87l6l6gkrw9xb3hsala19-ollama-0.9.6"
+        "out": "/nix/store/xsy98cz0yad3bd4s24i6x695ml09jqbi-ollama-0.10.0"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -594,27 +594,27 @@
     {
       "attr_path": "ollama",
       "broken": false,
-      "derivation": "/nix/store/8329yfkh33z76bm165ia6wscjq9472n0-ollama-0.9.6.drv",
+      "derivation": "/nix/store/lnb311yyhwinkrrdgcv9miq98rvjwvbl-ollama-0.10.0.drv",
       "description": "Get up and running with large language models locally",
       "install_id": "ollama",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "name": "ollama-0.9.6",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "name": "ollama-0.10.0",
       "pname": "ollama",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:07:29.327733Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:08:52.975093Z",
       "stabilities": [
         "unstable"
       ],
       "unfree": false,
-      "version": "0.9.6",
+      "version": "0.10.0",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/fbm3n9vjrlkd69n5sf9gwnlgkggpwpr5-ollama-0.9.6"
+        "out": "/nix/store/59r6ivzxnakhnp89z72lh88b12n0yssd-ollama-0.10.0"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -623,27 +623,27 @@
     {
       "attr_path": "ollama",
       "broken": false,
-      "derivation": "/nix/store/wnr9p857id8himm339vy41qyg0w7sx6z-ollama-0.9.6.drv",
+      "derivation": "/nix/store/7vjq0x6xzdmpzffalja0v4i3bfajv58n-ollama-0.10.0.drv",
       "description": "Get up and running with large language models locally",
       "install_id": "ollama",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "name": "ollama-0.9.6",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "name": "ollama-0.10.0",
       "pname": "ollama",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:31:34.031429Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:33:11.483087Z",
       "stabilities": [
         "unstable"
       ],
       "unfree": false,
-      "version": "0.9.6",
+      "version": "0.10.0",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/w86p582dnava6qmwg0m3mw6qzxf52v9s-ollama-0.9.6"
+        "out": "/nix/store/9j7l7cia0wnxi5fffa5h32zs81h1c7c9-ollama-0.10.0"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -656,13 +656,13 @@
       "description": "Type checker for the Python language",
       "install_id": "pyright",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "pyright-1.1.402",
       "pname": "pyright",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:28:14.239870Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:29:30.122959Z",
       "stabilities": [
         "unstable"
       ],
@@ -685,13 +685,13 @@
       "description": "Type checker for the Python language",
       "install_id": "pyright",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "pyright-1.1.402",
       "pname": "pyright",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:48:01.944362Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:49:37.163646Z",
       "stabilities": [
         "unstable"
       ],
@@ -714,13 +714,13 @@
       "description": "Type checker for the Python language",
       "install_id": "pyright",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "pyright-1.1.402",
       "pname": "pyright",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:07:34.721390Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:08:58.386083Z",
       "stabilities": [
         "unstable"
       ],
@@ -743,13 +743,13 @@
       "description": "Type checker for the Python language",
       "install_id": "pyright",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "pyright-1.1.402",
       "pname": "pyright",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:31:44.395472Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:33:22.039960Z",
       "stabilities": [
         "unstable"
       ],
@@ -772,13 +772,13 @@
       "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
       "install_id": "sqlite",
       "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "sqlite-3.50.2",
       "pname": "sqlite",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:28:47.155850Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:30:03.506187Z",
       "stabilities": [
         "unstable"
       ],
@@ -806,13 +806,13 @@
       "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
       "install_id": "sqlite",
       "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "sqlite-3.50.2",
       "pname": "sqlite",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:48:48.791451Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:50:26.197555Z",
       "stabilities": [
         "unstable"
       ],
@@ -841,13 +841,13 @@
       "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
       "install_id": "sqlite",
       "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "sqlite-3.50.2",
       "pname": "sqlite",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:08:07.702575Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:09:31.653662Z",
       "stabilities": [
         "unstable"
       ],
@@ -875,13 +875,13 @@
       "description": "Self-contained, serverless, zero-configuration, transactional SQL database engine",
       "install_id": "sqlite",
       "license": "Public Domain",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "sqlite-3.50.2",
       "pname": "sqlite",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:32:33.826719Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:34:12.288218Z",
       "stabilities": [
         "unstable"
       ],
@@ -910,13 +910,13 @@
       "description": "Extremely fast Python package installer and resolver, written in Rust",
       "install_id": "uv",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "uv-0.8.2",
       "pname": "uv",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:29:03.525700Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:30:20.079832Z",
       "stabilities": [
         "unstable"
       ],
@@ -939,13 +939,13 @@
       "description": "Extremely fast Python package installer and resolver, written in Rust",
       "install_id": "uv",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "uv-0.8.2",
       "pname": "uv",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T00:49:10.863162Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T00:50:48.529377Z",
       "stabilities": [
         "unstable"
       ],
@@ -968,13 +968,13 @@
       "description": "Extremely fast Python package installer and resolver, written in Rust",
       "install_id": "uv",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "uv-0.8.2",
       "pname": "uv",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:08:24.142702Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:09:48.239078Z",
       "stabilities": [
         "unstable"
       ],
@@ -997,13 +997,13 @@
       "description": "Extremely fast Python package installer and resolver, written in Rust",
       "install_id": "uv",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5b09dc45f24cf32316283e62aec81ffee3c3e376",
       "name": "uv-0.8.2",
       "pname": "uv",
-      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
-      "rev_count": 836203,
-      "rev_date": "2025-07-28T09:26:29Z",
-      "scrape_date": "2025-07-30T01:32:56.820354Z",
+      "rev": "5b09dc45f24cf32316283e62aec81ffee3c3e376",
+      "rev_count": 838708,
+      "rev_date": "2025-08-03T09:47:33Z",
+      "scrape_date": "2025-08-05T01:34:35.595013Z",
       "stabilities": [
         "unstable"
       ],
@@ -1035,7 +1035,7 @@
         }
       },
       "hook": {
-        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  uv venv\n  source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Grant RAG environment activated\"\n  echo \"\"\n  echo \"To start Ollama service:\"\n  echo \"  flox services start ollama\"\n  echo \"\"\n  echo \"Or start all services with:\"\n  echo \"  flox services start\"\n  echo \"\"\n  echo \"Check service status with:\"\n  echo \"  flox services status\"\n"
+        "on-activate": "  # -> Set variables, create files and directories\n  # -> Perform initialization steps, e.g. create a python venv\n  # -> Useful environment variables:\n  #      - FLOX_ENV_PROJECT=/home/user/example\n  #      - FLOX_ENV=/home/user/example/.flox/run\n  #      - FLOX_ENV_CACHE=/home/user/example/.flox/cache\n  \n  if [[ ! -z $DEV ]]; then\n    export GOBIN=\"${FLOX_ENV_CACHE}/go/bin/\"\n    mkdir -p \"${GOBIN}\"\n    go install \"github.com/isaacphi/mcp-language-server@latest\"\n    export PATH=\"${GOBIN}:${PATH}\"\n  fi\n  \n  uv python install 3.13\n  #uv venv\n  #source \"${FLOX_ENV_PROJECT}/.venv/bin/activate\"\n  uv sync\n  \n  echo \"Grant RAG environment activated\"\n  echo \"\"\n  echo \"To start Ollama service:\"\n  echo \"  flox services start ollama\"\n  echo \"\"\n  echo \"Or start all services with:\"\n  echo \"  flox services start\"\n  echo \"\"\n  echo \"Check service status with:\"\n  echo \"  flox services status\"\n"
       },
       "profile": {},
       "options": {},
