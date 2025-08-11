@@ -86,8 +86,9 @@ class TestBlogRoundRobin:
             db_path=db_path,
             vector_store_path=os.path.join(temp_dir, "vector_store"),
             round_robin=True,
-            days_back=365,  # Get all test items
+            date_threshold="2023-01-01T00:00:00",  # Include all test items from 2024
             verbose=True,
+            skip_validation=True,  # Skip feed validation
         )
 
         syncer = PodcastSyncer(config)
