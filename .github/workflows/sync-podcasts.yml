@@ -12,19 +12,19 @@ jobs:
     name: "Build and test sync podcasts"
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout"
-      - uses: actions/checkout@v4
+      - name: "Checkout current sync-podacast code"
+        uses: actions/checkout@v4
       
       - name: Install Flox
         uses: flox/install-flox-action@v2
         
       - name: "Activate Flox and run lint/format"
-        working-directory: ./projects/sync-podcasts
+        working-directory: ./projects/sync-podcasts/
         run: |
           flox activate -- just install
           flox activate -- just check
           
       - name: Lint and format check
-        working-directory: ./projects/sync-podcasts
+        working-directory: ./projects/sync-podcasts/
         run: |
           flox activate -- pytest
