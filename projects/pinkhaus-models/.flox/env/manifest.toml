@@ -24,6 +24,7 @@ just.pkg-path = "just"
 ## -------------------------------------------------------------------
 [vars]
 # INTRO_MESSAGE = "It's gettin' Flox in here"
+UV_VENV_CLEAR="1"
 
 
 ## Activation Hook ---------------------------------------------------
@@ -48,7 +49,6 @@ on-activate = '''
   uv python install 3.13
   uv venv
   source "${FLOX_ENV_PROJECT}/.venv/bin/activate"
-  uv sync
 
   echo "pinkhaus-models environment activated"
 '''
