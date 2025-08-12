@@ -6,6 +6,9 @@ from .models import (
 )
 from .database import TranscriptionDatabase
 
+# Proto imports - organized by package
+from . import proto
+
 __version__ = "0.1.0"
 __all__ = [
     "TranscriptionMetadata",
@@ -13,4 +16,5 @@ __all__ = [
     "Segment",
     "TranscriptionResult",
     "TranscriptionDatabase",
+    "proto",
 ]

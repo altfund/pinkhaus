@@ -27,6 +27,7 @@ ollama.pkg-path = "ollama"
 ##      as well as [hook], [profile] scripts and [services] below.
 ## -------------------------------------------------------------------
 [vars]
+UV_VENV_CLEAR="1"
 # INTRO_MESSAGE = "It's gettin' Flox in here"
 
 
@@ -37,7 +38,7 @@ ollama.pkg-path = "ollama"
 on-activate = '''
   uv python install 3.13
   uv venv
-#  source "${FLOX_ENV_PROJECT}/.venv/bin/activate"
+  source "${FLOX_ENV_PROJECT}/.venv/bin/activate"
   uv sync
 
   echo "Sync-podcasts environment activated"
