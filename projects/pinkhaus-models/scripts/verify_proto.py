@@ -40,7 +40,7 @@ def verify_proto_files():
             capture_output=True,
             text=True,
         )
-        
+
         if fix_result.returncode != 0:
             print("Failed to fix proto imports:")
             print(fix_result.stderr)
