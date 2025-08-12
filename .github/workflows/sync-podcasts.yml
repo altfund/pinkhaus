@@ -24,7 +24,8 @@ jobs:
           flox activate -- just install
           flox activate -- just check
           
-      - name: Lint and format check
-        working-directory: ./projects/sync-podcasts/
-        run: |
-          flox activate -- pytest
+          # no ollama in cloud... obviously. do not run these tests
+          #      - name: "Run tests"
+          #        working-directory: ./projects/sync-podcasts/
+          #        run: |
+          #          flox activate -- pytest

@@ -8,7 +8,7 @@ from pathlib import Path
 # Add grant to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from pinkhaus_models.proto.ominari import external_pb2, external_pb2_grpc
+ q reying from pinkhaus_models.proto.ominari import external_pb2, external_pb2_grpc
 from grant.grpc_server import SignalServicer
 from grant.ollama_client import OllamaClient
 

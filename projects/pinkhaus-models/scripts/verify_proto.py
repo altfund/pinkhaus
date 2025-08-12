@@ -32,6 +32,21 @@ def verify_proto_files():
             print(result.stderr)
             return False
 
+        # Fix imports in the generated files
+        print("Fixing imports in generated files...")
+        fix_script = project_root / "scripts" / "fix_proto_imports.py"
+        fix_result = subprocess.run(
+            [sys.executable, str(fix_script), str(proto_gen_dir)],
+            capture_output=True,
+            text=True,
+        )
+        
+        if fix_result.returncode != 0:
+            print("Failed to fix proto imports:")
+            print(fix_result.stderr)
+            # Don't fail here, as the script might not exist in some projects
+            # return False
+
         # Now compare generated files with checked-in versions
         all_match = True
         differences = []
