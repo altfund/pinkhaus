@@ -24,7 +24,7 @@ check:
 
 # test
 test:
-    uv run pytest
+    flox activate -- uv run pytest
 
 # Generate Python code from proto files
 proto-generate:
