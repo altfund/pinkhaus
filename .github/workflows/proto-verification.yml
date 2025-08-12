@@ -1,0 +1,32 @@
+name: Proto Verification
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'projects/pinkhaus-models/pinkhaus_models/proto/**/*.proto'
+      - 'projects/pinkhaus-models/scripts/generate_proto.py'
+      - '.github/workflows/proto-verification.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'projects/pinkhaus-models/pinkhaus_models/proto/**/*.proto'
+      - 'projects/pinkhaus-models/scripts/generate_proto.py'
+      - '.github/workflows/proto-verification.yml'
+
+jobs:
+  verify-proto:
+    name: "Verify Proto Generation"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
+
+      - name: "Install Flox"
+        uses: "flox/install-flox-action@v2"
+
+      - name: "Verify proto files match generated code"
+        working-directory: ./projects/pinkhaus-models/
+        run: |
+          flox activate -- just install
+          flox activate -- just proto-verify

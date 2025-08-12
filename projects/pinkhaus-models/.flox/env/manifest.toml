@@ -24,6 +24,7 @@ just.pkg-path = "just"
 ## -------------------------------------------------------------------
 [vars]
 # INTRO_MESSAGE = "It's gettin' Flox in here"
+UV_VENV_CLEAR="1"
 
 
 ## Activation Hook ---------------------------------------------------

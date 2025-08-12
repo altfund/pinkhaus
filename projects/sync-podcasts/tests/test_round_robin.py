@@ -38,6 +38,8 @@ class TestRoundRobin:
                     len(mock_service.return_value.processed_items) < 9
                 ):  # We have 9 total items
                     response.summary.processed = 1
+                    response.summary.skipped = 0
+                    response.summary.failed = 0
                     # In a real scenario, we'd extract the actual item
                     # For testing, we'll just track the count
                     mock_service.return_value.processed_items.append(
@@ -45,6 +47,8 @@ class TestRoundRobin:
                     )
                 else:
                     response.summary.processed = 0
+                    response.summary.skipped = 0
+                    response.summary.failed = 0
 
                 return response
 

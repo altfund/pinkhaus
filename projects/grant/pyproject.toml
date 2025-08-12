@@ -13,6 +13,8 @@ dependencies = [
     "rich>=13.0.0",
     "click>=8.1.0",
     "pinkhaus-models",
+    "grpcio>=1.60.0",
+    "grpcio-tools>=1.60.0",
 ]
 
 [project.scripts]
