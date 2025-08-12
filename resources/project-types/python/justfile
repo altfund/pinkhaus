@@ -32,6 +32,8 @@ proto-generate:
     # Copy generated files to the proto directory
     cp -r pinkhaus_models/proto_gen/* pinkhaus_models/proto/
     rm -rf pinkhaus_models/proto_gen
+    # Fix imports to use relative imports
+    uv run python scripts/fix_proto_imports.py
 
 # Verify that generated proto files match checked-in versions
 proto-verify:
