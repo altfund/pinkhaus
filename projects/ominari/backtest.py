@@ -6,11 +6,9 @@ Created on Sun Jul 20 02:19:02 2025
 @author: ess
 """
 
+
 from datetime import datetime, timezone
 from evaluate_open_markets import *
-from evaluate_open_markets import _init_external_stub
-
-_external_stub = _init_external_stub()
 
 # backtest_utils.py
 
@@ -19,10 +17,9 @@ import pandas as pd
 from sqlalchemy import text
 
 from evaluate_open_markets import (
-    generate_betting_session_report_and_save,
-    SIGNAL_PROVIDERS,
-    SIGNAL_WEIGHTS,
+    generate_betting_session_report_and_save
 )
+from signals import *
 
 from database import engine
 
@@ -36,6 +33,10 @@ from evaluate_open_markets import (
     extract_active_game_periods_from_breaks,
 )
 from typing import Optional, List, Tuple
+
+import sys, grpc
+print("RUNTIME PYTHON:", sys.executable)
+print("RUNTIME grpcio version:", grpc.__version__)
 
 
 def _load_data_windows() -> Tuple[
@@ -236,16 +237,6 @@ def compute_backtest_as_of_list(
     print(f"✅ Found {len(result)} backtest sessions.")
     return result
 
-
-SIGNAL_PROVIDERS = [
-    ImpliedRawSignal(),
-    ExternalGrpcSignal(_external_stub),
-]
-
-SIGNAL_WEIGHTS = {
-    "implied_raw": 1.0,  # base implied probability
-    "external": 1.0,  # weight for external model
-}
 
 
 def main():
