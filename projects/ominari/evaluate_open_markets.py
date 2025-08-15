@@ -13,7 +13,6 @@ from kelly_multimarket import *
 
 DB_NAME = "sport_odds.db"
 
-import grpc
 import time
 
 import sqlite3
@@ -23,8 +22,12 @@ from odds_formatting_helpers import (
     add_implied_probabilities,
     generate_internal_mispricing_signals,
 )
-from datetime import datetime, timezone
-from typing import Optional, Dict
+
+from signals import *
+
+
+from datetime import datetime, timezone, timedelta
+from typing import Optional, Dict, List
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -35,73 +38,98 @@ engine = create_engine(f"sqlite:///{DB_NAME}")
 Session = sessionmaker(bind=engine)
 
 
+def fetch_open_markets_for_as_of(as_of: pd.Timestamp) -> pd.DataFrame:
+    """
+    Pull the latest odds snapshot for every market at or before `as_of`,
+    in one SQL pass without chunking.
+    """
+    if as_of.tzinfo is None:
+        as_of = as_of.tz_localize(timezone.utc)
+
+    conn = engine.connect()
+    sql = """
+    WITH latest AS (
+      SELECT
+        source_id,
+        MAX(updated_at) AS t
+      FROM odd
+      WHERE updated_at <= ?
+      GROUP BY source_id
+    )
+    SELECT
+      o.source_id,
+      o.market_type      AS odds_market_type,
+      o.outcome          AS bet_name,
+      o.decimal_odds,
+      o.updated_at       AS as_of_time,
+      m.*                -- pulls all your market.* columns
+    FROM odd o
+    JOIN latest l
+      ON o.source_id = l.source_id
+     AND o.updated_at  = l.t
+    LEFT JOIN market m
+      ON m.source_id = o.source_id
+    """
+    df = pd.read_sql_query(sql, conn, params=(as_of.isoformat(),), parse_dates=["as_of_time"])
+    conn.close()
+    return df
+
+def fetch_market_outcomes_for_window(
+    source_ids: list,
+    as_of: pd.Timestamp,
+    until: pd.Timestamp
+) -> pd.DataFrame:
+    """
+    For each market in `source_ids`, pull its final decimal odds between `as_of` and `until`,
+    and build a result_multiplier = odds if the market’s normalized outcome matches your bet, else 0.
+
+    Returns a DataFrame with columns:
+      - source_id
+      - result_multiplier
+    """
+
+    conn = sqlite3.connect(DB_NAME)
+    # build a placeholder list for your IN clause
+    placeholders = ",".join("?" for _ in source_ids)
+
+    # NOTE: this assumes your `odds` table holds a time‐stamped snapshot of each market’s outcome/odds.
+    # Adjust table/column names as needed to match your schema.
+    sql = f"""
+    SELECT
+      source_id,
+      normalized_outcome,
+      decimal_odds,
+      time
+    FROM odds
+    WHERE source_id IN ({placeholders})
+      AND time >= ?
+      AND time <= ?
+    ORDER BY time DESC
+    """
+
+    params = source_ids + [as_of.isoformat(), until.isoformat()]
+    df = pd.read_sql_query(sql, conn, params=params, parse_dates=["time"])
+    conn.close()
+
+    # keep only the latest record per market
+    df = df.drop_duplicates(subset=["source_id"], keep="first")
+
+    # now compute a multiplier: if that market’s final normalized_outcome
+    # matches the bet you would have placed, you win `decimal_odds`, else 0.
+    # Since in our vectorized runner we don’t store each bet’s normalized_outcome,
+    # you might need to pull that column into your `all_bets` DataFrame or
+    # adapt this logic to use your actual bet side.
+    df["result_multiplier"] = df["decimal_odds"]  # stub: assume every bet was on the winning side
+    # → replace the above line with logic such as:
+    # df = df.merge(all_bets[['source_id','normalized_outcome']], on='source_id')
+    # df['result_multiplier'] = df.apply(
+    #     lambda r: r.decimal_odds if r.normalized_outcome_x==r.normalized_outcome_y else 0.0, axis=1
+    # )
+
+    return df[["source_id", "result_multiplier"]]
+
 # ─── 1. SIGNAL ABSTRACTION ─────────────────────────────────────────────────────
 
-
-class SignalProvider:
-    """Base class: must return a pd.Series of probabilities (0–1)."""
-
-    name: str
-
-    def get_probs(self, df: pd.DataFrame) -> pd.Series:
-        raise NotImplementedError
-
-
-class ImpliedRawSignal(SignalProvider):
-    name = "implied_raw"
-
-    def get_probs(self, df: pd.DataFrame) -> pd.Series:
-        # assumes df["implied_raw"] is in percent
-        return df["implied_raw"].astype(float).div(100.0)
-
-
-class ExternalGrpcSignal(SignalProvider):
-    name = "external"
-
-    def __init__(self, stub, timeout: float = 2.0):
-        self.stub = stub
-        self.timeout = timeout
-
-    def get_probs(self, df: pd.DataFrame) -> pd.Series:
-        import grpc
-        from external_pb2 import SignalBatchRequest
-
-        # 1) Always log entry & DataFrame size
-        print(f"[CLIENT] ExternalGrpcSignal.get_probs: {len(df)} rows", flush=True)
-
-        # 2) If empty, bail early (but log it)
-        if df.empty:
-            print("[CLIENT]  → empty df → returning empty Series", flush=True)
-            return pd.Series([], index=df.index)
-
-        # 3) Build & log the batch request
-        req = SignalBatchRequest()
-        for idx, row in df.iterrows():
-            r = req.requests.add()
-            r.source_id = row["source_id"]
-            r.normalized_outcome = row["normalized_outcome"]
-            r.as_of_time = row["time"].isoformat()
-        print(f"[CLIENT]  → sending {len(req.requests)} RPC requests", flush=True)
-
-        # 4) Actually call the RPC, but don’t hide exceptions
-        try:
-            t0 = time.time()
-            resp = self.stub.GetProbabilities(req, timeout=self.timeout)
-            took = time.time() - t0
-            print(
-                f"[CLIENT]  → RPC returned in {took:.3f}s, {len(resp.probabilities)} probs",
-                flush=True,
-            )
-            probs = list(resp.probabilities)
-        except grpc.RpcError as e:
-            # log the error before fallback
-            print(f"[CLIENT]  ! RPC error: {e.code()} {e.details()}", flush=True)
-            probs = [0.0] * len(df)
-
-        # 5) Return and log
-        series = pd.Series(probs, index=df.index)
-        print(f"[CLIENT]  → returning series head:\n{series.head()}", flush=True)
-        return series
 
 
 def save_bets_to_db(
@@ -188,43 +216,51 @@ def save_bets_to_db(
 
 def aggregate_signals(
     df: pd.DataFrame,
-    providers: list[SignalProvider],
-    weights: dict[str, float],
+    providers: List[SignalProvider],
+    weights: Dict[str, float],
 ) -> pd.DataFrame:
     """
     For each provider:
-      - compute a prob series
-      - store it in df[provider.name]
-      - store its weighted contribution in df[f"contrib_{name}"]
-    Then set df["probability"] = sum_i weight_i * df[name] / sum(weights).
+      - compute a pd.Series of probs, with -1→NaN for missing
+      - store it in df[name]
+    Then compute:
+      df['probability'] = sum_i (w_i * prob_i) / sum_i (w_i for which prob_i is not NaN)
+    and also per-provider contributions.
     """
     df = df.copy()
-    total_weight = sum(weights.values()) or 1.0
 
+    # collect per-provider prob Series in a dict
+    prob_dict = {}
     for provider in providers:
-        w = weights.get(provider.name, 0.0)
-        probs = provider.get_probs(df).fillna(0.0)
-        df[provider.name] = probs
-        df[f"contrib_{provider.name}"] = probs.mul(w).div(total_weight)
+        name = provider.name
+        w = weights.get(name, 0.0)
+        raw = provider.get_probs(df)
+        # map error sentinel to NaN
+        probs = raw.replace(-1.0, np.nan).astype(float)
+        prob_dict[name] = probs
+        df[name] = probs
 
-    # final blended probability
-    contrib_cols = [f"contrib_{p.name}" for p in providers]
-    df["probability"] = df[contrib_cols].sum(axis=1)
+    # build a DataFrame of all probs
+    probs_df = pd.DataFrame(prob_dict)
+
+    # create a weights vector aligned to columns
+    weight_vector = pd.Series({p.name: weights.get(p.name, 0.0) for p in providers})
+
+    # numerator: sum across providers of (weight * prob)
+    numer = (probs_df * weight_vector).sum(axis=1)
+
+    # denominator: sum of weights for providers that have a prob (i.e. not-NaN)
+    has_signal = probs_df.notna().astype(float)  # 1.0 where present, 0.0 where NaN
+    denom = (has_signal * weight_vector).sum(axis=1).replace(0, np.nan)
+
+    # final blended probability; rows with zero available weight become NaN
+    df["probability"] = numer.div(denom)
+
+    # store per-provider actual contribution (w_i * p_i / denom)
+    for name in prob_dict:
+        df[f"contrib_{name}"] = (probs_df[name] * weight_vector[name]).div(denom)
 
     return df
-
-
-# ─── 2. CONFIGURE SIGNALS & WIRING INTO prepare_kelly_input ─────────────────
-# Initialize external gRPC stub once at module load
-# in evaluate_open_markets.py, near top:
-def _init_external_stub():
-    # for local testing, use your dummy server:
-    channel = grpc.insecure_channel("localhost:50051")
-    return __import__("external_pb2_grpc").SignalServiceStub(channel)
-
-
-import pandas as pd
-from typing import Optional
 
 
 def get_upcoming_overtime_markets_with_signals(
@@ -273,7 +309,7 @@ def get_upcoming_overtime_markets_with_signals(
     chunk_start = pd.to_datetime(next_date, utc=True)
 
     # --- 3) decide real window_end ---
-    if window_end is None:
+    if window_end is None or window_end < chunk_start:
         chunk_end = chunk_start + timedelta(minutes=avg_game_duration_minutes)
     else:
         chunk_end = pd.to_datetime(window_end, utc=True)
@@ -530,15 +566,6 @@ def summarize_match_schedule_from_open_markets(
     )
 
     return match_df
-
-
-# Re-import necessary modules after code execution environment reset
-import pandas as pd
-from datetime import datetime, timedelta
-
-
-from datetime import datetime
-import pandas as pd
 
 
 def find_upcoming_game_breaks(
@@ -904,16 +931,6 @@ def trim_kelly_results(
     ]
 
 
-SIGNAL_PROVIDERS = [
-    ImpliedRawSignal()  # ,
-    # ExternalGrpcSignal(_external_stub),
-]
-
-SIGNAL_WEIGHTS = {
-    "implied_raw": 1.0  # ,    # base implied probability
-    # "external":    1.0,    # weight for external model
-}
-
 # assume all your existing imports: get_upcoming_overtime_markets_with_signals,
 # summarize_match_schedule_from_open_markets, find_upcoming_game_breaks,
 # extract_active_game_periods_from_breaks, prepare_kelly_input, calculate_kelly_stakes_with_exclusivity,
@@ -949,24 +966,23 @@ def generate_betting_session_report_and_save(
     elif as_of.tzinfo is None:
         as_of = as_of.replace(tzinfo=timezone.utc)
     print(f"evaluating open markets as of {as_of.isoformat()}")
-
     # --- 2) determine session window [start, end] ---
-    start = as_of
+    start       = as_of
     default_end = as_of + timedelta(minutes=avg_game_duration_minutes)
-    # allow explicit override
-    if window_end is not None:
-        end = window_end
-    else:
-        end = default_end
-
+    
+    # only override if the user-supplied window_end goes beyond our default
+    end = window_end if (window_end is not None and window_end > default_end) else default_end
+    print(f"Session window: {start} → {end}")
+    
     # --- 3) load full as_of snapshot and filter by maturity_date ---
     open_markets = get_upcoming_overtime_markets_with_signals(
         limit=abs_game_limit,
         as_of=as_of,
-        window_end=end,
+        window_end=end,                  # now either default_end or your later window_end
         min_break_minutes=min_break_minutes,
         avg_game_duration_minutes=avg_game_duration_minutes,
     )
+
     print(f"[DEBUG] open_markets → {len(open_markets)} rows")
 
     if open_markets.empty:
@@ -1157,7 +1173,11 @@ def save_and_display_betting_report(
         dict: Paths to the saved report files.
     """
     # Prepare timestamped directory
-    timestamp = report_data["as_of"].strftime("%Y-%m-%d_%H-%M-%S")
+    # look for either "as_of" or "start" in the incoming dict:
+    ts = report_data.get("as_of") or report_data.get("start")
+    if ts is None:
+        raise KeyError("report_data must include 'as_of' or 'start'")
+    timestamp = ts.strftime("%Y-%m-%d_%H-%M-%S")
     report_dir = Path(base_dir) / timestamp
     report_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1215,15 +1235,11 @@ def save_and_display_betting_report(
 
 
 if __name__ == "__main__":
-    save_and_display_betting_report(
-        (
             generate_betting_session_report_and_save(
                 execution_bankroll=100,
-                avg_game_duration_minutes=200.0,
+                avg_game_duration_minutes=120.0,
                 min_break_minutes=60.0,
                 abs_game_limit=None,
                 signal_providers=SIGNAL_PROVIDERS,
                 signal_weights=SIGNAL_WEIGHTS,
-            )
-        )
     )

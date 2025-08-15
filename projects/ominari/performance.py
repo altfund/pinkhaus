@@ -83,38 +83,60 @@ def score_bets(df: pd.DataFrame) -> pd.DataFrame:
             net = -row.execution_stake - row.fee_amount
             return pd.Series({"status": "loss", "net": net})
 
-    scored = df.join(df.apply(_score, axis=1))
+    # Build a DataFrame of scores
+    score_df = df.apply(_score, axis=1)
+    # Concatenate original and scored columns side by side
+    scored = pd.concat([df, score_df], axis=1)
     return scored
 
 
 def summarize_performance(scored: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Returns two DataFrames:
-      1) per-bet: the scored bets
+      1) per-bet: the scored bets (flattened index)
       2) per-session: aggregated metrics by session_id, strategy_name, session_type
     """
+    # FORCE session_id, strategy_name, session_type, as_of out of the index
+    if scored.index.name in ("session_id",):
+        # if the entire DataFrame was indexed by session_id, bring it back in
+        scored = scored.reset_index()
+
+    # Also guard against multi‐index
+    if isinstance(scored.index, pd.MultiIndex):
+        scored = scored.reset_index()
+
+    # Now drop any leftover index names so groupby sees real columns
+    scored.index.name = None
+
+    # Next ensure none of the grouping keys are still in the index
+    scored = scored.reset_index(drop=True)
+
     # 1) per-session aggregation
     agg = (
-        scored.groupby(
-            ["session_id", "strategy_name", "session_type", "as_of"], dropna=False
+        scored
+        .groupby(
+            ["session_id", "strategy_name", "session_type", "as_of"],
+            dropna=False
         )
         .agg(
-            total_staked=("execution_stake", "sum"),
-            total_fee=("fee_amount", "sum"),
-            total_net=("net", "sum"),
-            wins=("status", lambda s: (s == "win").sum()),
-            losses=("status", lambda s: (s == "loss").sum()),
-            pending=("status", lambda s: (s == "pending").sum()),
-            roi=(
+            total_staked = ("execution_stake", "sum"),
+            total_fee    = ("fee_amount",    "sum"),
+            total_net    = ("net",           "sum"),
+            wins         = ("status",        lambda s: (s == "win").sum()),
+            losses       = ("status",        lambda s: (s == "loss").sum()),
+            pending      = ("status",        lambda s: (s == "pending").sum()),
+            roi          = (
                 "net",
-                lambda x: x.sum() / scored.loc[x.index, "execution_stake"].sum()
-                if scored.loc[x.index, "execution_stake"].sum()
-                else 0.0,
+                lambda x: (
+                    x.sum() /
+                    scored.loc[x.index, "execution_stake"].sum()
+                ) if scored.loc[x.index, "execution_stake"].sum() else 0.0
             ),
         )
         .reset_index()
     )
 
+    # Return both the flattened per-bet DF and the per-session summary
     return scored, agg
 
 
