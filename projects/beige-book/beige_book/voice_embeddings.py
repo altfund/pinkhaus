@@ -87,8 +87,14 @@ class VoiceEmbeddingExtractor:
         """
         if self.method == "mock":
             # Return mock embedding for testing
+            # Use audio path and time to generate consistent embeddings
+            import hashlib
+            seed_str = f"{audio_path}:{start_time or 0}:{end_time or 0}"
+            seed = int(hashlib.md5(seed_str.encode()).hexdigest()[:8], 16)
+            np.random.seed(seed)
             embedding = np.random.randn(256).astype(np.float32)
             embedding = embedding / np.linalg.norm(embedding)
+            np.random.seed()  # Reset seed
             return embedding, 1.0
 
         # Load audio
@@ -156,8 +162,16 @@ class VoiceEmbeddingExtractor:
         # For mock mode, return mock embedding
         if self.method == "mock":
             indices = [i for i, _ in valid_segments]
+            # Use consistent seed based on audio path and segment times
+            import hashlib
+            seed_str = f"{audio_path}:"
+            for i, seg in valid_segments[:3]:  # Use first few segments for seed
+                seed_str += f"{seg['start_time']}-{seg['end_time']}:"
+            seed = int(hashlib.md5(seed_str.encode()).hexdigest()[:8], 16)
+            np.random.seed(seed)
             embedding = np.random.randn(256).astype(np.float32)
             embedding = embedding / np.linalg.norm(embedding)
+            np.random.seed()  # Reset seed
             return embedding, total_duration, indices
 
         # Extract embeddings from each valid segment

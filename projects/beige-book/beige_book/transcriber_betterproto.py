@@ -151,7 +151,7 @@ def format_time(seconds: float) -> str:
 
 def to_dict(self) -> Dict[str, Any]:
     """Convert to dictionary format."""
-    return {
+    result = {
         "filename": self.filename,
         "file_hash": self.file_hash,
         "language": self.language,
@@ -167,6 +167,22 @@ def to_dict(self) -> Dict[str, Any]:
         "full_text": self.full_text,
         "created_at": self.created_at,
     }
+    
+    # Include speaker metadata if present
+    if hasattr(self, 'has_speaker_labels'):
+        result['has_speaker_labels'] = self.has_speaker_labels
+    if hasattr(self, 'num_speakers'):
+        result['num_speakers'] = self.num_speakers
+        
+    # Include speaker info in segments if available
+    if self.has_speaker_labels:
+        for i, seg in enumerate(self.segments):
+            if hasattr(seg, 'speaker') and seg.speaker:
+                result['segments'][i]['speaker'] = seg.speaker
+            if hasattr(seg, 'confidence'):
+                result['segments'][i]['confidence'] = seg.confidence
+                
+    return result
 
 
 def to_json(self) -> str:
