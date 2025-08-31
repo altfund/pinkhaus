@@ -167,3 +167,11 @@ venv.bak/
 .mypy_cache/
 
 .pdf
+
+# Compressed archives
+*.tar.xz
+*.tar.gz
+*.tar.bz2
+*.xz
+**/*.ckpt
+projects/beige-book/pretrained_models/

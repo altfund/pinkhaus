@@ -2,6 +2,8 @@
 Transcription library using betterproto-generated Protocol Buffers.
 """
 
+import logging
+
 # Extended result support
 from .proto_models import ExtendedTranscriptionResult, FeedMetadata
 import os
@@ -17,6 +19,8 @@ from tabulate import tabulate
 import whisper
 
 from .proto_models import TranscriptionResult, Segment
+
+logger = logging.getLogger(__name__)
 
 
 class AudioTranscriber:
@@ -47,7 +51,11 @@ class AudioTranscriber:
         return sha256_hash.hexdigest()
 
     def transcribe_file(
-        self, filepath: str, verbose: bool = False
+        self,
+        filepath: str,
+        verbose: bool = False,
+        enable_diarization: bool = False,
+        hf_token: str = None,
     ) -> TranscriptionResult:
         """
         Transcribe an audio file and return structured result.
@@ -88,6 +96,45 @@ class AudioTranscriber:
                 )
             )
 
+        # Optionally add speaker diarization
+        if enable_diarization:
+            try:
+                from .speaker_diarizer import SpeakerDiarizer
+
+                diarizer = SpeakerDiarizer(auth_token=hf_token)
+                # No fallback - fail if pyannote not available
+                diarization = diarizer.diarize_file(filepath, use_mock=False)
+
+                # Align speakers with segments
+                segments_list = [
+                    {
+                        "start": seg.start_ms / 1000.0,
+                        "end": seg.end_ms / 1000.0,
+                        "text": seg.text
+                    }
+                    for seg in transcription.segments
+                ]
+                enhanced_segments = diarizer.align_with_transcription(
+                    diarization, segments_list
+                )
+
+                # Update protobuf segments with speaker info
+                for i, (seg, enhanced) in enumerate(
+                    zip(transcription.segments, enhanced_segments)
+                ):
+                    if "speaker" in enhanced:
+                        seg.speaker = enhanced["speaker"]
+                    if "confidence" in enhanced:
+                        seg.confidence = enhanced.get("confidence", 1.0)
+
+                # Update metadata
+                transcription.num_speakers = diarization.num_speakers
+                transcription.has_speaker_labels = True
+
+            except Exception as e:
+                print(f"Warning: Speaker diarization failed: {e}")
+                # Continue without diarization
+
         return transcription
 
 
@@ -104,7 +151,7 @@ def format_time(seconds: float) -> str:
 
 def to_dict(self) -> Dict[str, Any]:
     """Convert to dictionary format."""
-    return {
+    result = {
         "filename": self.filename,
         "file_hash": self.file_hash,
         "language": self.language,
@@ -120,6 +167,22 @@ def to_dict(self) -> Dict[str, Any]:
         "full_text": self.full_text,
         "created_at": self.created_at,
     }
+    
+    # Include speaker metadata if present
+    if hasattr(self, 'has_speaker_labels'):
+        result['has_speaker_labels'] = self.has_speaker_labels
+    if hasattr(self, 'num_speakers'):
+        result['num_speakers'] = self.num_speakers
+        
+    # Include speaker info in segments if available
+    if self.has_speaker_labels:
+        for i, seg in enumerate(self.segments):
+            if hasattr(seg, 'speaker') and seg.speaker:
+                result['segments'][i]['speaker'] = seg.speaker
+            if hasattr(seg, 'confidence'):
+                result['segments'][i]['confidence'] = seg.confidence
+                
+    return result
 
 
 def to_json(self) -> str:
