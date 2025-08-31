@@ -3,7 +3,7 @@ name = "beige-book"
 version = "0.1.0"
 description = "Collect audio data from feeds"
 readme = "README.md"
-requires-python = "==3.13.5"
+requires-python = ">=3.11,<3.12"
 dependencies = [
     "torch",
     "feedparser",
@@ -15,6 +15,9 @@ dependencies = [
     "pytest>=8.4.1",
     "tabulate>=0.9.0",
     "protobuf",
+    "torchaudio",
+    "huggingface-hub",
+    "pyannote.audio>=3.1.0",
     "pinkhaus-models",
     "betterproto>=1.2.5",
     "uvicorn",
@@ -24,6 +27,9 @@ dependencies = [
 [project.scripts]
 transcribe = "beige_book.main:main"
 beige-book-server = "beige_book.run_api:main"
+beige-book = "beige_book.cli:main"
+beige-book-update-speakers = "beige_book.update_speaker_data:main"
+beige-book-match-voice = "beige_book.voice_matcher:main"
 
 [build-system]
 requires = ["hatchling"]

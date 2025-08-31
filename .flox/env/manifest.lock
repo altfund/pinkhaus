@@ -6,6 +6,9 @@
       "claude-code": {
         "pkg-path": "claude-code"
       },
+      "ffmpeg": {
+        "pkg-path": "ffmpeg"
+      },
       "git": {
         "pkg-path": "git"
       },
@@ -54,6 +57,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T00:28:04.987120Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": true,
@@ -83,6 +87,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T00:47:40.570845Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": true,
@@ -112,6 +117,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T01:07:25.297496Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": true,
@@ -141,6 +147,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T01:31:20.452798Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": true,
@@ -150,6 +157,154 @@
       ],
       "outputs": {
         "out": "/nix/store/0zcsmzpnxz30zj225ddbdgxv1p8ml524-claude-code-1.0.61"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ffmpeg",
+      "broken": false,
+      "derivation": "/nix/store/lhc3d03bmclcp701d0gaam8b68q9wnqr-ffmpeg-7.1.1.drv",
+      "description": "Complete, cross-platform solution to record, convert and stream audio and video",
+      "install_id": "ffmpeg",
+      "license": "[ LGPL-2.1-or-later, GPL-2.0-or-later, LGPL-3.0-or-later, GPL-3.0-or-later ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "ffmpeg-7.1.1",
+      "pname": "ffmpeg",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:28:05.355646Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "7.1.1",
+      "outputs_to_install": [
+        "bin",
+        "man"
+      ],
+      "outputs": {
+        "bin": "/nix/store/gkgrqbp39zvrbmkk1alq98sxxs0ra09i-ffmpeg-7.1.1-bin",
+        "data": "/nix/store/b8pdx5iq32fpg84pl8fplhgljlfg0mrz-ffmpeg-7.1.1-data",
+        "dev": "/nix/store/1abzm62nfgzmpw6s6npz1rin6ppfcqzg-ffmpeg-7.1.1-dev",
+        "doc": "/nix/store/q59425ijrbidn14py0vwx65h4zkq3snx-ffmpeg-7.1.1-doc",
+        "lib": "/nix/store/7zcgjn45sfnm41n2slc5wwv0r50jz4yc-ffmpeg-7.1.1-lib",
+        "man": "/nix/store/8dvz9qflvfzaq5gppmh8fzhs9qn8spjm-ffmpeg-7.1.1-man",
+        "out": "/nix/store/gc39pwvnpqsrn71bz63kakg7ylrfzmc7-ffmpeg-7.1.1"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ffmpeg",
+      "broken": false,
+      "derivation": "/nix/store/0ffvn2bs5fjwypphcpj36ifvfzqzahgx-ffmpeg-7.1.1.drv",
+      "description": "Complete, cross-platform solution to record, convert and stream audio and video",
+      "install_id": "ffmpeg",
+      "license": "[ LGPL-2.1-or-later, GPL-2.0-or-later, LGPL-3.0-or-later, GPL-3.0-or-later ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "ffmpeg-7.1.1",
+      "pname": "ffmpeg",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T00:47:41.213282Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "7.1.1",
+      "outputs_to_install": [
+        "bin",
+        "man"
+      ],
+      "outputs": {
+        "bin": "/nix/store/611i8s479ln8rf3j2fbbbq1l9hdk4i67-ffmpeg-7.1.1-bin",
+        "data": "/nix/store/1cfffndq9rf121jmw3nbl3mwkhihhp4v-ffmpeg-7.1.1-data",
+        "dev": "/nix/store/9avsfi3anri888m7mfpi3vs2agqbp93x-ffmpeg-7.1.1-dev",
+        "doc": "/nix/store/0rjaz9j0qd76jv0d1b4miv85kyn6vi6h-ffmpeg-7.1.1-doc",
+        "lib": "/nix/store/la9cjmn1y069ldhpzvdkg719hadb3rri-ffmpeg-7.1.1-lib",
+        "man": "/nix/store/wrjizy5ilzsnfkvcjqpprdrc9bi128y9-ffmpeg-7.1.1-man",
+        "out": "/nix/store/nrsbrmbnyz1cz4yq8irwl76n3qm90cnh-ffmpeg-7.1.1"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ffmpeg",
+      "broken": false,
+      "derivation": "/nix/store/f40irzprd71xlriwzbdb0mi4n8km5c42-ffmpeg-7.1.1.drv",
+      "description": "Complete, cross-platform solution to record, convert and stream audio and video",
+      "install_id": "ffmpeg",
+      "license": "[ LGPL-2.1-or-later, GPL-2.0-or-later, LGPL-3.0-or-later, GPL-3.0-or-later ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "ffmpeg-7.1.1",
+      "pname": "ffmpeg",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:07:25.668165Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "7.1.1",
+      "outputs_to_install": [
+        "bin",
+        "man"
+      ],
+      "outputs": {
+        "bin": "/nix/store/7m9y5qgxrpf6hl8q2gl4c1fmgabyngi1-ffmpeg-7.1.1-bin",
+        "data": "/nix/store/lvqs2k281yv6c9d629jxd4k6cyax64g2-ffmpeg-7.1.1-data",
+        "dev": "/nix/store/c1qnpg1sr7ka9ifb3asdgwry2x1bjy47-ffmpeg-7.1.1-dev",
+        "doc": "/nix/store/cdjqmy6i8lnsw9km19jk2aqjz9djqj1f-ffmpeg-7.1.1-doc",
+        "lib": "/nix/store/y94dz1xxvvwhmry0gy65abnh1kx6ipi4-ffmpeg-7.1.1-lib",
+        "man": "/nix/store/vdbyl17npnpjnwg5709fmnzsz1yb8y4l-ffmpeg-7.1.1-man",
+        "out": "/nix/store/29750146f2chlkanzpffvs21kcgfxlkx-ffmpeg-7.1.1"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "ffmpeg",
+      "broken": false,
+      "derivation": "/nix/store/19sa2g8q5y8ky1zdvah2kvy4pw79n9ci-ffmpeg-7.1.1.drv",
+      "description": "Complete, cross-platform solution to record, convert and stream audio and video",
+      "install_id": "ffmpeg",
+      "license": "[ LGPL-2.1-or-later, GPL-2.0-or-later, LGPL-3.0-or-later, GPL-3.0-or-later ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "name": "ffmpeg-7.1.1",
+      "pname": "ffmpeg",
+      "rev": "dc9637876d0dcc8c9e5e22986b857632effeb727",
+      "rev_count": 836203,
+      "rev_date": "2025-07-28T09:26:29Z",
+      "scrape_date": "2025-07-30T01:31:21.172723Z",
+      "stabilities": [
+        "staging",
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "7.1.1",
+      "outputs_to_install": [
+        "bin",
+        "man"
+      ],
+      "outputs": {
+        "bin": "/nix/store/apsks1qb01pjn8q4g3ypl1rbsgz6vvyc-ffmpeg-7.1.1-bin",
+        "data": "/nix/store/h9idg6pqrfa1hv33ns3slkak416jfx9h-ffmpeg-7.1.1-data",
+        "dev": "/nix/store/18zwbjlmwnmxanrlhiwjs0ppcdv9phfj-ffmpeg-7.1.1-dev",
+        "doc": "/nix/store/sy8l9q3knk2x0h9ywa23v58aiv98j104-ffmpeg-7.1.1-doc",
+        "lib": "/nix/store/z5dk1v08a5w269l5i4702yrs5rqwp2g9-ffmpeg-7.1.1-lib",
+        "man": "/nix/store/y7vyzxw0pdaqdbn1ahz9bjp0hipnwnhv-ffmpeg-7.1.1-man",
+        "out": "/nix/store/83fdi7gqayqyr898xlplnck7qapz98nm-ffmpeg-7.1.1"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -170,6 +325,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T00:28:05.538108Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -200,6 +356,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T00:47:41.527135Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -231,6 +388,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T01:07:25.854540Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -261,6 +419,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T01:31:21.515818Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -292,6 +451,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T00:28:05.624816Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -321,6 +481,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T00:47:41.947414Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -350,6 +511,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T01:07:25.976298Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -379,6 +541,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T01:31:21.989538Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -408,6 +571,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T00:28:06.124112Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -440,6 +604,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T00:47:43.345276Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -472,6 +637,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T01:07:26.488332Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -504,6 +670,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T01:31:23.482900Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -536,6 +703,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T00:28:08.907478Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -565,6 +733,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T00:47:52.276829Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -594,6 +763,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T01:07:29.327733Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -623,6 +793,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T01:31:34.031429Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -652,6 +823,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T00:28:14.239870Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -681,6 +853,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T00:48:01.944362Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -710,6 +883,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T01:07:34.721390Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -739,6 +913,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T01:31:44.395472Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -768,6 +943,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T00:29:03.525700Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -797,6 +973,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T00:49:10.863162Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -826,6 +1003,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T01:08:24.142702Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -855,6 +1033,7 @@
       "rev_date": "2025-07-28T09:26:29Z",
       "scrape_date": "2025-07-30T01:32:56.820354Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
