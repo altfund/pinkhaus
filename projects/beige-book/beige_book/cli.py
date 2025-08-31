@@ -57,7 +57,13 @@ def args_to_request(args) -> TranscriptionRequest:
 
     # Create processing config
     processing_config = ProcessingConfig(
-        model=args.model, verbose=args.verbose, feed_options=feed_options
+        model=args.model, 
+        verbose=args.verbose, 
+        feed_options=feed_options,
+        enable_diarization=getattr(args, 'diarize', False),
+        enable_speaker_profiles=getattr(args, 'speaker_profiles', False),
+        embedding_method=getattr(args, 'embedding_method', 'speechbrain'),
+        hf_token=getattr(args, 'hf_token', os.getenv('HF_TOKEN'))
     )
 
     # Create database config if needed
@@ -231,6 +237,24 @@ def main():
         help="Process feeds in round-robin fashion (newest episode from each feed before moving to next)",
     )
 
+    # Speaker diarization and profiling arguments
+    parser.add_argument(
+        "--diarize",
+        action="store_true",
+        help="Enable speaker diarization (requires HF_TOKEN env var)",
+    )
+    parser.add_argument(
+        "--speaker-profiles",
+        action="store_true",
+        help="Enable speaker profiling (requires --diarize and --db-path)",
+    )
+    parser.add_argument(
+        "--embedding-method",
+        choices=["speechbrain", "pyannote", "mock"],
+        default="speechbrain",
+        help="Voice embedding extraction method (default: speechbrain)",
+    )
+
     args = parser.parse_args()
 
     # Setup logging
@@ -239,6 +263,21 @@ def main():
     # Validate database arguments
     if args.format == "sqlite" and not args.db_path:
         parser.error("--db-path is required when using sqlite format")
+    
+    # Validate speaker profiling arguments
+    if args.speaker_profiles and not args.diarize:
+        parser.error("--speaker-profiles requires --diarize to be enabled")
+    
+    if args.speaker_profiles and not args.db_path:
+        parser.error("--speaker-profiles requires --db-path for storing profiles")
+    
+    # Check for HF token if diarization is enabled
+    if args.diarize:
+        hf_token = os.getenv("HF_TOKEN")
+        if not hf_token:
+            parser.error("--diarize requires HF_TOKEN environment variable to be set")
+        # Store token for later use
+        args.hf_token = hf_token
 
     # Check if resumability is needed
     resumable_formats = {"text", "json", "table", "csv", "toml", "sqlite"}
