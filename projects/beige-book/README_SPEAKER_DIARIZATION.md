@@ -2,6 +2,21 @@
 
 This document explains how to use pyannote-audio for speaker diarization (identifying "who speaks when") and speaker identity tracking (recognizing recurring speakers) in podcast transcriptions.
 
+## ⚠️ IMPORTANT: License Requirements
+
+Before using speaker diarization, you MUST:
+
+1. **Accept the license conditions** for BOTH models:
+   - https://hf.co/pyannote/speaker-diarization-3.1
+   - https://hf.co/pyannote/segmentation-3.0
+   
+2. **Create a Hugging Face token**:
+   - Go to https://hf.co/settings/tokens
+   - Create a token with "read" permissions
+   - Set it as environment variable: `export HF_TOKEN='hf_...'`
+
+Without accepting BOTH model licenses, you'll get download errors even with a valid token!
+
 ## Quick Test
 
 **Run the test now that you have your HF_TOKEN set:**

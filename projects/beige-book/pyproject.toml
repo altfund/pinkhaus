@@ -26,6 +26,9 @@ dependencies = [
 [project.scripts]
 transcribe = "beige_book.main:main"
 beige-book-server = "beige_book.run_api:main"
+beige-book = "beige_book.cli:main"
+beige-book-update-speakers = "beige_book.update_speaker_data:main"
+beige-book-match-voice = "beige_book.voice_matcher:main"
 
 [build-system]
 requires = ["hatchling"]

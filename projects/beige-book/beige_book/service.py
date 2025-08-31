@@ -26,6 +26,7 @@ from .proto_models import (
 )
 from .feed_parser import FeedParser, FeedItem
 from .downloader import AudioDownloader
+from .audio_processor import AudioProcessor
 
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,7 @@ class TranscriptionService:
         self.database = None
         self.feed_parser = FeedParser()
         self.downloader = AudioDownloader()
+        self.audio_processor = None
 
     def process(self, request: TranscriptionRequest) -> TranscriptionResponse:
         """
@@ -93,11 +95,54 @@ class TranscriptionService:
             file_path = os.path.expanduser(request.input.source)
             file_path = os.path.abspath(file_path)
 
-            # Transcribe the file
-            result = self.transcriber.transcribe_file(
-                file_path, verbose=request.processing.verbose
-            )
-            response.results.append(result)
+            # Check if we should use AudioProcessor for diarization
+            if request.processing.enable_diarization and request.output.database:
+                # Initialize database if needed
+                if not self.database:
+                    db_config = request.output.database
+                    self.database = TranscriptionDatabase(db_config.db_path)
+                    self.database.create_tables(db_config.metadata_table, db_config.segments_table)
+                    
+                    if request.processing.enable_speaker_profiles:
+                        self.database.create_speaker_identity_tables()
+                
+                # Initialize AudioProcessor if not already done
+                if not self.audio_processor:
+                    model_name = self.MODEL_NAME_MAP.get(request.processing.model, "tiny")
+                    self.audio_processor = AudioProcessor(
+                        db=self.database,
+                        model_name=model_name,
+                        hf_token=request.processing.hf_token,
+                        embedding_method=request.processing.embedding_method or "speechbrain",
+                        matcher_threshold=0.85
+                    )
+                
+                # Process with AudioProcessor (handles everything)
+                # For single files, use the file path as feed URL
+                feed_url = f"file://{file_path}"
+                process_result = self.audio_processor.process_audio_file(
+                    audio_path=file_path,
+                    feed_url=feed_url,
+                    enable_diarization=True,
+                    create_new_profiles=request.processing.enable_speaker_profiles,
+                    verbose=request.processing.verbose
+                )
+                
+                result = process_result['transcription']
+                response.results.append(result)
+                
+                # No need to call _handle_output for SQLite as AudioProcessor already saved
+                if request.output.format == OutputConfigFormat.FORMAT_SQLITE:
+                    return response
+            else:
+                # Standard transcription without diarization
+                result = self.transcriber.transcribe_file(
+                    file_path, 
+                    verbose=request.processing.verbose,
+                    enable_diarization=request.processing.enable_diarization,
+                    hf_token=request.processing.hf_token
+                )
+                response.results.append(result)
 
             # Handle output
             self._handle_output(request, [result], response)
@@ -150,6 +195,11 @@ class TranscriptionService:
                 if request.output.database
                 else "transcription_segments",
             )
+            
+            # Create speaker identity tables if speaker profiling is enabled
+            if request.processing.enable_speaker_profiles:
+                db.create_speaker_identity_tables()
+                
             self.database = db
 
         # Parse feeds
@@ -241,15 +291,41 @@ class TranscriptionService:
         )
 
         try:
-            # Transcribe
-            result = self.transcriber.transcribe_file(
-                temp_path,
-                verbose=(request.processing.verbose and not request.output.destination),
-            )
+            # Check if we should use AudioProcessor for diarization
+            if request.processing.enable_diarization and self.database:
+                # Initialize AudioProcessor if not already done
+                if not self.audio_processor:
+                    model_name = self.MODEL_NAME_MAP.get(request.processing.model, "tiny")
+                    self.audio_processor = AudioProcessor(
+                        db=self.database,
+                        model_name=model_name,
+                        hf_token=request.processing.hf_token,
+                        embedding_method=request.processing.embedding_method or "speechbrain",
+                        matcher_threshold=0.85
+                    )
+                
+                # Process with AudioProcessor (handles everything including database save)
+                process_result = self.audio_processor.process_audio_file(
+                    audio_path=temp_path,
+                    feed_url=item.feed_url,
+                    enable_diarization=True,
+                    create_new_profiles=request.processing.enable_speaker_profiles,
+                    verbose=(request.processing.verbose and not request.output.destination)
+                )
+                
+                result = process_result['transcription']
+            else:
+                # Standard transcription without diarization
+                result = self.transcriber.transcribe_file(
+                    temp_path,
+                    verbose=(request.processing.verbose and not request.output.destination),
+                    enable_diarization=request.processing.enable_diarization,
+                    hf_token=request.processing.hf_token
+                )
 
-            # Save to database if configured
-            if self.database:
-                self._save_to_database(result, item, request)
+                # Save to database if configured
+                if self.database:
+                    self._save_to_database(result, item, request)
 
             # Add feed metadata to result for output formatting
             result.feed_metadata = {

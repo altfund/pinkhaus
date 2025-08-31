@@ -46,6 +46,8 @@ class Segment(betterproto.Message):
     start_ms: int = betterproto.int64_field(1)
     end_ms: int = betterproto.int64_field(2)
     text: str = betterproto.string_field(3)
+    speaker: str = betterproto.string_field(4)
+    confidence: float = betterproto.float_field(5)
 
 
 @dataclass
@@ -108,6 +110,10 @@ class ProcessingConfig(betterproto.Message):
     model: "ProcessingConfigModel" = betterproto.enum_field(1)
     verbose: bool = betterproto.bool_field(2)
     feed_options: "FeedOptions" = betterproto.message_field(3)
+    enable_diarization: bool = betterproto.bool_field(4)
+    enable_speaker_profiles: bool = betterproto.bool_field(5)
+    embedding_method: str = betterproto.string_field(6)
+    hf_token: str = betterproto.string_field(7)
 
 
 @dataclass
