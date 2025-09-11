@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ominari-postgres-hybrid
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ominari_user
+      POSTGRES_PASSWORD: ominari_2025_secure
+      POSTGRES_DB: ominari_production
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
+      POSTGRES_HOST_AUTH_METHOD: md5
+    ports:
+      - "5433:5432"  # Different port to avoid conflict
+    volumes:
+      - ominari_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ominari_user -d ominari_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      postgres
+      -c shared_buffers=1GB
+      -c effective_cache_size=3GB
+      -c maintenance_work_mem=256MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=26MB
+      -c min_wal_size=512MB
+      -c max_wal_size=2GB
+      -c max_worker_processes=4
+      -c max_parallel_workers_per_gather=2
+      -c max_parallel_workers=4
+
+  redis-ominari:
+    image: redis:7-alpine
+    container_name: ominari-redis-hybrid
+    restart: unless-stopped
+    ports:
+      - "6380:6379"  # Different port
+    volumes:
+      - ominari_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+
+volumes:
+  ominari_postgres_data:
+    driver: local
+  ominari_redis_data:
+    driver: local

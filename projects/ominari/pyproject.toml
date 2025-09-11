@@ -9,7 +9,7 @@ dependencies = [
 	"eth_utils==5.1.0",
 	"fuzzywuzzy==0.18.0",
 	"grpcio>=1.74.0",
-    "grpcio-tools>=1.74.0",
+	"grpcio-tools>=1.74.0",
 	"ipython==8.12.3",
 	"Markdown==3.8.2",
 	"markdown2==2.5.4",
@@ -23,6 +23,25 @@ dependencies = [
 	"Requests==2.32.4",
 	"scipy==1.16.1",
 	"SQLAlchemy==2.0.36",
+	"psutil>=5.9.0",
+	"fastapi>=0.100.0",
+	"uvicorn>=0.23.0",
+	"pydantic>=2.0.0",
+	"pydantic-settings>=2.0.0",
+	"aiohttp>=3.8.0",
+	"gql>=3.4.0",
+	"web3>=6.0.0",
+	"prometheus-client>=0.17.0",
+	"pytest>=7.0.0",
+	"pytest-asyncio>=0.21.0",
+	"scikit-learn>=1.3.0",
+	"seaborn>=0.12.0",
+	"PyYAML>=6.0.0",
+	"pinkhaus-models",
+	"flask>=3.1.2",
+	"flask-socketio>=5.5.1",
+	"redis>=6.4.0",
+	"psycopg2-binary>=2.9.10",
 ]
 
 [project.scripts]
@@ -39,7 +58,7 @@ packages = ["ominari"]
 allow-direct-references = true
 
 [tool.uv.sources]
-# pinkhaus-models = { path = "../pinkhaus-models", editable = true }
+pinkhaus-models = { path = "../pinkhaus-models" }
 
 [dependency-groups]
 dev = [
