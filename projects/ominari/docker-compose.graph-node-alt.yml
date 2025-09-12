@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: ominari-graph-postgres
+    ports:
+      - '15432:5432'  # Changed from 5432
+    environment:
+      POSTGRES_USER: graph
+      POSTGRES_PASSWORD: graph
+      POSTGRES_DB: graph
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  ipfs:
+    image: ipfs/go-ipfs:v0.17.0
+    container_name: ominari-graph-ipfs
+    ports:
+      - '15001:5001'  # Changed from 5001
+      - '18080:8080'  # Changed from 8080
+    volumes:
+      - ipfs-data:/data/ipfs
+    restart: unless-stopped
+
+  graph-node:
+    image: graphprotocol/graph-node:latest
+    container_name: ominari-graph-node
+    ports:
+      - '18000:8000'  # HTTP (changed from 8000)
+      - '18020:8020'  # JSON-RPC (changed from 8020)
+      - '18030:8030'  # Index node (changed from 8030)
+      - '18040:8040'  # Metrics (changed from 8040)
+    depends_on:
+      - postgres
+      - ipfs
+    environment:
+      postgres_host: postgres
+      postgres_user: graph
+      postgres_pass: graph
+      postgres_db: graph
+      ipfs: ipfs:5001
+      # Configure blockchain connections
+      # Replace with your actual RPC endpoints
+      ethereum: 'optimism:${OPTIMISM_RPC_URL:-https://mainnet.optimism.io}'
+      # Note: Graph Node currently only supports one network at a time
+      # To support multiple networks, you would need multiple Graph Node instances
+      GRAPH_LOG: info
+      GRAPH_ETHEREUM_CLEANUP_BLOCKS: "true"
+      GRAPH_ETHEREUM_ANCESTOR_COUNT: "50"
+      # Performance tuning
+      GRAPH_ETHEREUM_MAX_EVENT_ONLY_RANGE: "10000"
+      GRAPH_QUERY_CACHE_BLOCKS: "1"
+      GRAPH_QUERY_CACHE_MAX_MEM: "1000"
+      # Metrics
+      GRAPH_GRAPHQL_QUERY_TIMEOUT: "300"
+    restart: unless-stopped
+    volumes:
+      - ./data/graph-node:/data
+
+volumes:
+  postgres-data:
+  ipfs-data:

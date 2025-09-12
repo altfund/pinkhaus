@@ -1,0 +1,26 @@
+
+BETTING SESSION REPORT
+=======================
+
+Session Window: 2025-09-08 10:25:54.037109+00:00 → 2025-09-08 16:00:00+00:00  (duration: 0 days 05:34:05.962891)
+
+Parameters:
+  • Kelly bankroll: 1.0
+  • Execution bankroll: 8785.457166400789
+  • Kelly fraction: 0.25
+  • Caps: game=0.25, bet=0.25, game‐market=0.1
+  • Min bets: 10.0 abs, 0.0010 pct
+
+Games Covered: Equatorial Guinea_vs_Tunisia
+
+Expected Return (log): 0.0594
+Expected Multiplier: 1.061x
+Volatility: 0.0209
+Sharpe: 2.8436
+Total Stake: 878.55
+
+Bets to Place:
+                                                         source_id unified_market_type normalized_outcome  normalized_line                  market_name     odds  probability      stake  stake_fraction         trim_reason  original_stake_fraction  original_stake               league_name        bookmaker  safebox_fee  skew_fee  total_fee_pct  adjusted_odds  implied_raw  fee_pct  execution_stake  fee_amount
+0x3230323530393038444533444242304200000000000000000000000000000000                 h2h               Home              0.0 Equatorial Guinea_vs_Tunisia 3.483039     0.275956 294.522868        0.033524 cap_per_game_market                 0.335239        0.335239 FIFA World Cup Qualifiers overtime_markets         0.02      0.01           0.03       3.381591    29.571877     0.03       303.358555    8.835686
+0x3230323530393038444533444242304200000000000000000000000000000000                 h2h               Draw              0.0 Equatorial Guinea_vs_Tunisia 2.905740     0.335782 300.424248        0.034196 cap_per_game_market                 0.341956        0.341956 FIFA World Cup Qualifiers overtime_markets         0.02      0.01           0.03       2.821107    35.447084     0.03       309.436975    9.012727
+0x3230323530393038444533444242304200000000000000000000000000000000                 h2h               Away              0.0 Equatorial Guinea_vs_Tunisia 1.933953     0.486995 283.598600        0.032280 cap_per_game_market                 0.322805        0.322805 FIFA World Cup Qualifiers overtime_markets         0.02      0.01           0.03       1.877624    53.258803     0.03       292.106558    8.507958

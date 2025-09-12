@@ -36,3 +36,12 @@ event.listen(engine, "connect", _configure_sqlite)
 
 # Session factory
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+
+def get_db():
+    """Dependency to get database session."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

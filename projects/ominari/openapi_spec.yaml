@@ -1,0 +1,725 @@
+openapi: 3.0.3
+info:
+  title: Ominari Trading System API
+  description: |
+    The Ominari Trading System is a comprehensive sports betting platform with paper trading,
+    risk management, and multi-signal strategies. This API provides access to trading operations,
+    market data, performance metrics, and system monitoring.
+  version: 1.0.0
+  contact:
+    name: Ominari Development Team
+    email: support@ominari.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: http://localhost:8888
+    description: Web monitor server
+  - url: https://api.ominari.com
+    description: Production server
+
+tags:
+  - name: System
+    description: System status and health endpoints
+  - name: Trading
+    description: Trading operations and positions
+  - name: Markets
+    description: Market data and analysis
+  - name: Performance
+    description: Performance metrics and analytics
+  - name: Dashboard
+    description: Dashboard and UI data endpoints
+
+paths:
+  /:
+    get:
+      summary: Main dashboard page
+      description: Returns the HTML dashboard interface
+      tags:
+        - Dashboard
+      responses:
+        '200':
+          description: HTML dashboard page
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api/status:
+    get:
+      summary: Get system status
+      description: Returns current system status including health checks and component states
+      tags:
+        - System
+      responses:
+        '200':
+          description: System status information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStatus'
+
+  /api/database-stats:
+    get:
+      summary: Get database statistics
+      description: Returns statistics about the database including table sizes and record counts
+      tags:
+        - System
+      responses:
+        '200':
+          description: Database statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseStats'
+
+  /api/strategy:
+    get:
+      summary: Get current strategy configuration
+      description: Returns the current Kelly strategy parameters and risk settings
+      tags:
+        - Trading
+      responses:
+        '200':
+          description: Strategy configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StrategyConfig'
+
+  /api/performance:
+    get:
+      summary: Get performance metrics
+      description: |
+        Returns comprehensive performance metrics for the trading system including:
+        - P&L statistics
+        - Win rates
+        - Sharpe ratio
+        - Drawdown metrics
+        - Trade statistics by sport and strategy
+      tags:
+        - Performance
+      parameters:
+        - name: session_id
+          in: query
+          description: Paper trading session ID (optional)
+          schema:
+            type: string
+        - name: days
+          in: query
+          description: Number of days to analyze
+          schema:
+            type: integer
+            default: 30
+      responses:
+        '200':
+          description: Performance metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceMetrics'
+
+  /api/trading/status:
+    get:
+      summary: Get trading system status
+      description: Returns current trading system operational status
+      tags:
+        - Trading
+      responses:
+        '200':
+          description: Trading status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradingStatus'
+
+  /api/trading/portfolio:
+    get:
+      summary: Get portfolio overview
+      description: Returns current portfolio state including positions, exposure, and risk metrics
+      tags:
+        - Trading
+      parameters:
+        - name: session_id
+          in: query
+          description: Paper trading session ID
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Portfolio overview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioOverview'
+
+  /api/trading/positions:
+    get:
+      summary: Get open positions
+      description: Returns list of all open trading positions with details
+      tags:
+        - Trading
+      parameters:
+        - name: session_id
+          in: query
+          description: Paper trading session ID
+          schema:
+            type: string
+        - name: include_closed
+          in: query
+          description: Include closed positions
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of positions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  positions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Position'
+                  total_exposure:
+                    type: number
+                  position_count:
+                    type: integer
+
+  /api/trading/positions/{position_id}/close:
+    post:
+      summary: Close a position
+      description: Manually close an open position
+      tags:
+        - Trading
+      parameters:
+        - name: position_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                final_odds:
+                  type: number
+                  description: Final odds for settlement
+      responses:
+        '200':
+          description: Position closed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionCloseResult'
+        '404':
+          description: Position not found
+
+  /api/trading/execute:
+    post:
+      summary: Execute trading recommendations
+      description: Generate and optionally execute trading recommendations based on current market conditions
+      tags:
+        - Trading
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dry_run:
+                  type: boolean
+                  default: true
+                  description: If true, only generate recommendations without executing
+                session_id:
+                  type: string
+                  description: Paper trading session ID
+      responses:
+        '200':
+          description: Trading execution result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradingExecutionResult'
+
+  /api/trading/recent:
+    get:
+      summary: Get recent trading activity
+      description: Returns recent bets, signals, and market activity
+      tags:
+        - Trading
+      parameters:
+        - name: hours
+          in: query
+          description: Number of hours to look back
+          schema:
+            type: integer
+            default: 24
+      responses:
+        '200':
+          description: Recent trading activity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecentActivity'
+
+  /api/trading/logs:
+    get:
+      summary: Get trading logs
+      description: Returns recent trading system logs
+      tags:
+        - Trading
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of log entries
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: Trading logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        timestamp:
+                          type: string
+                          format: date-time
+                        level:
+                          type: string
+                          enum: [INFO, WARNING, ERROR, DEBUG]
+                        message:
+                          type: string
+
+  /api/trading/sessions:
+    get:
+      summary: Get paper trading sessions
+      description: Returns list of all paper trading sessions
+      tags:
+        - Trading
+      responses:
+        '200':
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TradingSession'
+
+  /api/trading/evaluation-stats:
+    get:
+      summary: Get market evaluation statistics
+      description: Returns statistics about current market opportunities and Kelly recommendations
+      tags:
+        - Markets
+      responses:
+        '200':
+          description: Evaluation statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationStats'
+
+  /api/dashboard/unified:
+    get:
+      summary: Get unified dashboard data
+      description: Returns all data needed for the main dashboard display
+      tags:
+        - Dashboard
+      parameters:
+        - name: session_id
+          in: query
+          description: Paper trading session ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Unified dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnifiedDashboard'
+
+components:
+  schemas:
+    SystemStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, error]
+        uptime_hours:
+          type: number
+        database_connected:
+          type: boolean
+        trading_active:
+          type: boolean
+        last_check:
+          type: string
+          format: date-time
+        version:
+          type: string
+
+    DatabaseStats:
+      type: object
+      properties:
+        total_markets:
+          type: integer
+        total_odds:
+          type: integer
+        total_bets:
+          type: integer
+        active_markets:
+          type: integer
+        database_size_mb:
+          type: number
+        tables:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              row_count:
+                type: integer
+
+    StrategyConfig:
+      type: object
+      properties:
+        kelly_fraction:
+          type: number
+          description: Kelly criterion fraction (0-1)
+        min_bet:
+          type: number
+          description: Minimum bet size in dollars
+        min_bet_pct:
+          type: number
+          description: Minimum bet as percentage of bankroll
+        bankroll:
+          type: number
+          description: Total bankroll amount
+        cap_per_game:
+          type: number
+          description: Maximum exposure per game as fraction
+        cap_per_bet:
+          type: number
+          description: Maximum single bet as fraction
+        biases:
+          type: object
+          properties:
+            favorite:
+              type: number
+            longshot:
+              type: number
+            draw:
+              type: number
+
+    PerformanceMetrics:
+      type: object
+      properties:
+        total_pnl:
+          type: number
+        win_rate:
+          type: number
+        total_bets:
+          type: integer
+        winning_bets:
+          type: integer
+        losing_bets:
+          type: integer
+        avg_stake:
+          type: number
+        avg_odds:
+          type: number
+        sharpe_ratio:
+          type: number
+        max_drawdown:
+          type: number
+        current_drawdown:
+          type: number
+        best_day:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date
+            pnl:
+              type: number
+        worst_day:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date
+            pnl:
+              type: number
+        by_sport:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              pnl:
+                type: number
+              bets:
+                type: integer
+              win_rate:
+                type: number
+
+    TradingStatus:
+      type: object
+      properties:
+        active:
+          type: boolean
+        mode:
+          type: string
+          enum: [paper, live, simulation]
+        current_session_id:
+          type: string
+        last_trade_time:
+          type: string
+          format: date-time
+
+    PortfolioOverview:
+      type: object
+      properties:
+        total_value:
+          type: number
+        cash_balance:
+          type: number
+        positions_value:
+          type: number
+        total_exposure:
+          type: number
+        open_positions:
+          type: integer
+        daily_pnl:
+          type: number
+        daily_pnl_pct:
+          type: number
+        total_pnl:
+          type: number
+        total_pnl_pct:
+          type: number
+        max_drawdown:
+          type: number
+        current_drawdown:
+          type: number
+
+    Position:
+      type: object
+      properties:
+        id:
+          type: string
+        session_id:
+          type: string
+        market_id:
+          type: string
+        sport:
+          type: string
+        league:
+          type: string
+        home_team:
+          type: string
+        away_team:
+          type: string
+        market_type:
+          type: string
+        outcome:
+          type: string
+        odds:
+          type: number
+        amount:
+          type: number
+        potential_payout:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [pending, open, won, lost, void]
+        pnl:
+          type: number
+
+    PositionCloseResult:
+      type: object
+      properties:
+        position_id:
+          type: string
+        final_odds:
+          type: number
+        result:
+          type: string
+          enum: [won, lost]
+        pnl:
+          type: number
+        closed_at:
+          type: string
+          format: date-time
+
+    TradingExecutionResult:
+      type: object
+      properties:
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              market_id:
+                type: string
+              market_name:
+                type: string
+              outcome:
+                type: string
+              odds:
+                type: number
+              probability:
+                type: number
+              edge:
+                type: number
+              stake:
+                type: number
+              kelly_fraction:
+                type: number
+        executed:
+          type: array
+          items:
+            type: object
+            properties:
+              bet_id:
+                type: string
+              market_id:
+                type: string
+              stake:
+                type: number
+              odds:
+                type: number
+        total_staked:
+          type: number
+        expected_return:
+          type: number
+
+    RecentActivity:
+      type: object
+      properties:
+        recent_bets:
+          type: array
+          items:
+            type: object
+            properties:
+              time:
+                type: string
+                format: date-time
+              market:
+                type: string
+              outcome:
+                type: string
+              stake:
+                type: number
+              odds:
+                type: number
+        recent_signals:
+          type: array
+          items:
+            type: object
+            properties:
+              time:
+                type: string
+                format: date-time
+              signal_name:
+                type: string
+              market:
+                type: string
+              probability:
+                type: number
+        active_markets:
+          type: integer
+
+    TradingSession:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        initial_bankroll:
+          type: number
+        current_bankroll:
+          type: number
+        total_pnl:
+          type: number
+        total_pnl_pct:
+          type: number
+        status:
+          type: string
+          enum: [active, completed, paused]
+        stats:
+          type: object
+          properties:
+            total_bets:
+              type: integer
+            winning_bets:
+              type: integer
+            win_rate:
+              type: number
+
+    EvaluationStats:
+      type: object
+      properties:
+        open_markets:
+          type: integer
+        upcoming_games:
+          type: integer
+        next_game_time:
+          type: string
+          format: date-time
+        recommended_bets:
+          type: integer
+        total_edge:
+          type: number
+        expected_return:
+          type: number
+
+    UnifiedDashboard:
+      type: object
+      properties:
+        portfolio:
+          $ref: '#/components/schemas/PortfolioOverview'
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Position'
+        recent_activity:
+          $ref: '#/components/schemas/RecentActivity'
+        performance_metrics:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        system_status:
+          $ref: '#/components/schemas/SystemStatus'
+        current_time:
+          type: string
+          format: date-time

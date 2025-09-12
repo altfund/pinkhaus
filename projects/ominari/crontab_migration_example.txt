@@ -1,0 +1,22 @@
+# Ominari Data Collection Schedule - Migration Example
+# 
+# This shows how to gradually migrate from old to new collector
+# Start with mostly old collector, gradually increase new collector usage
+
+# Initial phase (week 1) - Test new collector at low-traffic times
+0 3 * * * cd /path/to/ominari && python migration_tool.py --mode new >> logs/new_collector.log 2>&1
+*/5 * * * * cd /path/to/ominari && python free_data_pull.py >> scheduler_output.log 2>&1
+
+# Migration phase (week 2) - Run both and compare
+0 */6 * * * cd /path/to/ominari && python migration_tool.py --mode compare >> logs/comparison.log 2>&1
+*/5 * * * * cd /path/to/ominari && python free_data_pull.py >> scheduler_output.log 2>&1
+
+# Testing phase (week 3) - Increase new collector usage
+*/15 * * * * cd /path/to/ominari && python free_data_pull_v2.py >> scheduler_output.log 2>&1
+0,30 * * * * cd /path/to/ominari && python free_data_pull.py >> scheduler_output.log 2>&1
+
+# Final phase (week 4) - Switch to new collector
+*/5 * * * * cd /path/to/ominari && python free_data_pull_v2.py >> scheduler_output.log 2>&1
+
+# Monitoring - Check data source status daily
+0 0 * * * cd /path/to/ominari && python -c "import asyncio; from data_source_manager import DataSourceManager; m = DataSourceManager(); asyncio.run(m.initialize()); print(asyncio.run(m.get_status()))" >> logs/source_status.log 2>&1

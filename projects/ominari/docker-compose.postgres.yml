@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ominari-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ominari_user
+      POSTGRES_PASSWORD: ominari_2025_secure
+      POSTGRES_DB: ominari_production
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
+      POSTGRES_HOST_AUTH_METHOD: md5
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres_init:/docker-entrypoint-initdb.d
+    networks:
+      - ominari-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ominari_user -d ominari_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      postgres
+      -c shared_buffers=2GB
+      -c effective_cache_size=6GB
+      -c maintenance_work_mem=512MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=52MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c max_worker_processes=8
+      -c max_parallel_workers_per_gather=4
+      -c max_parallel_workers=8
+      -c max_parallel_maintenance_workers=4
+      -c log_statement=mod
+      -c log_duration=off
+      -c log_lock_waits=on
+      -c log_temp_files=0
+      -c autovacuum_max_workers=4
+      -c autovacuum_naptime=30s
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ominari-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@ominari.com
+      PGADMIN_DEFAULT_PASSWORD: pgadmin_2025_secure
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - ominari-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - tools
+
+  redis:
+    image: redis:7-alpine
+    container_name: ominari-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ominari-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 4gb
+      --maxmemory-policy allkeys-lru
+      --tcp-backlog 511
+      --timeout 0
+      --tcp-keepalive 300
+
+  # PostgreSQL backup service
+  postgres-backup:
+    image: postgres:15-alpine
+    container_name: ominari-postgres-backup
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ominari_user
+      POSTGRES_PASSWORD: ominari_2025_secure
+      POSTGRES_DB: ominari_production
+    volumes:
+      - ./backups:/backups
+    networks:
+      - ominari-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - backup
+    command: >
+      sh -c "
+      while true; do
+        echo 'Starting backup...'
+        PGPASSWORD=$$POSTGRES_PASSWORD pg_dump -h $$POSTGRES_HOST -U $$POSTGRES_USER -d $$POSTGRES_DB | gzip > /backups/backup_$$(date +%Y%m%d_%H%M%S).sql.gz
+        echo 'Backup completed'
+        # Keep only last 7 days of backups
+        find /backups -name 'backup_*.sql.gz' -mtime +7 -delete
+        # Sleep for 24 hours
+        sleep 86400
+      done
+      "
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  ominari-network:
+    external: true

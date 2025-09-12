@@ -1,0 +1,45 @@
+groups:
+- interval: 30s
+  name: ominari_alerts
+  rules:
+  - alert: APIDown
+    annotations:
+      description: API has been down for more than 1 minute
+      summary: Ominari API is down
+    expr: up{job="ominari_api"} == 0
+    for: 1m
+    labels:
+      severity: critical
+  - alert: HighErrorRate
+    annotations:
+      description: Error rate is above 5% for 5 minutes
+      summary: High API error rate
+    expr: rate(ominari_api_errors_total[5m]) > 0.05
+    for: 5m
+    labels:
+      severity: warning
+  - alert: DatabaseSlow
+    annotations:
+      description: Database queries taking more than 1 second
+      summary: Database queries are slow
+    expr: ominari_database_query_duration_seconds > 1
+    for: 5m
+    labels:
+      severity: warning
+  - alert: HighMemoryUsage
+    annotations:
+      description: Less than 10% memory available
+      summary: High memory usage
+    expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.1
+    for: 5m
+    labels:
+      severity: warning
+  - alert: DiskSpaceLow
+    annotations:
+      description: Less than 10% disk space available
+      summary: Low disk space
+    expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes
+      < 0.1
+    for: 5m
+    labels:
+      severity: critical

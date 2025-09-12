@@ -211,6 +211,25 @@ def calculate_kelly_stakes_with_exclusivity(
     if correlation_matrix is None:
         correlation_matrix = np.eye(n)
 
+    # Debug: Check for potential issues before optimization
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Check for degenerate exclusivity groups
+    for group_idx, indices in exclusivity_groups.items():
+        group_probs = bets_df.iloc[indices]["probability"].values
+        if np.all(group_probs == 0):
+            logger.warning(f"Exclusivity group {group_idx} has all zero probabilities")
+        total_prob = np.sum(group_probs)
+        if total_prob > 1.0:
+            logger.warning(f"Exclusivity group {group_idx} has total probability {total_prob:.3f} > 1")
+    
+    # Check for invalid values
+    if np.any(bets_df["odds"].values <= 0):
+        logger.error("Found odds <= 0")
+    if np.any(np.isnan(bets_df["probability"].values)):
+        logger.error("Found NaN probabilities")
+
     result = minimize(
         kelly_objective,
         x0,
@@ -221,27 +240,47 @@ def calculate_kelly_stakes_with_exclusivity(
     )
 
     if not result.success:
+        # Enhanced error message with diagnostics
+        logger.error(f"Optimization failed: {result.message}")
+        logger.error(f"Number of bets: {n}")
+        logger.error(f"Number of constraints: {len(constraints)}")
+        logger.error(f"Number of exclusivity groups: {len(exclusivity_groups)}")
+        
+        # Check constraint violations
+        for i, constraint in enumerate(constraints):
+            try:
+                value = constraint['fun'](x0)
+                if value < 0:
+                    logger.error(f"Constraint {i} violated at x0: value={value}")
+            except:
+                pass
+                
         raise ValueError("Optimization failed: " + result.message)
 
-    bets_df = bets_df.copy()
-    bets_df["stake_fraction"] = result.x
-    bets_df["stake"] = bankroll * bets_df["stake_fraction"]
-
-    return bets_df[
-        [
-            "source_id",
-            "unified_market_type",
-            "normalized_outcome",
-            "normalized_line",
-            "market_name",
-            "league_name",
-            "bookmaker",
-            "odds",
-            "probability",
-            "stake",
-            "stake_fraction",
-        ]
+    # Preserve all columns, just add stake and stake_fraction
+    result_df = bets_df.copy()
+    result_df["stake_fraction"] = result.x
+    result_df["stake"] = bankroll * result_df["stake_fraction"]
+    
+    # Ensure we have the expected columns
+    expected_cols = [
+        "source_id",
+        "unified_market_type",
+        "normalized_outcome",
+        "normalized_line",
+        "market_name",
+        "league_name",
+        "bookmaker",
+        "odds",
+        "probability",
+        "stake",
+        "stake_fraction",
     ]
+    
+    # Add any additional columns that exist (like edge)
+    extra_cols = [col for col in bets_df.columns if col not in expected_cols and col not in ["stake", "stake_fraction"]]
+    
+    return result_df[expected_cols + extra_cols]
 
 
 # ===== Example usage =====
