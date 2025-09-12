@@ -1,0 +1,53 @@
+# Ignore large files and directories
+sport_odds.db-*
+*.log
+*.pid
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+.git/
+.gitignore
+README.md
+*.md
+
+# Ignore development artifacts
+.env
+.env.local
+.venv/
+venv/
+node_modules/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Ignore backup and report directories
+backtests/
+betting_reports/
+paper_trading_reports/
+logs/
+*.out
+*.backup*
+
+# Ignore Docker files (except Dockerfile)
+docker-compose.override.yml
+.docker/
+
+# Ignore monitoring data
+monitoring/data/
+grafana_data/
+prometheus_data/
+
+# Keep these patterns but ignore content
+portfolio_plots/
+subgraphs/
+
+# Ignore large SQLite databases but keep schema
+sport_odds.db
+*.db-wal
+*.db-shm
+
+# Ignore test outputs
+test_*.py.out
+benchmark_*.out

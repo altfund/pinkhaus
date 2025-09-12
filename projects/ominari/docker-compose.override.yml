@@ -1,0 +1,82 @@
+# Docker Compose Override for Development
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.override.yml up
+
+version: '3.8'
+
+services:
+  # Development overrides for main trading system
+  ominari-trading:
+    build:
+      context: .
+      target: builder  # Use development stage if available
+    volumes:
+      - .:/app  # Mount source code for development
+      - /app/.venv  # Preserve virtual environment
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    ports:
+      - "8001:8000"  # Different port to avoid conflicts
+
+  # Development blockchain sync
+  ominari-blockchain:
+    volumes:
+      - .:/app
+      - /app/.venv
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - BLOCKCHAIN_SYNC_INTERVAL=30  # Faster sync in dev
+
+  # Development paper trading
+  ominari-paper:
+    volumes:
+      - .:/app
+      - /app/.venv
+    environment:
+      - ENVIRONMENT=development
+      - PAPER_TRADING_BANKROLL=1000  # Smaller bankroll for testing
+
+  # Development database with faster settings
+  postgres:
+    environment:
+      - POSTGRES_DB=ominari_dev
+    command: >
+      postgres -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c max_connections=100
+      -c shared_buffers=128MB
+
+  # Development Redis with debugging
+  redis:
+    command: redis-server --appendonly yes --loglevel debug
+
+# Additional development services
+  # PgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ominari-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@ominari.dev
+      PGADMIN_DEFAULT_PASSWORD: admin_password
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    networks:
+      - ominari-network
+    profiles:
+      - dev-tools
+
+  # Redis Commander for cache management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: ominari-redis-commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - ominari-network
+    profiles:
+      - dev-tools

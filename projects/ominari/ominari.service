@@ -1,0 +1,26 @@
+[Unit]
+Description=Ominari Trading System Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=%u
+WorkingDirectory=/home/ess/Documents/apps/ominari/projects/ominari
+Environment="PATH=/home/ess/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/usr/bin/uv run python ominari_daemon.py start
+ExecStop=/usr/bin/uv run python ominari_daemon.py stop
+Restart=on-failure
+RestartSec=30
+StandardOutput=append:/home/ess/Documents/apps/ominari/projects/ominari/ominari_system.log
+StandardError=append:/home/ess/Documents/apps/ominari/projects/ominari/ominari_system_error.log
+
+# Resource limits
+MemoryLimit=2G
+CPUQuota=80%
+
+# Security
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

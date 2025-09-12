@@ -1,0 +1,150 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Ominari Trading System",
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "type": "graph",
+        "title": "API Request Rate",
+        "targets": [
+          {
+            "expr": "rate(ominari_api_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "type": "graph",
+        "title": "API Response Time",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(ominari_api_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
+        "type": "graph",
+        "title": "Trading Performance",
+        "targets": [
+          {
+            "expr": "ominari_portfolio_value",
+            "legendFormat": "Portfolio Value"
+          },
+          {
+            "expr": "ominari_total_pnl",
+            "legendFormat": "Total P&L"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        },
+        "type": "graph",
+        "title": "System Resources",
+        "targets": [
+          {
+            "expr": "100 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100)",
+            "legendFormat": "Memory Usage %"
+          },
+          {
+            "expr": "100 - (avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "CPU Usage %"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 16
+        },
+        "type": "stat",
+        "title": "Open Positions",
+        "targets": [
+          {
+            "expr": "ominari_open_positions"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 16
+        },
+        "type": "stat",
+        "title": "Win Rate",
+        "targets": [
+          {
+            "expr": "ominari_win_rate * 100"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 16
+        },
+        "type": "stat",
+        "title": "Active Markets",
+        "targets": [
+          {
+            "expr": "ominari_active_markets"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 18,
+          "y": 16
+        },
+        "type": "stat",
+        "title": "Database Size",
+        "targets": [
+          {
+            "expr": "pg_database_size_bytes{datname=\"ominari\"}"
+          }
+        ]
+      }
+    ]
+  }
+}

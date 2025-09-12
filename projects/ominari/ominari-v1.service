@@ -1,0 +1,22 @@
+[Unit]
+Description=Ominari V1 Trading System
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ess/Documents/apps/ominari/projects/ominari
+ExecStart=/home/ess/Documents/apps/ominari/projects/ominari/.venv/bin/python /home/ess/Documents/apps/ominari/projects/ominari/run_ominari_v1.py
+Restart=always
+RestartSec=10
+Environment="PATH=/home/ess/Documents/apps/ominari/projects/ominari/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+
+# Logging
+StandardOutput=append:/home/ess/Documents/apps/ominari/projects/ominari/ominari_v1.log
+StandardError=append:/home/ess/Documents/apps/ominari/projects/ominari/ominari_v1_error.log
+
+# Process management
+KillMode=control-group
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

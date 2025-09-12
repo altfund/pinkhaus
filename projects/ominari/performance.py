@@ -113,24 +113,21 @@ def summarize_performance(scored: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFr
 
     # 1) per-session aggregation
     agg = (
-        scored
-        .groupby(
-            ["session_id", "strategy_name", "session_type", "as_of"],
-            dropna=False
+        scored.groupby(
+            ["session_id", "strategy_name", "session_type", "as_of"], dropna=False
         )
         .agg(
-            total_staked = ("execution_stake", "sum"),
-            total_fee    = ("fee_amount",    "sum"),
-            total_net    = ("net",           "sum"),
-            wins         = ("status",        lambda s: (s == "win").sum()),
-            losses       = ("status",        lambda s: (s == "loss").sum()),
-            pending      = ("status",        lambda s: (s == "pending").sum()),
-            roi          = (
+            total_staked=("execution_stake", "sum"),
+            total_fee=("fee_amount", "sum"),
+            total_net=("net", "sum"),
+            wins=("status", lambda s: (s == "win").sum()),
+            losses=("status", lambda s: (s == "loss").sum()),
+            pending=("status", lambda s: (s == "pending").sum()),
+            roi=(
                 "net",
-                lambda x: (
-                    x.sum() /
-                    scored.loc[x.index, "execution_stake"].sum()
-                ) if scored.loc[x.index, "execution_stake"].sum() else 0.0
+                lambda x: (x.sum() / scored.loc[x.index, "execution_stake"].sum())
+                if scored.loc[x.index, "execution_stake"].sum()
+                else 0.0,
             ),
         )
         .reset_index()

@@ -8,6 +8,7 @@ import os
 from dotenv import load_dotenv
 from alembic.config import Config
 from alembic import command
+from database_utils import upsert_records_orm
 
 
 load_dotenv()  # loads from .env if present
@@ -134,6 +135,31 @@ def upsert_table(database, df, table_name, key_columns, update_columns=None):
         conn.commit()
 
 
+def upsert_table_orm(df, model_class, key_columns):
+    """
+    ORM-based upsert that handles large datasets efficiently.
+    Uses the optimized utilities from database_utils.py
+
+    :param df: pandas.DataFrame, the rows to upsert
+    :param model_class: SQLAlchemy model class (e.g., Market, Odd)
+    :param key_columns: list of str, columns that form the unique constraint
+    """
+    # Convert DataFrame to list of dicts
+    records = df.to_dict("records")
+
+    # Use the ORM upsert utility which handles chunking internally
+    upsert_records_orm(
+        records=records,
+        model_class=model_class,
+        unique_keys=key_columns,
+        batch_size=500,  # Process 500 records at a time to avoid timeouts
+    )
+
+    logging.info(
+        f"Successfully upserted {len(records)} records to {model_class.__tablename__}"
+    )
+
+
 # Fetch all Overtime market odds
 def get_all_overtime_markets():
     try:
@@ -149,16 +175,49 @@ def get_all_overtime_markets():
 
 def get_overtime_markets_markets(overtime_all_json):
     results = []
+    
+    # Import settings for sport filtering
+    from config import settings
+    
+    # Allowed sports from config (lowercase for comparison)
+    allowed_sports = [s.lower() for s in settings.trading.allowed_sports]
+    
     for sport, leagues in overtime_all_json.items():
+        # Check if sport should be included
+        sport_lower = sport.lower()
+        league_name_lower = ""
+        
+        # Skip if sport filtering is enabled and this sport isn't allowed
+        if settings.trading.sport_filter_enabled:
+            sport_match = any(allowed in sport_lower for allowed in allowed_sports)
+            if not sport_match:
+                # Check league names as backup
+                for league_id, markets in leagues.items():
+                    if markets and isinstance(markets[0], dict):
+                        league_name_lower = (markets[0].get("leagueName") or "").lower()
+                        league_match = any(allowed in league_name_lower for allowed in allowed_sports)
+                        if not league_match:
+                            continue
+                    else:
+                        continue
+            
         for league_id, markets in leagues.items():
             for market in markets:
                 if isinstance(market, dict):
+                    league_name = market.get("leagueName") or ""
+                    
+                    # Final check on league name
+                    if settings.trading.sport_filter_enabled:
+                        combined_check = sport_lower + " " + league_name.lower()
+                        if not any(allowed in combined_check for allowed in allowed_sports):
+                            continue
+                    
                     results.append(
                         {
                             "source": "overtime_markets",
                             "source_id": market.get("gameId"),
                             "sport": sport,
-                            "league_name": market.get("leagueName"),
+                            "league_name": league_name,
                             "market_type": market.get("type"),
                             "home_team": market.get("homeTeam"),
                             "away_team": market.get("awayTeam"),
@@ -168,6 +227,8 @@ def get_overtime_markets_markets(overtime_all_json):
                             ),
                         }
                     )
+    
+    logging.info(f"Filtered to {len(results)} soccer markets from total markets")
     return pd.DataFrame(results)
 
 
@@ -409,10 +470,18 @@ def initialize_database():
     command.upgrade(cfg, "head")
 
 
-# Main function
-if __name__ == "__main__":
+def main():
+    """Main entry point for the data collector."""
     # Initialize database
     initialize_database()
+    
+    # Run the data update functions
+    get_all_overtime_markets()
+    get_odds_api_markets()
+
+# Main function
+if __name__ == "__main__":
+    main()
 
     # Update Overtime Markets
     last_updated = last_update_time(DB_NAME, "market")

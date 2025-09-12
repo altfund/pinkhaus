@@ -7,6 +7,7 @@ Created on Thu Apr  3 16:51:44 2025
 """
 
 import pandas as pd
+import sqlite3
 
 from odds_formatting_helpers import *
 from kelly_multimarket import *
@@ -15,7 +16,6 @@ DB_NAME = "sport_odds.db"
 
 import time
 
-import sqlite3
 from odds_formatting_helpers import (
     normalize_outcome,
     normalize_team_outcome,
@@ -29,13 +29,11 @@ from signals import *
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, List
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from models import BettingSession, Bet
+from models import BettingSession, Bet, Odd
+from database_v2 import db_manager, SessionLocal
+from database_utils import fetch_open_markets_optimized
 
-engine = create_engine(f"sqlite:///{DB_NAME}")
-
-Session = sessionmaker(bind=engine)
+Session = SessionLocal
 
 
 def fetch_open_markets_for_as_of(as_of: pd.Timestamp) -> pd.DataFrame:
@@ -46,38 +44,11 @@ def fetch_open_markets_for_as_of(as_of: pd.Timestamp) -> pd.DataFrame:
     if as_of.tzinfo is None:
         as_of = as_of.tz_localize(timezone.utc)
 
-    conn = engine.connect()
-    sql = """
-    WITH latest AS (
-      SELECT
-        source_id,
-        MAX(updated_at) AS t
-      FROM odd
-      WHERE updated_at <= ?
-      GROUP BY source_id
-    )
-    SELECT
-      o.source_id,
-      o.market_type      AS odds_market_type,
-      o.outcome          AS bet_name,
-      o.decimal_odds,
-      o.updated_at       AS as_of_time,
-      m.*                -- pulls all your market.* columns
-    FROM odd o
-    JOIN latest l
-      ON o.source_id = l.source_id
-     AND o.updated_at  = l.t
-    LEFT JOIN market m
-      ON m.source_id = o.source_id
-    """
-    df = pd.read_sql_query(sql, conn, params=(as_of.isoformat(),), parse_dates=["as_of_time"])
-    conn.close()
-    return df
+    return fetch_open_markets_optimized(as_of)
+
 
 def fetch_market_outcomes_for_window(
-    source_ids: list,
-    as_of: pd.Timestamp,
-    until: pd.Timestamp
+    source_ids: list, as_of: pd.Timestamp, until: pd.Timestamp
 ) -> pd.DataFrame:
     """
     For each market in `source_ids`, pull its final decimal odds between `as_of` and `until`,
@@ -88,48 +59,74 @@ def fetch_market_outcomes_for_window(
       - result_multiplier
     """
 
-    conn = sqlite3.connect(DB_NAME)
-    # build a placeholder list for your IN clause
-    placeholders = ",".join("?" for _ in source_ids)
+    with db_manager.get_db_session() as session:
+        from sqlalchemy import func
 
-    # NOTE: this assumes your `odds` table holds a time‐stamped snapshot of each market’s outcome/odds.
-    # Adjust table/column names as needed to match your schema.
-    sql = f"""
-    SELECT
-      source_id,
-      normalized_outcome,
-      decimal_odds,
-      time
-    FROM odds
-    WHERE source_id IN ({placeholders})
-      AND time >= ?
-      AND time <= ?
-    ORDER BY time DESC
-    """
+        # Process in chunks to avoid query size limits
+        all_results = []
+        chunk_size = 1000
 
-    params = source_ids + [as_of.isoformat(), until.isoformat()]
-    df = pd.read_sql_query(sql, conn, params=params, parse_dates=["time"])
-    conn.close()
+        for i in range(0, len(source_ids), chunk_size):
+            chunk_ids = source_ids[i : i + chunk_size]
 
-    # keep only the latest record per market
-    df = df.drop_duplicates(subset=["source_id"], keep="first")
+            # Get the latest odds for each market in the time window
+            # Using a window function for better performance
+            subq = (
+                session.query(
+                    Odd.source_id,
+                    Odd.outcome.label("normalized_outcome"),
+                    Odd.decimal_odds,
+                    Odd.updated_at.label("time"),
+                    func.row_number()
+                    .over(partition_by=Odd.source_id, order_by=Odd.updated_at.desc())
+                    .label("rn"),
+                )
+                .filter(
+                    Odd.source_id.in_(chunk_ids),
+                    Odd.updated_at >= as_of,
+                    Odd.updated_at <= until,
+                )
+                .subquery()
+            )
 
-    # now compute a multiplier: if that market’s final normalized_outcome
-    # matches the bet you would have placed, you win `decimal_odds`, else 0.
-    # Since in our vectorized runner we don’t store each bet’s normalized_outcome,
-    # you might need to pull that column into your `all_bets` DataFrame or
-    # adapt this logic to use your actual bet side.
-    df["result_multiplier"] = df["decimal_odds"]  # stub: assume every bet was on the winning side
-    # → replace the above line with logic such as:
-    # df = df.merge(all_bets[['source_id','normalized_outcome']], on='source_id')
-    # df['result_multiplier'] = df.apply(
-    #     lambda r: r.decimal_odds if r.normalized_outcome_x==r.normalized_outcome_y else 0.0, axis=1
-    # )
+            # Get only the latest record per market
+            chunk_results = (
+                session.query(
+                    subq.c.source_id,
+                    subq.c.normalized_outcome,
+                    subq.c.decimal_odds,
+                    subq.c.time,
+                )
+                .filter(subq.c.rn == 1)
+                .all()
+            )
 
-    return df[["source_id", "result_multiplier"]]
+            all_results.extend(chunk_results)
+
+        # Convert to DataFrame
+        if all_results:
+            df = pd.DataFrame(
+                [
+                    {
+                        "source_id": r.source_id,
+                        "normalized_outcome": r.normalized_outcome,
+                        "decimal_odds": r.decimal_odds,
+                        "time": r.time,
+                    }
+                    for r in all_results
+                ]
+            )
+
+            # Compute result multiplier (stub implementation)
+            df["result_multiplier"] = df["decimal_odds"]
+
+            return df[["source_id", "result_multiplier"]]
+        else:
+            return pd.DataFrame(columns=["source_id", "result_multiplier"])
+
+
 
 # ─── 1. SIGNAL ABSTRACTION ─────────────────────────────────────────────────────
-
 
 
 def save_bets_to_db(
@@ -516,6 +513,10 @@ def prepare_kelly_input(
     df = aggregate_signals(df, signal_providers, signal_weights)
 
     df["odds"] = df["adjusted_odds"]
+    
+    # Calculate edge using fee-adjusted odds
+    # Edge = (probability * adjusted_odds) - 1
+    df["edge"] = (df["probability"] * df["adjusted_odds"]) - 1.0
 
     return df[
         [
@@ -528,6 +529,7 @@ def prepare_kelly_input(
             "normalized_line",
             "odds",
             "probability",
+            "edge",
             "bookmaker",
             *[f"contrib_{p.name}" for p in signal_providers],
         ]
@@ -820,7 +822,7 @@ def calculate_expected_kelly_return(
 
 def trim_kelly_results(
     kelly_df: pd.DataFrame,
-    kelly_fraction: float = 0.25,
+    kelly_fraction: float = 0.5,  # Updated from 0.25 to 0.5 (50% Kelly)
     bankroll: float = 1000.0,
     cap_per_game: float = 0.1,
     cap_per_bet: float = 0.05,
@@ -881,12 +883,25 @@ def trim_kelly_results(
     # Convert back to absolute stake
     df["stake"] = df["stake_fraction"] * bankroll
 
-    # Enforce minimum bet size
+    # Enforce minimum bet size - but force minimum on positive edge
     min_bet_thresh = max(min_bet_abs, min_bet_pct * bankroll)
     too_small = df["stake"] < min_bet_thresh
-    df.loc[too_small, "stake"] = 0
-    df.loc[too_small, "stake_fraction"] = 0
-    df.loc[too_small, "trim_reason"] += "|min_bet"
+    
+    # For any Kelly recommended bet (positive or negative EV for hedging), force minimum
+    # Kelly optimizer already considers portfolio context and may recommend negative EV bets for hedging
+    kelly_recommended = df["original_stake_fraction"] > 1e-6  # Any non-zero Kelly recommendation
+    force_min_bet = too_small & kelly_recommended
+    
+    # Apply minimum bet to Kelly recommended bets
+    df.loc[force_min_bet, "stake"] = min_bet_thresh
+    df.loc[force_min_bet, "stake_fraction"] = min_bet_thresh / bankroll
+    df.loc[force_min_bet, "trim_reason"] += "|forced_min_bet"
+    
+    # Zero out truly small bets (no Kelly recommendation)
+    zero_out = too_small & ~kelly_recommended
+    df.loc[zero_out, "stake"] = 0
+    df.loc[zero_out, "stake_fraction"] = 0
+    df.loc[zero_out, "trim_reason"] += "|min_bet"
 
     display(
         df[["market_name", "odds", "probability", "original_stake"]].sort_values(
@@ -911,24 +926,32 @@ def trim_kelly_results(
     print("Final stake allocations:")
     print(df.groupby("source_id")["stake"].sum().sort_values(ascending=False))
 
-    return df[
-        [
-            "source_id",
-            "unified_market_type",
-            "normalized_outcome",
-            "normalized_line",
-            "market_name",
-            "odds",
-            "probability",
-            "stake",
-            "stake_fraction",
-            "trim_reason",
-            "original_stake_fraction",
-            "original_stake",
-            "league_name",
-            "bookmaker",
-        ]
+    # Return all columns that are needed
+    base_cols = [
+        "source_id",
+        "unified_market_type",
+        "normalized_outcome",
+        "normalized_line",
+        "market_name",
+        "odds",
+        "probability",
+        "stake",
+        "stake_fraction",
+        "trim_reason",
+        "original_stake_fraction",
+        "original_stake",
+        "league_name",
+        "bookmaker",
     ]
+    
+    # Add edge if it exists
+    if "edge" in df.columns:
+        base_cols.append("edge")
+    
+    # Add any other columns that might be needed
+    extra_cols = [col for col in df.columns if col not in base_cols and col.startswith("contrib_")]
+    
+    return df[base_cols + extra_cols]
 
 
 # assume all your existing imports: get_upcoming_overtime_markets_with_signals,
@@ -941,7 +964,7 @@ def trim_kelly_results(
 def generate_betting_session_report_and_save(
     kelly_bankroll: float = 1.0,
     execution_bankroll: float = 15.0,
-    kelly_fraction: float = 0.25,
+    kelly_fraction: float = 0.5,  # Updated from 0.25 to 0.5 (50% Kelly)
     cap_per_game: float = 0.25,
     cap_per_bet: float = 0.25,
     cap_per_game_market: float = 0.10,
@@ -967,18 +990,22 @@ def generate_betting_session_report_and_save(
         as_of = as_of.replace(tzinfo=timezone.utc)
     print(f"evaluating open markets as of {as_of.isoformat()}")
     # --- 2) determine session window [start, end] ---
-    start       = as_of
+    start = as_of
     default_end = as_of + timedelta(minutes=avg_game_duration_minutes)
-    
+
     # only override if the user-supplied window_end goes beyond our default
-    end = window_end if (window_end is not None and window_end > default_end) else default_end
+    end = (
+        window_end
+        if (window_end is not None and window_end > default_end)
+        else default_end
+    )
     print(f"Session window: {start} → {end}")
-    
+
     # --- 3) load full as_of snapshot and filter by maturity_date ---
     open_markets = get_upcoming_overtime_markets_with_signals(
         limit=abs_game_limit,
         as_of=as_of,
-        window_end=end,                  # now either default_end or your later window_end
+        window_end=end,  # now either default_end or your later window_end
         min_break_minutes=min_break_minutes,
         avg_game_duration_minutes=avg_game_duration_minutes,
     )
@@ -1235,11 +1262,11 @@ def save_and_display_betting_report(
 
 
 if __name__ == "__main__":
-            generate_betting_session_report_and_save(
-                execution_bankroll=100,
-                avg_game_duration_minutes=120.0,
-                min_break_minutes=60.0,
-                abs_game_limit=None,
-                signal_providers=SIGNAL_PROVIDERS,
-                signal_weights=SIGNAL_WEIGHTS,
+    generate_betting_session_report_and_save(
+        execution_bankroll=100,
+        avg_game_duration_minutes=120.0,
+        min_break_minutes=60.0,
+        abs_game_limit=None,
+        signal_providers=SIGNAL_PROVIDERS,
+        signal_weights=SIGNAL_WEIGHTS,
     )
