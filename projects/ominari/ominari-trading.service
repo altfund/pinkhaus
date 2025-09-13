@@ -1,0 +1,39 @@
+[Unit]
+Description=Ominari Unified Trading System
+Documentation=https://github.com/yourusername/ominari
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=%USER%
+Group=%USER%
+WorkingDirectory=/home/ess/Documents/apps/ominari/projects/ominari
+Environment="PATH=/home/ess/.local/Spyder-5.4.5/envs/spyder-5.4.5/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONPATH=/home/ess/Documents/apps/ominari/projects/ominari"
+
+# Pre-start commands
+ExecStartPre=/bin/bash -c 'docker-compose -f docker-compose.graph-node-alt.yml up -d'
+ExecStartPre=/bin/sleep 30
+
+# Main process
+ExecStart=/home/ess/.local/Spyder-5.4.5/envs/spyder-5.4.5/bin/python ominari_unified.py
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=append:/var/log/ominari/trading.log
+StandardError=append:/var/log/ominari/error.log
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

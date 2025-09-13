@@ -6,44 +6,35 @@ Created on Sun Jul 20 02:19:02 2025
 @author: ess
 """
 
-from datetime import datetime, timezone
+from datetime import datetime
 from evaluate_open_markets import *
-from evaluate_open_markets import _init_external_stub
-
-_external_stub = _init_external_stub()
 
 # backtest_utils.py
 
 import pandas as pd
-from dateutil.relativedelta import relativedelta
-from free_data_pull import DB_NAME          
 
-from sqlalchemy import select,text
-from sqlalchemy.orm import Session
 
-from evaluate_open_markets import (
-    generate_betting_session_report_and_save,
-    SIGNAL_PROVIDERS,
-    SIGNAL_WEIGHTS,
-)
+from signals import *
 
-from database import engine
+from database_utils import fetch_odds_window_optimized, fetch_markets_in_window
 
 from performance import (
-    get_latest_session_ids,
-    load_bets_with_results,
-    score_bets,
-    summarize_performance,
-    summarize_backtest_performance
+    summarize_backtest_performance,
 )
-from models import BettingSession                              # :contentReference[oaicite:4]{index=4}
 
 from evaluate_open_markets import (
     summarize_match_schedule_from_open_markets,
     find_upcoming_game_breaks,
-    extract_active_game_periods_from_breaks
+    extract_active_game_periods_from_breaks,
 )
 from typing import Optional, List, Tuple
+
+import sys
+import grpc
+
+print("RUNTIME PYTHON:", sys.executable)
+print("RUNTIME grpcio version:", grpc.__version__)
+
 
 def _load_data_windows() -> Tuple[
     Optional[pd.Timestamp],  # earliest_odds_update
@@ -60,39 +51,15 @@ def _load_data_windows() -> Tuple[
     All four are normalized to UTC‐aware pandas Timestamps.
     If no data is present, any missing bound becomes None.
     """
-    sql = text("""
-      SELECT
-        MIN(o.updated_at)    AS earliest_odds,
-        MAX(o.updated_at)    AS latest_odds,
-        MIN(m.maturity_date) AS earliest_mat,
-        MAX(m.maturity_date) AS latest_mat
-      FROM odd o
-      JOIN market m ON m.source_id = o.source_id
-      WHERE o.bookmaker   = 'overtime_markets'
-        AND o.market_type = 'winner'
-        AND m.sport       = 'Soccer'
-    """)
-    with engine.connect() as conn:
-        df = pd.read_sql_query(sql, conn, parse_dates=[
-            "earliest_odds", "latest_odds", "earliest_mat", "latest_mat"
-        ])
-
-    row = df.iloc[0]
-    def _to_utc(ts: pd.Timestamp) -> Optional[pd.Timestamp]:
-        if pd.isna(ts):
-            return None
-        ts = pd.to_datetime(ts)
-        if ts.tzinfo is None:
-            return ts.tz_localize("UTC")
-        else:
-            return ts.tz_convert("UTC")
-
-    return (
-        _to_utc(row["earliest_odds"]),
-        _to_utc(row["latest_odds"]),
-        _to_utc(row["earliest_mat"]),
-        _to_utc(row["latest_mat"]),
+    # Use ORM-based function that handles the query more efficiently
+    earliest, latest = fetch_odds_window_optimized(
+        sport="Soccer", market_type="winner", bookmaker="overtime_markets"
     )
+
+    # The optimized function returns combined windows, so we need to get individual components
+    # For now, return the same values for odds and maturity windows
+    return (earliest, latest, earliest, latest)
+
 
 def _load_odds_window() -> Tuple[Optional[pd.Timestamp], Optional[pd.Timestamp]]:
     """
@@ -106,7 +73,7 @@ def _load_odds_window() -> Tuple[Optional[pd.Timestamp], Optional[pd.Timestamp]]
 
     # Gather non‐None candidates
     start_candidates = [ts for ts in (earliest_odds, earliest_mat) if ts is not None]
-    end_candidates   = [ts for ts in (latest_odds,   latest_mat) if ts is not None]
+    end_candidates = [ts for ts in (latest_odds, latest_mat) if ts is not None]
 
     if not start_candidates or not end_candidates:
         # No usable data
@@ -114,7 +81,7 @@ def _load_odds_window() -> Tuple[Optional[pd.Timestamp], Optional[pd.Timestamp]]
 
     # Determine combined window
     earliest = min(start_candidates)
-    latest   = max(end_candidates)
+    latest = max(end_candidates)
     return earliest, latest
 
 
@@ -125,25 +92,15 @@ def _to_utc(dt: pd.Timestamp) -> pd.Timestamp:
     else:
         return dt.tz_convert("UTC")
 
+
 def _to_naive(dt_utc: pd.Timestamp) -> datetime:
     """Strip tz so we can bind to SQL BETWEEN."""
     return dt_utc.tz_convert("UTC").tz_localize(None).to_pydatetime()
 
+
 def _load_markets(start_naive: datetime, end_naive: datetime) -> pd.DataFrame:
-    sql = """
-      SELECT maturity_date, home_team, away_team
-      FROM market
-      WHERE maturity_date BETWEEN :start AND :end
-    """
-    with engine.connect() as conn:
-        df = pd.read_sql_query(
-           sql, conn,
-           params={"start": start_naive, "end": end_naive},
-           parse_dates=["maturity_date"]
-        )
-    if not df.empty:
-        df["maturity_date"] = pd.to_datetime(df["maturity_date"], utc=True)
-    return df
+    return fetch_markets_in_window(start_naive, end_naive)
+
 
 def _compute_chunks(
     raw: pd.DataFrame,
@@ -161,26 +118,28 @@ def _compute_chunks(
         now=start_utc,
     )
     chunk_df = extract_active_game_periods_from_breaks(
-        match_df,
-        breaks_df,
-        avg_game_duration_minutes=avg_game_duration_minutes
+        match_df, breaks_df, avg_game_duration_minutes=avg_game_duration_minutes
     )
 
     # keep only those chunks that start before our window’s end
     chunk_df["chunk_start"] = pd.to_datetime(chunk_df["chunk_start"], utc=True)
-    chunk_df["chunk_end"]   = pd.to_datetime(chunk_df["chunk_end"],   utc=True)
+    chunk_df["chunk_end"] = pd.to_datetime(chunk_df["chunk_end"], utc=True)
     return chunk_df
 
-def _compute_midpoints(chunk_df: pd.DataFrame) -> List[Tuple[pd.Timestamp,pd.Timestamp]]:
+
+def _compute_midpoints(
+    chunk_df: pd.DataFrame,
+) -> List[Tuple[pd.Timestamp, pd.Timestamp]]:
     """For each adjacent pair of chunks, return (midpoint, this_chunk_end)."""
     pairs = []
     for i in range(1, len(chunk_df)):
-        prev_end = chunk_df.loc[i-1, "chunk_end"]
+        prev_end = chunk_df.loc[i - 1, "chunk_end"]
         this_start = chunk_df.loc[i, "chunk_start"]
-        this_end   = chunk_df.loc[i, "chunk_end"]
+        this_end = chunk_df.loc[i, "chunk_end"]
         midpoint = prev_end + 0.5 * (this_start - prev_end)
         pairs.append((midpoint, this_end))
     return pairs
+
 
 def compute_backtest_as_of_list(
     min_break_minutes: float = 300.0,
@@ -199,7 +158,7 @@ def compute_backtest_as_of_list(
 
     # 2) normalize to UTC‐aware + prepare naive for SQL
     start_utc = _to_utc(start_ts)
-    end_utc   = _to_utc(end_ts)
+    end_utc = _to_utc(end_ts)
     start_naive, end_naive = _to_naive(start_utc), _to_naive(end_utc)
     print(f"🔍 Backtest window (UTC‐aware): {start_utc} → {end_utc}")
 
@@ -211,8 +170,7 @@ def compute_backtest_as_of_list(
 
     # 4) compute the game‐chunks
     chunk_df = _compute_chunks(
-        raw, start_utc,
-        min_break_minutes, avg_game_duration_minutes
+        raw, start_utc, min_break_minutes, avg_game_duration_minutes
     )
     # drop any chunks that start after our window end
     chunk_df = chunk_df[chunk_df["chunk_start"] < end_utc].reset_index(drop=True)
@@ -235,69 +193,42 @@ def compute_backtest_as_of_list(
     return result
 
 
-
-SIGNAL_PROVIDERS = [
-    ImpliedRawSignal(),
-    ExternalGrpcSignal(_external_stub),
-]
-
-SIGNAL_WEIGHTS = {
-    "implied_raw": 1.0,    # base implied probability
-    "external":    1.0,    # weight for external model
-}
-
 def main():
-    min_break_minutes = 1*60.0
-    avg_game_duration_minutes = 120.0  # used only for chunking
-    abs_game_limit = None
-    base_strat = "implied_kelly+random"
-
-    # 1) Compute all (as_of, chunk_end) pairs
-    as_of_pairs = compute_backtest_as_of_list(
-        min_break_minutes=min_break_minutes,
-        avg_game_duration_minutes=avg_game_duration_minutes
+    """
+    Legacy main function - now uses vectorized backtest.
+    For the new implementation, see run_backtest.py
+    """
+    print("Note: This uses the legacy backtest implementation.")
+    print(
+        "For better performance, use run_backtest.py which uses the vectorized version."
     )
-    if not as_of_pairs:
-        print("No backtest chunks found; exiting.")
-        return
+    print()
 
-    # record the runtime for unique backtest ID
-    runtime = datetime.now(timezone.utc)
+    from vectorized_backtest import run_vectorized_backtest_with_chunks
 
-    # 2) Derive dynamic strat_name including runtime
-    start_ts, _ = as_of_pairs[0]
-    end_ts, _ = as_of_pairs[-1]
-    strat_name = (
-        f"{base_strat}_"
-        f"{runtime.strftime('%Y%m%d_%H%M%S')}_"
-        f"start={start_ts.strftime('%Y%m%d_%H%M')}_"
-        f"end={end_ts.strftime('%Y%m%d_%H%M')}_"
-        f"break={min_break_minutes}_"
-        f"games={avg_game_duration_minutes}"
+    # Create a strategy matching the old configuration
+    legacy_strategy = {
+        "name": "implied_kelly+random",
+        "providers": SIGNAL_PROVIDERS,
+        "weights": SIGNAL_WEIGHTS,
+        "bankroll": 1000,
+        "correlation_matrix": None,
+        "risk_adjusted": True,
+        "max_stake_per_bet": None,
+    }
+
+    # Run vectorized backtest
+    results = run_vectorized_backtest_with_chunks(
+        strategies=[legacy_strategy],
+        min_break_minutes=60.0,
+        avg_game_duration_minutes=120.0,
+        save_results=True,
     )
-    print(f"Using strategy name/backtest ID: {strat_name}")
 
-
-    # 3) Run each session and save bets
-    for as_of, chunk_end in as_of_pairs:
-        print(f"\n=== Running session @ {as_of.isoformat()} ===")
-        generate_betting_session_report_and_save(
-            execution_bankroll        = 1000,
-            avg_game_duration_minutes = avg_game_duration_minutes,
-            min_break_minutes         = min_break_minutes,
-            abs_game_limit            = abs_game_limit,
-            base_dir                  = "backtests/"+strat_name,
-            signal_providers          = SIGNAL_PROVIDERS,
-            signal_weights            = SIGNAL_WEIGHTS,
-            as_of                     = as_of,
-            mode                      = "backtest",
-            strat                     = strat_name,
-            window_end                = chunk_end
-        )
-
-    print(f"=== Completed all sessions for: {strat_name} ===")
-    # Now summarize by strat_name directly
-    summarize_backtest_performance(strat_name=strat_name, print_per_session=True)
+    if results is not None:
+        # Summarize performance
+        strat_name = legacy_strategy["name"]
+        summarize_backtest_performance(strat_name=strat_name, print_per_session=True)
 
 
 if __name__ == "__main__":
@@ -305,21 +236,21 @@ if __name__ == "__main__":
 
 
 # make market primary key consist of:
-    # game_id/source_id
-    # type_id
-    # line (0 if none)
-    # player (0 if none)
-    # position (odds position in return list)
-    
+# game_id/source_id
+# type_id
+# line (0 if none)
+# player (0 if none)
+# position (odds position in return list)
+
 # make trade/bet/wager table
-    # connect to market table
-    # if backtest just record and save source and any other data needed
-    # if paper trade get quote from overtime and record it
-    # if live, get quote and then execute trade
-    
+# connect to market table
+# if backtest just record and save source and any other data needed
+# if paper trade get quote from overtime and record it
+# if live, get quote and then execute trade
+
 # make backtest subfolders
 # iterate chunks based on end dates of prior backtest betting reports
 # determine dates to backtest within (R&D, out of sample, etc.)
 
 # compose multiple backtests into a weight on them based on performance, correlation etc. per Carver
-# 
+#

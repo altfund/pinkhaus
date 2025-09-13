@@ -1,0 +1,25 @@
+[Unit]
+Description=Ominari Database Migration Service
+After=network.target
+
+[Service]
+Type=simple
+User=ess
+WorkingDirectory=/home/ess/Documents/apps/ominari/projects/ominari
+Environment="PATH=/home/ess/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/usr/bin/python3 /home/ess/Documents/apps/ominari/projects/ominari/background_migration.py --batch-size 500 --sleep 2 --nice 19
+Restart=on-failure
+RestartSec=60
+StandardOutput=append:/home/ess/Documents/apps/ominari/projects/ominari/migration_service.log
+StandardError=append:/home/ess/Documents/apps/ominari/projects/ominari/migration_service_error.log
+
+# Resource limits
+CPUQuota=25%
+MemoryMax=2G
+IOWeight=10
+
+# Nice level
+Nice=19
+
+[Install]
+WantedBy=multi-user.target

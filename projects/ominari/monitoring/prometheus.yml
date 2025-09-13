@@ -1,0 +1,61 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: ominari-blockchain-trading
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - localhost:9093
+
+rule_files:
+  - "alerts/*.yml"
+
+scrape_configs:
+  # Ominari trading system metrics
+  - job_name: 'ominari-trading'
+    static_configs:
+      - targets: ['ominari-trading:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # PostgreSQL metrics
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    scrape_interval: 30s
+
+  # Redis metrics  
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s
+
+  # Blockchain sync daemon metrics
+  - job_name: 'blockchain-sync'
+    static_configs:
+      - targets: ['ominari-blockchain:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Paper trading metrics
+  - job_name: 'paper-trading'
+    static_configs:
+      - targets: ['ominari-paper:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 60s
+
+  # Web monitor
+  - job_name: 'web-monitor'
+    static_configs:
+      - targets: ['ominari-web:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # System metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+    scrape_interval: 15s

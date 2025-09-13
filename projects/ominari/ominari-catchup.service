@@ -1,0 +1,17 @@
+[Unit]
+Description=Ominari Results Catch-up Service
+After=network.target
+
+[Service]
+Type=simple
+User=ess
+WorkingDirectory=/home/ess/Documents/apps/ominari/projects/ominari
+Environment="PATH=/home/ess/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/usr/bin/python3 /home/ess/Documents/apps/ominari/projects/ominari/results_catchup_service.py --mode continuous --interval 30
+Restart=always
+RestartSec=60
+StandardOutput=append:/home/ess/Documents/apps/ominari/projects/ominari/logs/catchup.log
+StandardError=append:/home/ess/Documents/apps/ominari/projects/ominari/logs/catchup_error.log
+
+[Install]
+WantedBy=multi-user.target

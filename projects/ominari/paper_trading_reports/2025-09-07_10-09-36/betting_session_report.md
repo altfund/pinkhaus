@@ -1,0 +1,38 @@
+
+BETTING SESSION REPORT
+=======================
+
+Session Window: 2025-09-07 10:09:36.422045+00:00 → 2025-09-07 14:00:00+00:00  (duration: 0 days 03:50:23.577955)
+
+Parameters:
+  • Kelly bankroll: 1.0
+  • Execution bankroll: 7865.373312149512
+  • Kelly fraction: 0.25
+  • Caps: game=0.25, bet=0.25, game‐market=0.1
+  • Min bets: 10.0 abs, 0.0010 pct
+
+Games Covered: AD Ceuta_vs_SD Huesca, Brighton & Hove Albion WFC_vs_Aston Villa WFC, Calcio Lecco 1912_vs_Dolomiti Bellunesi, Georgia_vs_Bulgaria, Liverpool LFC_vs_Everton WFC, Manchester United WFC_vs_Leicester City WFC, Novara Calcio_vs_AC Trento, Rodina Moscow_vs_Enisey Krasnoyarsk, Tottenham Hotspur WFC_vs_West Ham United WFC
+
+Expected Return (log): 0.1672
+Expected Multiplier: 1.182x
+Volatility: 0.0350
+Sharpe: 4.7741
+Total Stake: 1844.70
+
+Bets to Place:
+                                                         source_id unified_market_type normalized_outcome  normalized_line                                   market_name      odds  probability      stake  stake_fraction         trim_reason  original_stake_fraction  original_stake                  league_name        bookmaker  safebox_fee  skew_fee  total_fee_pct  adjusted_odds  implied_raw  fee_pct  execution_stake  fee_amount
+0x3230323530393037344136303841304400000000000000000000000000000000                 h2h               Away              0.0           Rodina Moscow_vs_Enisey Krasnoyarsk  4.972729     0.205240 118.355744        0.015048                                     0.060191        0.060191          Russia First League overtime_markets         0.02      0.01           0.03       4.827893    20.712971     0.03       121.906416    3.550672
+0x3230323530393037333638393843393300000000000000000000000000000000                 h2h               Draw              0.0                    Novara Calcio_vs_AC Trento  3.174419     0.310843  26.991708        0.003432                                     0.013727        0.013727                Italy Serie C overtime_markets         0.02      0.01           0.03       3.081960    32.446881     0.03        27.801459    0.809751
+0x3230323530393037463939304243374200000000000000000000000000000000                 h2h               Draw              0.0       Calcio Lecco 1912_vs_Dolomiti Bellunesi  3.713168     0.266468 100.225269        0.012743                                     0.050970        0.050970                Italy Serie C overtime_markets         0.02      0.01           0.03       3.605018    27.739114     0.03       103.232027    3.006758
+0x3230323530393037463939304243374200000000000000000000000000000000                 h2h               Away              0.0       Calcio Lecco 1912_vs_Dolomiti Bellunesi  4.184529     0.242015 114.845320        0.014601                                     0.058406        0.058406                Italy Serie C overtime_markets         0.02      0.01           0.03       4.062650    24.614478     0.03       118.290680    3.445360
+0x3230323530393037413745323046323100000000000000000000000000000000                 h2h               Draw              0.0                           Georgia_vs_Bulgaria  4.126010     0.250306 133.452217        0.016967                                     0.067868        0.067868    FIFA World Cup Qualifiers overtime_markets         0.02      0.01           0.03       4.005834    24.963588     0.03       137.455783    4.003567
+0x3230323530393037413745323046323100000000000000000000000000000000                 h2h               Away              0.0                           Georgia_vs_Bulgaria  7.463365     0.140085 127.045147        0.016152                                     0.064610        0.064610    FIFA World Cup Qualifiers overtime_markets         0.02      0.01           0.03       7.245985    13.800746     0.03       130.856501    3.811354
+0x3230323530393037344136303841304400000000000000000000000000000000                 h2h               Draw              0.0           Rodina Moscow_vs_Enisey Krasnoyarsk  3.356833     0.294223  88.262961        0.011222                                     0.044887        0.044887          Russia First League overtime_markets         0.02      0.01           0.03       3.259061    30.683685     0.03        90.910850    2.647889
+0x3230323530393037343530383846463600000000000000000000000000000000                 h2h               Draw              0.0                         AD Ceuta_vs_SD Huesca  2.981278     0.330657 270.337947        0.034371 cap_per_game_market                 0.158745        0.158745                    La Liga 2 overtime_markets         0.02      0.01           0.03       2.894444    34.548947     0.03       278.448085    8.110138
+0x3230323530393037334334313534324500000000000000000000000000000000                 h2h               Draw              0.0                  Liverpool LFC_vs_Everton WFC  3.040423     0.321129  11.144124        0.001417                                     0.005667        0.005667 England Women's Super League overtime_markets         0.02      0.01           0.03       2.951867    33.876860     0.03        11.478448    0.334324
+0x3230323530393037453734453334363100000000000000000000000000000000                 h2h               Draw              0.0  Tottenham Hotspur WFC_vs_West Ham United WFC  3.405280     0.290108  42.020040        0.005342                                     0.021370        0.021370 England Women's Super League overtime_markets         0.02      0.01           0.03       3.306097    30.247149     0.03        43.280641    1.260601
+0x3230323530393037454641343439433900000000000000000000000000000000                 h2h               Away              0.0   Manchester United WFC_vs_Leicester City WFC 10.591304     0.101667 112.702471        0.014329                                     0.057316        0.057316 England Women's Super League overtime_markets         0.02      0.01           0.03      10.282820     9.724959     0.03       116.083545    3.381074
+0x3230323530393037454641343439433900000000000000000000000000000000                 h2h               Draw              0.0   Manchester United WFC_vs_Leicester City WFC  5.656391     0.186642 138.029705        0.017549                                     0.070196        0.070196 England Women's Super League overtime_markets         0.02      0.01           0.03       5.491642    18.209490     0.03       142.170596    4.140891
+0x3230323530393037343530383846463600000000000000000000000000000000                 h2h               Home              0.0                         AD Ceuta_vs_SD Huesca  2.625448     0.369794 257.311257        0.032714 cap_per_game_market                 0.151095        0.151095                    La Liga 2 overtime_markets         0.02      0.01           0.03       2.548978    39.231405     0.03       265.030595    7.719338
+0x3230323530393037343530383846463600000000000000000000000000000000                 h2h               Away              0.0                         AD Ceuta_vs_SD Huesca  2.673533     0.363143 258.888127        0.032915 cap_per_game_market                 0.152021        0.152021                    La Liga 2 overtime_markets         0.02      0.01           0.03       2.595663    38.525804     0.03       266.654771    7.766644
+0x3230323530393037353931333534343400000000000000000000000000000000                 h2h               Draw              0.0 Brighton & Hove Albion WFC_vs_Aston Villa WFC  3.462991     0.285357  45.090381        0.005733                                     0.022931        0.022931 England Women's Super League overtime_markets         0.02      0.01           0.03       3.362127    29.743075     0.03        46.443093    1.352711

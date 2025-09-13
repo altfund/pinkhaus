@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: ominari-graph-postgres
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: graph
+      POSTGRES_PASSWORD: graph
+      POSTGRES_DB: graph
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  ipfs:
+    image: ipfs/go-ipfs:v0.17.0
+    container_name: ominari-graph-ipfs
+    ports:
+      - '5001:5001'
+      - '8080:8080'
+    volumes:
+      - ipfs-data:/data/ipfs
+    restart: unless-stopped
+
+  graph-node:
+    image: graphprotocol/graph-node:latest
+    container_name: ominari-graph-node
+    ports:
+      - '8000:8000'  # HTTP
+      - '8020:8020'  # JSON-RPC
+      - '8030:8030'  # Index node
+      - '8040:8040'  # Metrics
+    depends_on:
+      - postgres
+      - ipfs
+    environment:
+      postgres_host: postgres
+      postgres_user: graph
+      postgres_pass: graph
+      postgres_db: graph
+      ipfs: ipfs:5001
+      # Configure blockchain connections
+      # Replace with your actual RPC endpoints
+      ethereum: |
+        optimism:${OPTIMISM_RPC_URL:-https://opt-mainnet.g.alchemy.com/v2/demo}
+        arbitrum:${ARBITRUM_RPC_URL:-https://arb-mainnet.g.alchemy.com/v2/demo}
+      GRAPH_LOG: info
+      GRAPH_ETHEREUM_CLEANUP_BLOCKS: "true"
+      GRAPH_ETHEREUM_ANCESTOR_COUNT: "50"
+      # Performance tuning
+      GRAPH_ETHEREUM_MAX_EVENT_ONLY_RANGE: "10000"
+      GRAPH_QUERY_CACHE_BLOCKS: "1"
+      GRAPH_QUERY_CACHE_MAX_MEM: "1000"
+      # Metrics
+      GRAPH_GRAPHQL_QUERY_TIMEOUT: "300"
+    restart: unless-stopped
+    volumes:
+      - ./data/graph-node:/data
+
+volumes:
+  postgres-data:
+  ipfs-data:

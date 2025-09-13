@@ -1,0 +1,318 @@
+version: '3.8'
+
+# Multi-Chain Docker Compose Configuration
+# Supports different environments and chain configurations
+
+x-common-blockchain-env: &common-blockchain-env
+  REDIS_URL: redis://redis:6379/0
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  METRICS_ENABLED: "true"
+
+services:
+  # ==========================================
+  # PRODUCTION CHAINS (Mainnet)
+  # ==========================================
+  
+  blockchain-optimism-mainnet:
+    build: .
+    container_name: ominari-blockchain-optimism-mainnet
+    environment:
+      <<: *common-blockchain-env
+      SERVICE: blockchain-sync
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      CHAIN_NAME: optimism
+      CHAIN_ID: 10
+      NETWORK_TYPE: mainnet
+      DATABASE_URL: ${DATABASE_URL}
+      OPTIMISM_RPC_URLS: |
+        https://mainnet.optimism.io
+        https://optimism-mainnet.public.blastapi.io
+        https://rpc.ankr.com/optimism
+      SPORTS_AMM_ADDRESS: "0xFb4e4811C7A811E098A556bD79B64c20b479E431"
+      DATA_NAMESPACE: prod_optimism_mainnet_10
+    volumes:
+      - optimism_mainnet_data:/app/data
+      - blockchain_logs:/app/logs
+    networks:
+      - ominari-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      replicas: ${MAINNET_REPLICAS:-2}
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+    profiles:
+      - production
+      - mainnet
+
+  blockchain-arbitrum-mainnet:
+    build: .
+    container_name: ominari-blockchain-arbitrum-mainnet
+    environment:
+      <<: *common-blockchain-env
+      SERVICE: blockchain-sync
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      CHAIN_NAME: arbitrum
+      CHAIN_ID: 42161
+      NETWORK_TYPE: mainnet
+      DATABASE_URL: ${DATABASE_URL}
+      ARBITRUM_RPC_URLS: |
+        https://arb1.arbitrum.io/rpc
+        https://arbitrum-mainnet.public.blastapi.io
+        https://rpc.ankr.com/arbitrum
+      SPORTS_AMM_ADDRESS: "0x7465c5d60d3d095443CF9991Da03304A30D42Eae"
+      DATA_NAMESPACE: prod_arbitrum_mainnet_42161
+    volumes:
+      - arbitrum_mainnet_data:/app/data
+      - blockchain_logs:/app/logs
+    networks:
+      - ominari-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      replicas: ${MAINNET_REPLICAS:-2}
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+    profiles:
+      - production
+      - mainnet
+
+  # ==========================================
+  # TESTNET CHAINS
+  # ==========================================
+  
+  blockchain-optimism-sepolia:
+    build: .
+    container_name: ominari-blockchain-optimism-sepolia
+    environment:
+      <<: *common-blockchain-env
+      SERVICE: blockchain-sync
+      ENVIRONMENT: ${ENVIRONMENT:-testnet}
+      CHAIN_NAME: optimism
+      CHAIN_ID: 11155420
+      NETWORK_TYPE: testnet
+      DATABASE_URL: ${DATABASE_URL}
+      OPTIMISM_RPC_URLS: |
+        https://sepolia.optimism.io
+        https://optimism-sepolia.public.blastapi.io
+      SPORTS_AMM_ADDRESS: "0x5e2c7704F5f784B2e4A5C1bD5b7fBE578A2b6EdC"
+      DATA_NAMESPACE: ${TESTNET_PREFIX:-test}_optimism_testnet_11155420
+    volumes:
+      - optimism_testnet_data:/app/data
+      - blockchain_logs:/app/logs
+    networks:
+      - ominari-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      replicas: ${TESTNET_REPLICAS:-1}
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+    profiles:
+      - testnet
+      - staging
+      - development
+
+  blockchain-arbitrum-sepolia:
+    build: .
+    container_name: ominari-blockchain-arbitrum-sepolia
+    environment:
+      <<: *common-blockchain-env
+      SERVICE: blockchain-sync
+      ENVIRONMENT: ${ENVIRONMENT:-testnet}
+      CHAIN_NAME: arbitrum
+      CHAIN_ID: 421614
+      NETWORK_TYPE: testnet
+      DATABASE_URL: ${DATABASE_URL}
+      ARBITRUM_RPC_URLS: |
+        https://sepolia-rollup.arbitrum.io/rpc
+      SPORTS_AMM_ADDRESS: "0x2345678901234567890123456789012345678901"
+      DATA_NAMESPACE: ${TESTNET_PREFIX:-test}_arbitrum_testnet_421614
+    volumes:
+      - arbitrum_testnet_data:/app/data
+      - blockchain_logs:/app/logs
+    networks:
+      - ominari-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      replicas: ${TESTNET_REPLICAS:-1}
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+    profiles:
+      - testnet
+      - staging
+      - development
+
+  # ==========================================
+  # LOCAL DEVELOPMENT CHAIN
+  # ==========================================
+  
+  blockchain-local:
+    build: .
+    container_name: ominari-blockchain-local
+    environment:
+      <<: *common-blockchain-env
+      SERVICE: blockchain-sync
+      ENVIRONMENT: development
+      CHAIN_NAME: local
+      CHAIN_ID: 31337
+      NETWORK_TYPE: local
+      DATABASE_URL: ${DATABASE_URL}
+      LOCAL_RPC_URL: http://hardhat:8545
+      SPORTS_AMM_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+      DATA_NAMESPACE: dev_local_local_31337
+      SYNC_INTERVAL: 5  # Faster for local
+    volumes:
+      - local_chain_data:/app/data
+      - blockchain_logs:/app/logs
+    networks:
+      - ominari-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      hardhat:
+        condition: service_healthy
+    profiles:
+      - development
+      - local
+
+  # Local blockchain node (Hardhat)
+  hardhat:
+    image: hardhat/hardhat:latest
+    container_name: ominari-hardhat
+    command: npx hardhat node --hostname 0.0.0.0
+    ports:
+      - "8545:8545"
+    networks:
+      - ominari-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8545"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    profiles:
+      - development
+      - local
+
+  # ==========================================
+  # UNIFIED DATA API (Works with all chains)
+  # ==========================================
+  
+  unified-api:
+    build: .
+    container_name: ominari-unified-api
+    environment:
+      <<: *common-blockchain-env
+      SERVICE: api
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      DATABASE_URL: ${DATABASE_URL}
+      ENABLE_MAINNET: ${ENABLE_MAINNET:-true}
+      ENABLE_TESTNET: ${ENABLE_TESTNET:-false}
+      ENABLE_LOCAL: ${ENABLE_LOCAL:-false}
+      API_RATE_LIMIT: ${API_RATE_LIMIT:-100}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - api_logs:/app/logs
+    networks:
+      - ominari-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      replicas: ${API_REPLICAS:-2}
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  # ==========================================
+  # CHAIN MONITORING
+  # ==========================================
+  
+  chain-monitor:
+    build: .
+    container_name: ominari-chain-monitor
+    environment:
+      SERVICE: chain-monitor
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: redis://redis:6379/0
+      MONITOR_CHAINS: ${MONITOR_CHAINS:-all}
+      ALERT_WEBHOOK: ${ALERT_WEBHOOK}
+      CHECK_INTERVAL: ${CHECK_INTERVAL:-60}
+    volumes:
+      - monitor_logs:/app/logs
+    networks:
+      - ominari-network
+    depends_on:
+      - unified-api
+    profiles:
+      - monitoring
+
+  # ==========================================
+  # DEVELOPMENT TOOLS
+  # ==========================================
+  
+  chain-explorer:
+    image: otterscan/otterscan:latest
+    container_name: ominari-chain-explorer
+    environment:
+      - ERIGON_URL=http://hardhat:8545
+    ports:
+      - "5100:80"
+    networks:
+      - ominari-network
+    depends_on:
+      - hardhat
+    profiles:
+      - development
+      - debug
+
+volumes:
+  # Mainnet volumes
+  optimism_mainnet_data:
+  arbitrum_mainnet_data:
+  base_mainnet_data:
+  
+  # Testnet volumes
+  optimism_testnet_data:
+  arbitrum_testnet_data:
+  
+  # Development volumes
+  local_chain_data:
+  
+  # Shared volumes
+  blockchain_logs:
+  api_logs:
+  monitor_logs:
+
+networks:
+  ominari-network:
+    driver: bridge

@@ -1,0 +1,202 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database for new data
+  postgres:
+    image: postgres:15-alpine
+    container_name: ominari-postgres
+    environment:
+      POSTGRES_DB: ominari_live
+      POSTGRES_USER: ominari_user
+      POSTGRES_PASSWORD: ominari_2025_secure
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    networks:
+      - ominari-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ominari_user -d ominari_live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis cache
+  redis:
+    image: redis:7-alpine
+    container_name: ominari-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - ominari-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Main trading system
+  ominari-trading:
+    build: .
+    container_name: ominari-trading
+    environment:
+      - SERVICE=trading
+      - DATABASE_URL=postgresql://ominari_user:ominari_2025_secure@postgres:5432/ominari_live
+      - REDIS_URL=redis://redis:6379/0
+      - HISTORICAL_DB_PATH=/app/sport_odds.db
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./sport_odds.db:/app/sport_odds.db:ro  # Historical data read-only
+      - trading_logs:/app/logs
+      - trading_reports:/app/betting_reports
+    networks:
+      - ominari-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Blockchain sync daemon
+  ominari-blockchain:
+    build: .
+    container_name: ominari-blockchain
+    environment:
+      - SERVICE=blockchain-sync
+      - DATABASE_URL=postgresql://ominari_user:ominari_2025_secure@postgres:5432/ominari_live
+      - REDIS_URL=redis://redis:6379/0
+      - OPTIMISM_RPC_URL=https://mainnet.optimism.io
+      - ARBITRUM_RPC_URL=https://arb1.arbitrum.io/rpc
+    volumes:
+      - blockchain_logs:/app/logs
+      - blockchain_data:/app/blockchain_data
+    networks:
+      - ominari-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Paper trading engine
+  ominari-paper:
+    build: .
+    container_name: ominari-paper
+    environment:
+      - SERVICE=paper-trading
+      - DATABASE_URL=postgresql://ominari_user:ominari_2025_secure@postgres:5432/ominari_live
+      - REDIS_URL=redis://redis:6379/0
+      - PAPER_TRADING_BANKROLL=10000
+    volumes:
+      - paper_trading_reports:/app/paper_trading_reports
+      - paper_logs:/app/logs
+    networks:
+      - ominari-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Web monitor dashboard
+  ominari-web:
+    build: .
+    container_name: ominari-web
+    environment:
+      - SERVICE=web-monitor
+      - DATABASE_URL=postgresql://ominari_user:ominari_2025_secure@postgres:5432/ominari_live
+      - REDIS_URL=redis://redis:6379/0
+    ports:
+      - "9090:9090"
+    networks:
+      - ominari-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Prometheus monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ominari-prometheus
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - ominari-network
+    restart: unless-stopped
+
+  # Grafana dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ominari-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=ominari_admin_2025
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning
+    networks:
+      - ominari-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # Backup service
+  ominari-backup:
+    build: .
+    container_name: ominari-backup
+    environment:
+      - SERVICE=api
+      - DATABASE_URL=postgresql://ominari_user:ominari_2025_secure@postgres:5432/ominari_live
+    volumes:
+      - backup_data:/app/backups
+      - ./sport_odds.db:/app/sport_odds.db:ro
+    networks:
+      - ominari-network
+    profiles:
+      - backup  # Only run when explicitly requested
+    command: /bin/bash -c "
+      while true; do
+        echo 'Creating backup...'
+        pg_dump -h postgres -U ominari_user -d ominari_live > /app/backups/backup_$(date +%Y%m%d_%H%M%S).sql
+        echo 'Backup completed'
+        sleep 86400  # Daily backups
+      done"
+
+volumes:
+  postgres_data:
+  redis_data:
+  trading_logs:
+  trading_reports:
+  blockchain_logs:
+  blockchain_data:
+  paper_trading_reports:
+  paper_logs:
+  prometheus_data:
+  grafana_data:
+  backup_data:
+
+networks:
+  ominari-network:
+    driver: bridge

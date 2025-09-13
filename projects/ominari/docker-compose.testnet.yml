@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  # Testnet trading system
+  ominari-testnet:
+    build: .
+    container_name: ominari-testnet
+    environment:
+      - SERVICE=trading
+      - ENVIRONMENT=testnet
+      - TESTNET_MODE=true
+      - PAPER_TRADING_ONLY=true
+      - LOG_LEVEL=DEBUG
+      - MAX_POSITION_SIZE=0.01
+      - MAX_DAILY_VOLUME=0.1
+      - KELLY_MULTIPLIER=0.1
+      - SIMULATION_MODE=true
+      - DATABASE_URL=postgresql://ominari_user:ominari_testnet@postgres-testnet:5432/ominari_testnet
+      - REDIS_URL=redis://redis-testnet:6379/0
+      # Testnet RPC URLs
+      - OPTIMISM_SEPOLIA_RPC_URL=https://sepolia.optimism.io
+      - ARBITRUM_SEPOLIA_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
+      - BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+    ports:
+      - "8001:8000"  # Different port from mainnet
+    volumes:
+      - testnet_logs:/app/logs
+      - testnet_reports:/app/betting_reports
+    networks:
+      - ominari-testnet
+    depends_on:
+      postgres-testnet:
+        condition: service_healthy
+      redis-testnet:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Testnet blockchain sync
+  ominari-blockchain-testnet:
+    build: .
+    container_name: ominari-blockchain-testnet
+    environment:
+      - SERVICE=blockchain-sync
+      - ENVIRONMENT=testnet
+      - TESTNET_MODE=true
+      - DATABASE_URL=postgresql://ominari_user:ominari_testnet@postgres-testnet:5432/ominari_testnet
+      - REDIS_URL=redis://redis-testnet:6379/0
+      - OPTIMISM_SEPOLIA_RPC_URL=https://sepolia.optimism.io
+      - ARBITRUM_SEPOLIA_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
+      - SYNC_INTERVAL=30  # Faster sync for testing
+    volumes:
+      - testnet_blockchain_logs:/app/logs
+    networks:
+      - ominari-testnet
+    depends_on:
+      postgres-testnet:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Testnet PostgreSQL
+  postgres-testnet:
+    image: postgres:15-alpine
+    container_name: ominari-postgres-testnet
+    environment:
+      POSTGRES_DB: ominari_testnet
+      POSTGRES_USER: ominari_user
+      POSTGRES_PASSWORD: ominari_testnet
+    ports:
+      - "5433:5432"  # Different port from mainnet
+    volumes:
+      - postgres_testnet_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    networks:
+      - ominari-testnet
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ominari_user -d ominari_testnet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Testnet Redis
+  redis-testnet:
+    image: redis:7-alpine
+    container_name: ominari-redis-testnet
+    ports:
+      - "6380:6379"  # Different port from mainnet
+    command: redis-server --appendonly yes --maxmemory 256mb
+    volumes:
+      - redis_testnet_data:/data
+    networks:
+      - ominari-testnet
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Testnet monitoring
+  grafana-testnet:
+    image: grafana/grafana:latest
+    container_name: ominari-grafana-testnet
+    ports:
+      - "3001:3000"  # Different port from mainnet
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=testnet_admin
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_testnet_data:/var/lib/grafana
+    networks:
+      - ominari-testnet
+    restart: unless-stopped
+
+volumes:
+  postgres_testnet_data:
+  redis_testnet_data:
+  testnet_logs:
+  testnet_reports:
+  testnet_blockchain_logs:
+  grafana_testnet_data:
+
+networks:
+  ominari-testnet:
+    driver: bridge
