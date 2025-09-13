@@ -4061,20 +4061,32 @@ def get_market_data():
                     logger.warning(f"Failed to get odds for market {market.source_id}: {e}")
                     odds = []
                 
-                home_odds = None
-                draw_odds = None  
-                away_odds = None
-                
+                # Group odds by outcome using flexible matching (scheier improvement)
+                home_odds_list = []
+                draw_odds_list = []
+                away_odds_list = []
+
                 for odd in odds:
-                    if odd and odd.outcome == 'option_1' and odd.decimal_odds:
-                        home_odds = odd.decimal_odds
+                    if not odd or not odd.decimal_odds:
+                        continue
+
+                    # Handle different outcome naming conventions
+                    outcome = str(odd.outcome).lower() if odd.outcome else ''
+
+                    if 'home' in outcome or outcome == 'option_1':
+                        home_odds_list.append(odd.decimal_odds)
                         all_odds.append(odd.decimal_odds)
-                    elif odd and odd.outcome == 'option_3' and odd.decimal_odds:
-                        draw_odds = odd.decimal_odds
+                    elif 'away' in outcome or outcome == 'option_2':
+                        away_odds_list.append(odd.decimal_odds)
                         all_odds.append(odd.decimal_odds)
-                    elif odd and odd.outcome == 'option_2' and odd.decimal_odds:
-                        away_odds = odd.decimal_odds
+                    elif 'draw' in outcome or 'tie' in outcome or outcome == 'option_3':
+                        draw_odds_list.append(odd.decimal_odds)
                         all_odds.append(odd.decimal_odds)
+
+                # Get best odds (lowest for better payout)
+                home_odds = min(home_odds_list) if home_odds_list else None
+                draw_odds = min(draw_odds_list) if draw_odds_list else None
+                away_odds = min(away_odds_list) if away_odds_list else None
                 
                 # Calculate time until and status
                 time_until = "Started"
@@ -5862,17 +5874,29 @@ def api_unified_dashboard():
                     # Skip for now to avoid database issues
                     latest_odds = []
                     
-                    home_odds = None
-                    draw_odds = None
-                    away_odds = None
-                    
+                    # Group odds by outcome using flexible matching (scheier improvement)
+                    home_odds_list = []
+                    draw_odds_list = []
+                    away_odds_list = []
+
                     for odd in latest_odds:
-                        if odd.outcome == 'Home':
-                            home_odds = odd.decimal_odds
-                        elif odd.outcome == 'Draw':
-                            draw_odds = odd.decimal_odds
-                        elif odd.outcome == 'Away':
-                            away_odds = odd.decimal_odds
+                        if not odd or not odd.decimal_odds:
+                            continue
+
+                        # Handle different outcome naming conventions
+                        outcome = str(odd.outcome).lower() if odd.outcome else ''
+
+                        if 'home' in outcome:
+                            home_odds_list.append(odd.decimal_odds)
+                        elif 'away' in outcome:
+                            away_odds_list.append(odd.decimal_odds)
+                        elif 'draw' in outcome or 'tie' in outcome:
+                            draw_odds_list.append(odd.decimal_odds)
+
+                    # Get best odds
+                    home_odds = min(home_odds_list) if home_odds_list else None
+                    draw_odds = min(draw_odds_list) if draw_odds_list else None
+                    away_odds = min(away_odds_list) if away_odds_list else None
                     
                     # Use placeholder odds if none found
                     if not home_odds:
