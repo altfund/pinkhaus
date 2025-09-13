@@ -10,12 +10,15 @@ import logging
 from datetime import datetime, timezone, timedelta
 from flask import Flask, render_template_string, jsonify, request
 from flask_socketio import SocketIO, emit
-from database import SessionLocal, get_database_stats
-from models import Market, LookupSport, LookupTeam, LookupSource
+from database_v2 import db_manager
+from models import MarketNormalized, LookupSport, LookupTeam, LookupSource, OddsNormalized, LookupOutcome
 from sqlalchemy import func, desc
 import threading
 import time
 import numpy as np
+
+# Import legacy models for compatibility
+from models import Market, Odd
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -275,7 +278,7 @@ def api_status():
 def api_dashboard_data():
     """Get dashboard data."""
     try:
-        session = SessionLocal()
+        session = db_manager.session_factory()
 
         # Basic statistics
         start_time = time.time()
@@ -326,7 +329,7 @@ def api_dashboard_data():
         ]
 
         # Database stats
-        stats = get_database_stats()
+        stats = db_manager.get_database_stats()
         db_size = stats['database_size'] if stats else '39 MB'
 
         session.close()
@@ -361,7 +364,7 @@ def run_dashboard():
 
     try:
         # Test database connection first
-        session = SessionLocal()
+        session = db_manager.session_factory()
         market_count = session.query(Market).count()
         session.close()
 
