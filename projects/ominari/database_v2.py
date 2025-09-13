@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Enhanced database connection configuration with better locking prevention.
+PostgreSQL Database Manager V2
+Updated from SQLite to PostgreSQL with enhanced connection management.
 """
 
-from sqlalchemy import create_engine, event, pool
+from sqlalchemy import create_engine, event, pool, text
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import OperationalError
 from contextlib import contextmanager
-import sqlite3
 import time
 import logging
 import os
@@ -17,25 +17,21 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
-DB_NAME = "sport_odds.db"
-DB_URL = f"sqlite:///{DB_NAME}"
-
-# Enhanced SQLite configuration for large databases
-SQLITE_PRAGMAS = {
-    "journal_mode": "WAL",
-    "cache_size": -64000,  # 64MB cache
-    "synchronous": "NORMAL",  # Balance between safety and speed
-    "temp_store": "MEMORY",
-    "mmap_size": 268435456,  # 256MB memory-mapped I/O
-    "busy_timeout": 30000,  # 30 seconds
-    "wal_autocheckpoint": 1000,  # Checkpoint every 1000 pages
-    "optimize": None,  # Run ANALYZE periodically
+# PostgreSQL Configuration
+PG_CONFIG = {
+    'host': os.getenv('PG_HOST', 'localhost'),
+    'port': os.getenv('PG_PORT', '5435'),
+    'user': os.getenv('PG_USER', 'ominari_user'),
+    'password': os.getenv('PG_PASSWORD', 'ominari_2025_secure'),
+    'database': os.getenv('PG_DB', 'ominari_production')
 }
 
-# Connection pool configuration
+DB_URL = f"postgresql://{PG_CONFIG['user']}:{PG_CONFIG['password']}@{PG_CONFIG['host']}:{PG_CONFIG['port']}/{PG_CONFIG['database']}"
+
+# Connection pool configuration optimized for PostgreSQL
 POOL_CONFIG = {
-    "pool_size": 5,  # Number of connections to maintain
-    "max_overflow": 10,  # Maximum overflow connections
+    "pool_size": 20,  # Number of connections to maintain
+    "max_overflow": 30,  # Maximum overflow connections
     "pool_timeout": 30,  # Timeout for getting connection from pool
     "pool_recycle": 3600,  # Recycle connections after 1 hour
     "pool_pre_ping": True,  # Check connections before using
@@ -43,227 +39,208 @@ POOL_CONFIG = {
 
 
 class DatabaseManager:
-    """Enhanced database manager with better locking prevention."""
-    
+    """Enhanced PostgreSQL database manager with connection pooling."""
+
     def __init__(self, db_url: str = DB_URL):
         self.db_url = db_url
         self._engine = None
         self._session_factory = None
         self._scoped_session = None
-        self.last_optimize = None
-        
+        logger.info("DatabaseManager initialized for PostgreSQL")
+
     @property
     def engine(self):
+        """Lazy initialization of database engine."""
         if self._engine is None:
-            if "sqlite" in self.db_url:
-                # SQLite with StaticPool doesn't support pool parameters
-                self._engine = create_engine(
-                    self.db_url,
-                    connect_args={
-                        "check_same_thread": False,
-                        "timeout": 30,
-                        "isolation_level": None,  # Use SQLite's default autocommit
-                    },
-                    poolclass=pool.StaticPool,
-                    pool_pre_ping=True,
-                    future=True,
-                )
-            else:
-                # Other databases support full pool configuration
-                self._engine = create_engine(
-                    self.db_url,
-                    poolclass=pool.QueuePool,
-                    **POOL_CONFIG,
-                    future=True,
-                )
-            
-            # Configure SQLite on each connection
-            event.listen(self._engine, "connect", self._configure_sqlite)
-            
+            self._engine = create_engine(
+                self.db_url,
+                **POOL_CONFIG,
+                echo=False,  # Set to True for SQL debugging
+                future=True
+            )
+
+            # Configure PostgreSQL session settings
+            @event.listens_for(self._engine, "connect")
+            def set_postgresql_search_path(dbapi_connection, connection_record):
+                with dbapi_connection.cursor() as cursor:
+                    # Set search path to include ominari schema
+                    cursor.execute("SET search_path TO ominari, public")
+                    cursor.execute("SET statement_timeout = '300s'")
+                    cursor.execute("SET work_mem = '32MB'")
+
+            logger.info("PostgreSQL engine created with connection pooling")
+
         return self._engine
     
     @property
     def session_factory(self):
+        """Get session factory."""
         if self._session_factory is None:
             self._session_factory = sessionmaker(
                 bind=self.engine,
                 autoflush=False,
                 autocommit=False,
-                expire_on_commit=False,  # Don't expire objects after commit
+                expire_on_commit=False
             )
         return self._session_factory
-    
+
     @property
     def scoped_session(self):
+        """Get scoped session for thread-safe operations."""
         if self._scoped_session is None:
             self._scoped_session = scoped_session(self.session_factory)
         return self._scoped_session
     
-    def _configure_sqlite(self, dbapi_con, connection_record):
-        """Configure SQLite connection with optimal settings."""
-        cursor = dbapi_con.cursor()
-        
-        for pragma, value in SQLITE_PRAGMAS.items():
-            if value is not None:
-                try:
-                    cursor.execute(f"PRAGMA {pragma}={value};")
-                except sqlite3.OperationalError as e:
-                    logger.warning(f"Failed to set PRAGMA {pragma}: {e}")
-            elif pragma == "optimize":
-                # Run ANALYZE periodically
-                if self.last_optimize is None or \
-                   datetime.now() - self.last_optimize > timedelta(hours=1):
-                    try:
-                        cursor.execute("PRAGMA optimize;")
-                        self.last_optimize = datetime.now()
-                    except sqlite3.OperationalError:
-                        pass
-        
-        cursor.close()
-    
     @contextmanager
-    def get_db_session(self, retries: int = 3, retry_delay: float = 0.5) -> Generator:
-        """Get a database session with retry logic."""
+    def get_db_session(self, retries: int = 3, retry_delay: float = 1.0) -> Generator:
+        """
+        Get database session with automatic retry and proper error handling.
+
+        Args:
+            retries: Number of retry attempts
+            retry_delay: Delay between retries in seconds
+
+        Yields:
+            SQLAlchemy session object
+        """
         session = None
-        last_error = None
-        
-        for attempt in range(retries):
+        last_exception = None
+
+        for attempt in range(retries + 1):
             try:
                 session = self.session_factory()
+
+                # Test the connection with a simple query
+                session.execute(text("SELECT 1"))
+
                 yield session
-                session.commit()
                 return
+
             except OperationalError as e:
-                last_error = e
+                last_exception = e
+                logger.warning(f"Database connection attempt {attempt + 1} failed: {e}")
+
                 if session:
-                    session.rollback()
-                if "database is locked" in str(e):
-                    logger.warning(f"Database locked, attempt {attempt + 1}/{retries}")
-                    if attempt < retries - 1:
-                        time.sleep(retry_delay * (2 ** attempt))  # Exponential backoff
+                    try:
+                        session.rollback()
+                        session.close()
+                    except Exception:
+                        pass
+                    session = None
+
+                if attempt < retries:
+                    time.sleep(retry_delay * (2 ** attempt))  # Exponential backoff
+                    continue
                 else:
-                    raise
-            except Exception:
+                    logger.error(f"All database connection attempts failed")
+                    raise last_exception
+
+            except Exception as e:
+                logger.error(f"Unexpected database error: {e}")
                 if session:
-                    session.rollback()
-                raise
+                    try:
+                        session.rollback()
+                        session.close()
+                    except Exception:
+                        pass
+                raise e
+
             finally:
                 if session:
-                    session.close()
-        
-        # If we get here, all retries failed
-        raise OperationalError(f"Database locked after {retries} attempts", None, None) from last_error
+                    try:
+                        session.close()
+                    except Exception as e:
+                        logger.warning(f"Error closing session: {e}")
     
-    def execute_with_retry(self, func, *args, retries: int = 3, **kwargs):
-        """Execute a function with database retry logic."""
-        last_error = None
-        
-        for attempt in range(retries):
-            try:
-                with self.get_db_session() as session:
-                    return func(session, *args, **kwargs)
-            except OperationalError as e:
-                last_error = e
-                if "database is locked" not in str(e) or attempt == retries - 1:
-                    raise
-                logger.warning(f"Retrying after database lock, attempt {attempt + 1}/{retries}")
-                time.sleep(0.5 * (2 ** attempt))
-        
-        raise last_error
-    
-    def vacuum_wal(self):
-        """Force a WAL checkpoint to reduce WAL file size."""
+    def test_connection(self) -> bool:
+        """Test database connectivity."""
         try:
-            with self.engine.connect() as conn:
-                conn.execute("PRAGMA wal_checkpoint(TRUNCATE);")
-                logger.info("WAL checkpoint completed")
+            with self.get_db_session() as session:
+                result = session.execute(text("SELECT COUNT(*) FROM ominari.markets_normalized LIMIT 1"))
+                count = result.scalar()
+                logger.info(f"Connection test successful - found {count:,} markets")
+                return True
+
         except Exception as e:
-            logger.error(f"Failed to checkpoint WAL: {e}")
-    
-    def optimize_database(self):
-        """Run database optimization."""
-        try:
-            with self.engine.connect() as conn:
-                conn.execute("PRAGMA optimize;")
-                conn.execute("ANALYZE;")
-                logger.info("Database optimization completed")
-        except Exception as e:
-            logger.error(f"Failed to optimize database: {e}")
-    
+            logger.error(f"Connection test failed: {e}")
+            return False
+
     def get_database_stats(self) -> dict:
-        """Get database statistics."""
-        stats = {}
+        """Get comprehensive database statistics."""
         try:
-            with self.engine.connect() as conn:
+            with self.get_db_session() as session:
                 # Database size
-                result = conn.execute("SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size();")
-                stats['size_bytes'] = result.scalar()
-                
-                # WAL size
-                wal_path = f"{DB_NAME}-wal"
-                if os.path.exists(wal_path):
-                    stats['wal_size_bytes'] = os.path.getsize(wal_path)
-                else:
-                    stats['wal_size_bytes'] = 0
-                
-                # Cache stats
-                result = conn.execute("SELECT * FROM pragma_cache_stats;")
-                cache_stats = result.fetchone()
-                if cache_stats:
-                    stats['cache_hits'] = cache_stats[0]
-                    stats['cache_misses'] = cache_stats[1]
-                    stats['cache_hit_rate'] = cache_stats[0] / (cache_stats[0] + cache_stats[1]) if cache_stats[1] > 0 else 1.0
-                
+                size_result = session.execute(text("""
+                    SELECT pg_size_pretty(pg_database_size('ominari_production'))
+                """))
+                db_size = size_result.scalar()
+
+                # Table counts
+                tables = ['markets_normalized', 'lu_teams', 'lu_sports', 'lu_sources']
+                counts = {}
+
+                for table in tables:
+                    count_result = session.execute(text(f"""
+                        SELECT COUNT(*) FROM ominari.{table}
+                    """))
+                    counts[table] = count_result.scalar()
+
+                return {
+                    'database_size': db_size,
+                    'table_counts': counts,
+                    'connection_pool': {
+                        'pool_size': POOL_CONFIG['pool_size'],
+                        'max_overflow': POOL_CONFIG['max_overflow']
+                    }
+                }
+
         except Exception as e:
             logger.error(f"Failed to get database stats: {e}")
-        
-        return stats
+            return {}
+
+    def close_all_connections(self):
+        """Close all database connections."""
+        try:
+            if self._scoped_session:
+                self._scoped_session.remove()
+
+            if self._engine:
+                self._engine.dispose()
+
+            logger.info("All database connections closed")
+
+        except Exception as e:
+            logger.error(f"Error closing connections: {e}")
 
 
 # Global database manager instance
 db_manager = DatabaseManager()
 
-# Backward compatibility
-engine = db_manager.engine
+
+def get_db():
+    """Compatibility function for getting database session."""
+    return db_manager.get_db_session()
+
+
+# Compatibility aliases for existing code
 SessionLocal = db_manager.session_factory
-get_db = db_manager.get_db_session
+engine = db_manager.engine
 
 
-# Connection pool monitoring
-@event.listens_for(engine, "connect")
-def receive_connect(dbapi_connection, connection_record):
-    """Log when a new connection is created."""
-    logger.debug("New database connection created")
+if __name__ == "__main__":
+    """Test the PostgreSQL database manager."""
+    logging.basicConfig(level=logging.INFO)
 
+    print("Testing PostgreSQL Database Manager V2...")
 
-@event.listens_for(engine, "close")
-def receive_close(dbapi_connection, connection_record):
-    """Log when a connection is closed."""
-    logger.debug("Database connection closed")
+    if db_manager.test_connection():
+        print("✅ Database connection successful!")
 
-
-# Helper functions for common patterns
-def with_db_session(func):
-    """Decorator to automatically handle database sessions."""
-    def wrapper(*args, **kwargs):
-        with db_manager.get_db_session() as session:
-            return func(session, *args, **kwargs)
-    return wrapper
-
-
-def bulk_insert_with_retry(model_class, records, chunk_size=1000):
-    """Bulk insert records with chunking and retry logic."""
-    total_inserted = 0
-    
-    for i in range(0, len(records), chunk_size):
-        chunk = records[i:i + chunk_size]
-        
-        def insert_chunk(session):
-            session.bulk_insert_mappings(model_class, chunk)
-            return len(chunk)
-        
-        inserted = db_manager.execute_with_retry(insert_chunk)
-        total_inserted += inserted
-        logger.info(f"Inserted {inserted} records ({total_inserted}/{len(records)})")
-    
-    return total_inserted
+        stats = db_manager.get_database_stats()
+        if stats:
+            print(f"📊 Database size: {stats['database_size']}")
+            print("📋 Table counts:")
+            for table, count in stats['table_counts'].items():
+                print(f"  {table}: {count:,}")
+    else:
+        print("❌ Database connection failed!")
