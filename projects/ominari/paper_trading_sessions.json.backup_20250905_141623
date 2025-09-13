@@ -1,0 +1,2664 @@
+{
+  "sessions": {
+    "20250905_175221": {
+      "session_id": "20250905_175221",
+      "session_name": "Session 20250905_175221",
+      "created_at": "2025-09-05T17:52:21.707639+00:00",
+      "initial_bankroll": 10000.0,
+      "current_bankroll": 7626.907510774377,
+      "portfolio_value": 9982.264452313646,
+      "positions": {
+        "0x3230323530393035394141324235463600000000000000000000000000000000_Away": {
+          "market_id": "0x3230323530393035394141324235463600000000000000000000000000000000",
+          "market_name": "Chelsea FC Women vs Manchester City WFC",
+          "outcome": "Away",
+          "total_stake": 46.19986098748906,
+          "avg_odds": 4.954047628743911,
+          "current_value": 46.19986098748906,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423541+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423543+00:00",
+              "stake": 46.19986098748906,
+              "odds": 4.954047628743911,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035394141324235463600000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035394141324235463600000000000000000000000000000000",
+          "market_name": "Chelsea FC Women vs Manchester City WFC",
+          "outcome": "Draw",
+          "total_stake": 45.158207201329596,
+          "avg_odds": 4.101951436596678,
+          "current_value": 45.158207201329596,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423546+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423548+00:00",
+              "stake": 29.940580830786313,
+              "odds": 4.101951436596678,
+              "type": "open"
+            },
+            {
+              "timestamp": "2025-09-05T18:03:49.290266+00:00",
+              "stake": 15.217626370543282,
+              "odds": 4.101951436596678,
+              "type": "rebalance"
+            }
+          ]
+        },
+        "0x3230323530393035354141324335414300000000000000000000000000000000_Away": {
+          "market_id": "0x3230323530393035354141324335414300000000000000000000000000000000",
+          "market_name": "Bray Wanderers vs Athlone Town",
+          "outcome": "Away",
+          "total_stake": 65.51150804078797,
+          "avg_odds": 6.557943727170182,
+          "current_value": 65.51150804078797,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423552+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423555+00:00",
+              "stake": 65.51150804078797,
+              "odds": 6.557943727170182,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035354141324335414300000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035354141324335414300000000000000000000000000000000",
+          "market_name": "Bray Wanderers vs Athlone Town",
+          "outcome": "Draw",
+          "total_stake": 72.25334213413981,
+          "avg_odds": 4.953129703310943,
+          "current_value": 72.25334213413981,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423558+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423560+00:00",
+              "stake": 58.03569700182201,
+              "odds": 4.953129703310944,
+              "type": "open"
+            },
+            {
+              "timestamp": "2025-09-05T18:03:49.290262+00:00",
+              "stake": 14.217645132317806,
+              "odds": 4.953129703310944,
+              "type": "rebalance"
+            }
+          ]
+        },
+        "0x3230323530393035343844313745394100000000000000000000000000000000_Home": {
+          "market_id": "0x3230323530393035343844313745394100000000000000000000000000000000",
+          "market_name": "Wexford FC vs Dundalk FC",
+          "outcome": "Home",
+          "total_stake": 48.45742409904003,
+          "avg_odds": 5.061989135211509,
+          "current_value": 48.45742409904003,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423562+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423564+00:00",
+              "stake": 48.45742409904003,
+              "odds": 5.061989135211509,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035343844313745394100000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035343844313745394100000000000000000000000000000000",
+          "market_name": "Wexford FC vs Dundalk FC",
+          "outcome": "Draw",
+          "total_stake": 48.400428448509494,
+          "avg_odds": 4.170445060530985,
+          "current_value": 48.400428448509494,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423566+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423568+00:00",
+              "stake": 33.039745992843926,
+              "odds": 4.1704450605309855,
+              "type": "open"
+            },
+            {
+              "timestamp": "2025-09-05T18:03:49.290259+00:00",
+              "stake": 15.360682455665568,
+              "odds": 4.1704450605309855,
+              "type": "rebalance"
+            }
+          ]
+        },
+        "0x3230323530393035364638413441383300000000000000000000000000000000_Away": {
+          "market_id": "0x3230323530393035364638413441383300000000000000000000000000000000",
+          "market_name": "Italy vs Estonia",
+          "outcome": "Away",
+          "total_stake": 47.302096162272235,
+          "avg_odds": 43.08379423824064,
+          "current_value": 47.302096162272235,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423570+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423572+00:00",
+              "stake": 47.302096162272235,
+              "odds": 43.08379423824064,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035364638413441383300000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035364638413441383300000000000000000000000000000000",
+          "market_name": "Italy vs Estonia",
+          "outcome": "Draw",
+          "total_stake": 66.12061994299259,
+          "avg_odds": 15.8469128232427,
+          "current_value": 66.12061994299259,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423574+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423576+00:00",
+              "stake": 78.62082384224414,
+              "odds": 15.8469128232427,
+              "type": "open"
+            },
+            {
+              "timestamp": "2025-09-05T17:53:08.444052+00:00",
+              "stake": -12.500203899251545,
+              "odds": 15.385352255575437,
+              "type": "rebalance"
+            }
+          ]
+        },
+        "0x3230323530393035383046384638324200000000000000000000000000000000_Home": {
+          "market_id": "0x3230323530393035383046384638324200000000000000000000000000000000",
+          "market_name": "Faroe Islands vs Croatia",
+          "outcome": "Home",
+          "total_stake": 64.02330793297052,
+          "avg_odds": 15.540927586240432,
+          "current_value": 64.02330793297052,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423578+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423580+00:00",
+              "stake": 64.02330793297052,
+              "odds": 15.540927586240432,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035383046384638324200000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035383046384638324200000000000000000000000000000000",
+          "market_name": "Faroe Islands vs Croatia",
+          "outcome": "Draw",
+          "total_stake": 80.03302351752887,
+          "avg_odds": 6.943397219840752,
+          "current_value": 80.03302351752887,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423582+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423584+00:00",
+              "stake": 80.03302351752887,
+              "odds": 6.943397219840752,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035453642464143453000000000000000000000000000000000_Home": {
+          "market_id": "0x3230323530393035453642464143453000000000000000000000000000000000",
+          "market_name": "Ukraine vs France",
+          "outcome": "Home",
+          "total_stake": 71.77503098831998,
+          "avg_odds": 9.746105197305852,
+          "current_value": 71.77503098831998,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423586+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423588+00:00",
+              "stake": 71.77503098831998,
+              "odds": 9.746105197305852,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035453642464143453000000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035453642464143453000000000000000000000000000000000",
+          "market_name": "Ukraine vs France",
+          "outcome": "Draw",
+          "total_stake": 77.34088632619199,
+          "avg_odds": 5.150380795307749,
+          "current_value": 77.34088632619199,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423591+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423592+00:00",
+              "stake": 64.43897633713598,
+              "odds": 5.150380795307749,
+              "type": "open"
+            },
+            {
+              "timestamp": "2025-09-05T18:03:49.290268+00:00",
+              "stake": 12.901909989056008,
+              "odds": 5.150380795307749,
+              "type": "rebalance"
+            }
+          ]
+        },
+        "0x3230323530393035343043394634343200000000000000000000000000000000_Away": {
+          "market_id": "0x3230323530393035343043394634343200000000000000000000000000000000",
+          "market_name": "Switzerland vs Kosovo",
+          "outcome": "Away",
+          "total_stake": 71.26329683205809,
+          "avg_odds": 7.715700085851245,
+          "current_value": 71.26329683205809,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423595+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423597+00:00",
+              "stake": 71.26329683205809,
+              "odds": 7.715700085851245,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035343043394634343200000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035343043394634343200000000000000000000000000000000",
+          "market_name": "Switzerland vs Kosovo",
+          "outcome": "Draw",
+          "total_stake": 69.3455180640032,
+          "avg_odds": 4.64526744578695,
+          "current_value": 69.3455180640032,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423599+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423601+00:00",
+              "stake": 52.63408417899192,
+              "odds": 4.64526744578695,
+              "type": "open"
+            },
+            {
+              "timestamp": "2025-09-05T18:03:49.290272+00:00",
+              "stake": 16.71143388501128,
+              "odds": 4.64526744578695,
+              "type": "rebalance"
+            }
+          ]
+        },
+        "0x3230323530393035463537314343334400000000000000000000000000000000_Away": {
+          "market_id": "0x3230323530393035463537314343334400000000000000000000000000000000",
+          "market_name": "Denmark vs Scotland",
+          "outcome": "Away",
+          "total_stake": 58.82388358663189,
+          "avg_odds": 7.40865144313612,
+          "current_value": 58.82388358663189,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423603+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423605+00:00",
+              "stake": 70.67628924265895,
+              "odds": 7.40865144313612,
+              "type": "open"
+            },
+            {
+              "timestamp": "2025-09-05T17:53:08.444046+00:00",
+              "stake": -11.852405656027067,
+              "odds": 7.192865478772932,
+              "type": "rebalance"
+            }
+          ]
+        },
+        "0x3230323530393035463537314343334400000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035463537314343334400000000000000000000000000000000",
+          "market_name": "Denmark vs Scotland",
+          "outcome": "Draw",
+          "total_stake": 20.639860031609423,
+          "avg_odds": 3.971750305747537,
+          "current_value": 20.639860031609423,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423608+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423609+00:00",
+              "stake": 10.0,
+              "odds": 3.9717503057475376,
+              "type": "open"
+            },
+            {
+              "timestamp": "2025-09-05T17:53:08.444049+00:00",
+              "stake": 10.639860031609423,
+              "odds": 3.9717503057475376,
+              "type": "rebalance"
+            }
+          ]
+        },
+        "0x3230323530393035374544394545333700000000000000000000000000000000_Away": {
+          "market_id": "0x3230323530393035374544394545333700000000000000000000000000000000",
+          "market_name": "Iceland vs Azerbaijan",
+          "outcome": "Away",
+          "total_stake": 70.62827781608483,
+          "avg_odds": 7.388823630040983,
+          "current_value": 70.62827781608483,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423612+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423613+00:00",
+              "stake": 70.62827781608483,
+              "odds": 7.388823630040983,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035374544394545333700000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035374544394545333700000000000000000000000000000000",
+          "market_name": "Iceland vs Azerbaijan",
+          "outcome": "Draw",
+          "total_stake": 61.05737106631572,
+          "avg_odds": 4.3283055312833385,
+          "current_value": 61.05737106631572,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423616+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423618+00:00",
+              "stake": 42.143442624806724,
+              "odds": 4.3283055312833385,
+              "type": "open"
+            },
+            {
+              "timestamp": "2025-09-05T18:03:49.290240+00:00",
+              "stake": 18.913928441508993,
+              "odds": 4.3283055312833385,
+              "type": "rebalance"
+            }
+          ]
+        },
+        "0x3230323530393035354136314433343900000000000000000000000000000000_Away": {
+          "market_id": "0x3230323530393035354136314433343900000000000000000000000000000000",
+          "market_name": "Greece vs Belarus",
+          "outcome": "Away",
+          "total_stake": 61.34595408927301,
+          "avg_odds": 17.987244304929547,
+          "current_value": 61.34595408927301,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423620+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423622+00:00",
+              "stake": 61.34595408927301,
+              "odds": 17.987244304929547,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035354136314433343900000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035354136314433343900000000000000000000000000000000",
+          "market_name": "Greece vs Belarus",
+          "outcome": "Draw",
+          "total_stake": 80.1186684886287,
+          "avg_odds": 6.96312375899624,
+          "current_value": 80.1186684886287,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423624+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423626+00:00",
+              "stake": 80.1186684886287,
+              "odds": 6.96312375899624,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035463331394643353300000000000000000000000000000000_Home": {
+          "market_id": "0x3230323530393035463331394643353300000000000000000000000000000000",
+          "market_name": "Moldova vs Israel",
+          "outcome": "Home",
+          "total_stake": 66.62472069812263,
+          "avg_odds": 6.418154739902974,
+          "current_value": 66.62472069812263,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423629+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423630+00:00",
+              "stake": 66.62472069812263,
+              "odds": 6.418154739902974,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035463331394643353300000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035463331394643353300000000000000000000000000000000",
+          "market_name": "Moldova vs Israel",
+          "outcome": "Draw",
+          "total_stake": 40.75684407919743,
+          "avg_odds": 4.031155832002608,
+          "current_value": 40.75684407919743,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423633+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423635+00:00",
+              "stake": 29.294646156885463,
+              "odds": 4.031155832002608,
+              "type": "open"
+            },
+            {
+              "timestamp": "2025-09-05T17:53:08.444041+00:00",
+              "stake": 11.462197922311965,
+              "odds": 4.031155832002608,
+              "type": "rebalance"
+            }
+          ]
+        },
+        "0x3230323530393035444242313531313500000000000000000000000000000000_Home": {
+          "market_id": "0x3230323530393035444242313531313500000000000000000000000000000000",
+          "market_name": "Montenegro vs Czechia",
+          "outcome": "Home",
+          "total_stake": 48.39050646901948,
+          "avg_odds": 5.576235863903813,
+          "current_value": 48.39050646901948,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423637+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423639+00:00",
+              "stake": 58.993529592999444,
+              "odds": 5.576235863903813,
+              "type": "open"
+            },
+            {
+              "timestamp": "2025-09-05T17:53:08.444037+00:00",
+              "stake": -10.603023123979966,
+              "odds": 5.413821227091081,
+              "type": "rebalance"
+            }
+          ]
+        },
+        "0x3230323530393035333143304630414300000000000000000000000000000000_Away": {
+          "market_id": "0x3230323530393035333143304630414300000000000000000000000000000000",
+          "market_name": "C\u00f4te d'Ivoire vs Burundi",
+          "outcome": "Away",
+          "total_stake": 64.65133364601382,
+          "avg_odds": 13.250088671618027,
+          "current_value": 64.65133364601382,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423641+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423642+00:00",
+              "stake": 64.65133364601382,
+              "odds": 13.250088671618027,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035333143304630414300000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035333143304630414300000000000000000000000000000000",
+          "market_name": "C\u00f4te d'Ivoire vs Burundi",
+          "outcome": "Draw",
+          "total_stake": 63.672916334935344,
+          "avg_odds": 5.5101341072661985,
+          "current_value": 63.672916334935344,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423645+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423646+00:00",
+              "stake": 63.672916334935344,
+              "odds": 5.5101341072661985,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035414430354631304100000000000000000000000000000000_Away": {
+          "market_id": "0x3230323530393035414430354631304100000000000000000000000000000000",
+          "market_name": "Senegal vs Sudan",
+          "outcome": "Away",
+          "total_stake": 61.49828442010112,
+          "avg_odds": 16.232074850179657,
+          "current_value": 61.49828442010112,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423649+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423650+00:00",
+              "stake": 61.49828442010112,
+              "odds": 16.232074850179657,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035414430354631304100000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035414430354631304100000000000000000000000000000000",
+          "market_name": "Senegal vs Sudan",
+          "outcome": "Draw",
+          "total_stake": 58.96008925867017,
+          "avg_odds": 4.677374437898308,
+          "current_value": 58.96008925867017,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423653+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423655+00:00",
+              "stake": 46.06994749238224,
+              "odds": 4.677374437898308,
+              "type": "open"
+            },
+            {
+              "timestamp": "2025-09-05T18:03:49.290255+00:00",
+              "stake": 12.890141766287933,
+              "odds": 4.677374437898308,
+              "type": "rebalance"
+            }
+          ]
+        },
+        "0x3230323530393035313544354636324600000000000000000000000000000000_Away": {
+          "market_id": "0x3230323530393035313544354636324600000000000000000000000000000000",
+          "market_name": "Egypt vs Ethiopia",
+          "outcome": "Away",
+          "total_stake": 55.612139045898196,
+          "avg_odds": 22.782306147348848,
+          "current_value": 55.612139045898196,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423658+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423659+00:00",
+              "stake": 55.612139045898196,
+              "odds": 22.782306147348848,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035313544354636324600000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035313544354636324600000000000000000000000000000000",
+          "market_name": "Egypt vs Ethiopia",
+          "outcome": "Draw",
+          "total_stake": 66.26661770834352,
+          "avg_odds": 5.698053951610527,
+          "current_value": 66.26661770834352,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423662+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423664+00:00",
+              "stake": 66.26661770834352,
+              "odds": 5.698053951610527,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035424433383434313900000000000000000000000000000000_Away": {
+          "market_id": "0x3230323530393035424433383434313900000000000000000000000000000000",
+          "market_name": "Morocco vs Niger",
+          "outcome": "Away",
+          "total_stake": 65.16226286075823,
+          "avg_odds": 12.764332004019007,
+          "current_value": 65.16226286075823,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423666+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423668+00:00",
+              "stake": 65.16226286075823,
+              "odds": 12.764332004019007,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035424433383434313900000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035424433383434313900000000000000000000000000000000",
+          "market_name": "Morocco vs Niger",
+          "outcome": "Draw",
+          "total_stake": 75.09316437785277,
+          "avg_odds": 6.699292262972112,
+          "current_value": 75.09316437785277,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:52:24.423671+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423673+00:00",
+              "stake": 75.09316437785277,
+              "odds": 6.699292262972112,
+              "type": "open"
+            }
+          ]
+        },
+        "0x3230323530393035444242313531313500000000000000000000000000000000_Draw": {
+          "market_id": "0x3230323530393035444242313531313500000000000000000000000000000000",
+          "market_name": "Montenegro_vs_Czechia",
+          "outcome": "Draw",
+          "total_stake": 12.869496884178465,
+          "avg_odds": 3.8627566375202114,
+          "current_value": 12.869496884178465,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T17:53:08.444021+00:00",
+          "maturity_date": "2025-09-05T18:45:00+00:00",
+          "fee_info": {
+            "stake": 12.869496884178465,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 0.38608490652535393,
+            "execution_stake": 13.25558179070382,
+            "entry_odds": 3.8627566375202114,
+            "adjusted_odds": 3.7502491626409817,
+            "implied_prob": 0.26664894961159996
+          },
+          "execution_stake": 13.25558179070382,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:53:08.444032+00:00",
+              "stake": 12.869496884178465,
+              "odds": 3.8627566375202114,
+              "type": "open",
+              "fee_info": {
+                "stake": 12.869496884178465,
+                "safebox_fee_pct": 0.02,
+                "skew_fee_pct": 0.01,
+                "total_fee_pct": 0.03,
+                "fee_amount": 0.38608490652535393,
+                "execution_stake": 13.25558179070382,
+                "entry_odds": 3.8627566375202114,
+                "adjusted_odds": 3.7502491626409817,
+                "implied_prob": 0.26664894961159996
+              }
+            }
+          ]
+        },
+        "DEMO_MARKET_000_Home": {
+          "market_id": "DEMO_MARKET_000",
+          "market_name": "Demo Match A vs Demo Team B",
+          "outcome": "Home",
+          "total_stake": 200.0,
+          "avg_odds": 2.5,
+          "current_value": 200.0,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T18:06:47.996112+00:00",
+          "maturity_date": "2025-09-05T18:06:47.996052+00:00",
+          "fee_info": {
+            "stake": 200.0,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 6.0,
+            "execution_stake": 206.0,
+            "entry_odds": 2.5,
+            "adjusted_odds": 2.4271844660194173,
+            "implied_prob": 0.41200000000000003
+          },
+          "execution_stake": 206.0,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T18:06:47.996114+00:00",
+              "stake": 200.0,
+              "odds": 2.5,
+              "type": "open",
+              "fee_info": {
+                "stake": 200.0,
+                "safebox_fee_pct": 0.02,
+                "skew_fee_pct": 0.01,
+                "total_fee_pct": 0.03,
+                "fee_amount": 6.0,
+                "execution_stake": 206.0,
+                "entry_odds": 2.5,
+                "adjusted_odds": 2.4271844660194173,
+                "implied_prob": 0.41200000000000003
+              }
+            }
+          ]
+        },
+        "DEMO_MARKET_001_Draw": {
+          "market_id": "DEMO_MARKET_001",
+          "market_name": "Demo Match A vs Demo Team B",
+          "outcome": "Draw",
+          "total_stake": 150.0,
+          "avg_odds": 3.2,
+          "current_value": 150.0,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T18:06:47.996116+00:00",
+          "maturity_date": "2025-09-05T18:06:47.996075+00:00",
+          "fee_info": {
+            "stake": 150.0,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 4.5,
+            "execution_stake": 154.5,
+            "entry_odds": 3.2,
+            "adjusted_odds": 3.1067961165048543,
+            "implied_prob": 0.321875
+          },
+          "execution_stake": 154.5,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T18:06:47.996117+00:00",
+              "stake": 150.0,
+              "odds": 3.2,
+              "type": "open",
+              "fee_info": {
+                "stake": 150.0,
+                "safebox_fee_pct": 0.02,
+                "skew_fee_pct": 0.01,
+                "total_fee_pct": 0.03,
+                "fee_amount": 4.5,
+                "execution_stake": 154.5,
+                "entry_odds": 3.2,
+                "adjusted_odds": 3.1067961165048543,
+                "implied_prob": 0.321875
+              }
+            }
+          ]
+        },
+        "DEMO_MARKET_002_Away": {
+          "market_id": "DEMO_MARKET_002",
+          "market_name": "Demo Match C vs Demo Team D",
+          "outcome": "Away",
+          "total_stake": 100.0,
+          "avg_odds": 4.5,
+          "current_value": 100.0,
+          "pnl": 0.0,
+          "status": "open",
+          "opened_at": "2025-09-05T18:06:47.996119+00:00",
+          "maturity_date": "2025-09-05T18:06:47.996081+00:00",
+          "fee_info": {
+            "stake": 100.0,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 3.0,
+            "execution_stake": 103.0,
+            "entry_odds": 4.5,
+            "adjusted_odds": 4.368932038834951,
+            "implied_prob": 0.2288888888888889
+          },
+          "execution_stake": 103.0,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T18:06:47.996120+00:00",
+              "stake": 100.0,
+              "odds": 4.5,
+              "type": "open",
+              "fee_info": {
+                "stake": 100.0,
+                "safebox_fee_pct": 0.02,
+                "skew_fee_pct": 0.01,
+                "total_fee_pct": 0.03,
+                "fee_amount": 3.0,
+                "execution_stake": 103.0,
+                "entry_odds": 4.5,
+                "adjusted_odds": 4.368932038834951,
+                "implied_prob": 0.2288888888888889
+              }
+            }
+          ]
+        }
+      },
+      "closed_positions": [
+        {
+          "market_id": "0x3230323530393035334544344531464300000000000000000000000000000000",
+          "market_name": "Lesotho vs South Africa",
+          "outcome": "Home",
+          "total_stake": 59.41824836948345,
+          "avg_odds": 19.872075456619964,
+          "current_value": 59.41824836948345,
+          "pnl": 0.0,
+          "status": "closed",
+          "opened_at": "2025-09-05T17:52:24.423473+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423484+00:00",
+              "stake": 59.41824836948345,
+              "odds": 19.872075456619964,
+              "type": "open"
+            }
+          ],
+          "closed_at": "2025-09-05T17:53:08.444055+00:00",
+          "close_reason": "rebalanced_out"
+        },
+        {
+          "market_id": "0x3230323530393035334544344531464300000000000000000000000000000000",
+          "market_name": "Lesotho vs South Africa",
+          "outcome": "Draw",
+          "total_stake": 62.330883632344865,
+          "avg_odds": 5.16119208019179,
+          "current_value": 62.330883632344865,
+          "pnl": 0.0,
+          "status": "closed",
+          "opened_at": "2025-09-05T17:52:24.423489+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423491+00:00",
+              "stake": 62.330883632344865,
+              "odds": 5.16119208019179,
+              "type": "open"
+            }
+          ],
+          "closed_at": "2025-09-05T17:53:08.444087+00:00",
+          "close_reason": "rebalanced_out"
+        },
+        {
+          "market_id": "0x3230323530393035443139323642464500000000000000000000000000000000",
+          "market_name": "Uganda vs Mozambique",
+          "outcome": "Away",
+          "total_stake": 34.28815925638643,
+          "avg_odds": 4.507673110580429,
+          "current_value": 34.28815925638643,
+          "pnl": 0.0,
+          "status": "closed",
+          "opened_at": "2025-09-05T17:52:24.423494+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423496+00:00",
+              "stake": 34.28815925638643,
+              "odds": 4.507673110580429,
+              "type": "open"
+            }
+          ],
+          "closed_at": "2025-09-05T17:53:08.444103+00:00",
+          "close_reason": "rebalanced_out"
+        },
+        {
+          "market_id": "0x3230323530393035313436304632304600000000000000000000000000000000",
+          "market_name": "Djibouti vs Burkina Faso",
+          "outcome": "Home",
+          "total_stake": 58.743460438287855,
+          "avg_odds": 20.61715624653404,
+          "current_value": 58.743460438287855,
+          "pnl": 0.0,
+          "status": "closed",
+          "opened_at": "2025-09-05T17:52:24.423500+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423502+00:00",
+              "stake": 58.743460438287855,
+              "odds": 20.61715624653404,
+              "type": "open"
+            }
+          ],
+          "closed_at": "2025-09-05T17:53:08.444114+00:00",
+          "close_reason": "rebalanced_out"
+        },
+        {
+          "market_id": "0x3230323530393035313436304632304600000000000000000000000000000000",
+          "market_name": "Djibouti vs Burkina Faso",
+          "outcome": "Draw",
+          "total_stake": 83.8546289158123,
+          "avg_odds": 9.56057461697988,
+          "current_value": 83.8546289158123,
+          "pnl": 0.0,
+          "status": "closed",
+          "opened_at": "2025-09-05T17:52:24.423505+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423506+00:00",
+              "stake": 83.8546289158123,
+              "odds": 9.56057461697988,
+              "type": "open"
+            }
+          ],
+          "closed_at": "2025-09-05T17:53:08.444127+00:00",
+          "close_reason": "rebalanced_out"
+        },
+        {
+          "market_id": "0x3230323530393035353135333243343700000000000000000000000000000000",
+          "market_name": "Eintracht Frankfurt vs SGS Essen",
+          "outcome": "Away",
+          "total_stake": 67.74905885639772,
+          "avg_odds": 7.044185579371134,
+          "current_value": 67.74905885639772,
+          "pnl": 0.0,
+          "status": "closed",
+          "opened_at": "2025-09-05T17:52:24.423509+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423511+00:00",
+              "stake": 67.74905885639772,
+              "odds": 7.044185579371134,
+              "type": "open"
+            }
+          ],
+          "closed_at": "2025-09-05T17:53:08.444137+00:00",
+          "close_reason": "rebalanced_out"
+        },
+        {
+          "market_id": "0x3230323530393035353135333243343700000000000000000000000000000000",
+          "market_name": "Eintracht Frankfurt vs SGS Essen",
+          "outcome": "Draw",
+          "total_stake": 58.49022380516644,
+          "avg_odds": 4.97353187179168,
+          "current_value": 58.49022380516644,
+          "pnl": 0.0,
+          "status": "closed",
+          "opened_at": "2025-09-05T17:52:24.423515+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423516+00:00",
+              "stake": 58.49022380516644,
+              "odds": 4.97353187179168,
+              "type": "open"
+            }
+          ],
+          "closed_at": "2025-09-05T17:53:08.444147+00:00",
+          "close_reason": "rebalanced_out"
+        },
+        {
+          "market_id": "0x3230323530393035464539383737393300000000000000000000000000000000",
+          "market_name": "Albacete Balompi\u00e9 vs CD Mirand\u00e9s",
+          "outcome": "Away",
+          "total_stake": 40.70159568533909,
+          "avg_odds": 4.635270755444221,
+          "current_value": 40.70159568533909,
+          "pnl": 0.0,
+          "status": "closed",
+          "opened_at": "2025-09-05T17:52:24.423519+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423520+00:00",
+              "stake": 40.70159568533909,
+              "odds": 4.635270755444221,
+              "type": "open"
+            }
+          ],
+          "closed_at": "2025-09-05T17:53:08.444156+00:00",
+          "close_reason": "rebalanced_out"
+        },
+        {
+          "market_id": "0x3230323530393035394435373845444500000000000000000000000000000000",
+          "market_name": "Paysandu SC vs Volta Redonda FC",
+          "outcome": "Away",
+          "total_stake": 26.931155994284538,
+          "avg_odds": 4.298679608843809,
+          "current_value": 26.931155994284538,
+          "pnl": 0.0,
+          "status": "closed",
+          "opened_at": "2025-09-05T17:52:24.423676+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423678+00:00",
+              "stake": 26.931155994284538,
+              "odds": 4.298679608843809,
+              "type": "open"
+            }
+          ],
+          "closed_at": "2025-09-05T17:53:08.444166+00:00",
+          "close_reason": "rebalanced_out"
+        },
+        {
+          "market_id": "0x3230323530393035383943323634363900000000000000000000000000000000",
+          "market_name": "Bermuda vs Jamaica",
+          "outcome": "Home",
+          "total_stake": 65.54606888649244,
+          "avg_odds": 14.276979842738163,
+          "current_value": 65.54606888649244,
+          "pnl": 0.0,
+          "status": "closed",
+          "opened_at": "2025-09-05T17:52:24.423680+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423683+00:00",
+              "stake": 65.54606888649244,
+              "odds": 14.276979842738163,
+              "type": "open"
+            }
+          ],
+          "closed_at": "2025-09-05T17:53:08.444177+00:00",
+          "close_reason": "rebalanced_out"
+        },
+        {
+          "market_id": "0x3230323530393035383943323634363900000000000000000000000000000000",
+          "market_name": "Bermuda vs Jamaica",
+          "outcome": "Draw",
+          "total_stake": 34.356678094902186,
+          "avg_odds": 4.2008601341559375,
+          "current_value": 34.356678094902186,
+          "pnl": 0.0,
+          "status": "closed",
+          "opened_at": "2025-09-05T17:52:24.423687+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423690+00:00",
+              "stake": 34.356678094902186,
+              "odds": 4.2008601341559375,
+              "type": "open"
+            }
+          ],
+          "closed_at": "2025-09-05T17:53:08.444187+00:00",
+          "close_reason": "rebalanced_out"
+        },
+        {
+          "market_id": "0x3230323530393035433434414236463500000000000000000000000000000000",
+          "market_name": "BV De Graafschap vs FC Emmen",
+          "outcome": "Away",
+          "total_stake": 62.501307688106806,
+          "avg_odds": 6.1214138363811905,
+          "current_value": 62.501307688106806,
+          "pnl": 0.0,
+          "status": "closed",
+          "opened_at": "2025-09-05T17:52:24.423523+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423525+00:00",
+              "stake": 62.501307688106806,
+              "odds": 6.1214138363811905,
+              "type": "open"
+            }
+          ],
+          "closed_at": "2025-09-05T18:03:49.290275+00:00",
+          "close_reason": "rebalanced_out"
+        },
+        {
+          "market_id": "0x3230323530393035433434414236463500000000000000000000000000000000",
+          "market_name": "BV De Graafschap vs FC Emmen",
+          "outcome": "Draw",
+          "total_stake": 52.37540993967595,
+          "avg_odds": 4.7247805824609,
+          "current_value": 52.37540993967595,
+          "pnl": 0.0,
+          "status": "closed",
+          "opened_at": "2025-09-05T17:52:24.423527+00:00",
+          "maturity_date": null,
+          "trades": [
+            {
+              "timestamp": "2025-09-05T17:52:24.423529+00:00",
+              "stake": 52.37540993967595,
+              "odds": 4.7247805824609,
+              "type": "open"
+            }
+          ],
+          "closed_at": "2025-09-05T18:03:49.290313+00:00",
+          "close_reason": "rebalanced_out"
+        }
+      ],
+      "trades": [
+        {
+          "market_id": "0x3230323530393035334544344531464300000000000000000000000000000000",
+          "market_name": "Lesotho vs South Africa",
+          "outcome": "Home",
+          "odds": 19.872075456619964,
+          "execution_odds": 19.872075456619964,
+          "stake": 59.41824836948345,
+          "target_stake": 59.41824836948345,
+          "current_stake": 0,
+          "edge": 1.0000000000000002,
+          "probability": 0.06032187011281054,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035334544344531464300000000000000000000000000000000",
+          "market_name": "Lesotho vs South Africa",
+          "outcome": "Draw",
+          "odds": 5.16119208019179,
+          "execution_odds": 5.16119208019179,
+          "stake": 62.330883632344865,
+          "target_stake": 62.330883632344865,
+          "current_stake": 0,
+          "edge": 1.5000000000000013,
+          "probability": 0.20875368799737445,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035443139323642464500000000000000000000000000000000",
+          "market_name": "Uganda vs Mozambique",
+          "outcome": "Away",
+          "odds": 4.507673110580429,
+          "execution_odds": 4.507673110580429,
+          "stake": 34.28815925638643,
+          "target_stake": 34.28815925638643,
+          "current_stake": 0,
+          "edge": 1.0000000000000036,
+          "probability": 0.2318439481897647,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035313436304632304600000000000000000000000000000000",
+          "market_name": "Djibouti vs Burkina Faso",
+          "outcome": "Home",
+          "odds": 20.61715624653404,
+          "execution_odds": 20.61715624653404,
+          "stake": 58.743460438287855,
+          "target_stake": 58.743460438287855,
+          "current_stake": 0,
+          "edge": 0.9999999999999996,
+          "probability": 0.05850329444285559,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035313436304632304600000000000000000000000000000000",
+          "market_name": "Djibouti vs Burkina Faso",
+          "outcome": "Draw",
+          "odds": 9.56057461697988,
+          "execution_odds": 9.56057461697988,
+          "stake": 83.8546289158123,
+          "target_stake": 83.8546289158123,
+          "current_stake": 0,
+          "edge": 1.5,
+          "probability": 0.11959622356003255,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035353135333243343700000000000000000000000000000000",
+          "market_name": "Eintracht Frankfurt vs SGS Essen",
+          "outcome": "Away",
+          "odds": 7.044185579371134,
+          "execution_odds": 7.044185579371134,
+          "stake": 67.74905885639772,
+          "target_stake": 67.74905885639772,
+          "current_stake": 0,
+          "edge": 1.0000000000000009,
+          "probability": 0.15196105266285084,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035353135333243343700000000000000000000000000000000",
+          "market_name": "Eintracht Frankfurt vs SGS Essen",
+          "outcome": "Draw",
+          "odds": 4.97353187179168,
+          "execution_odds": 4.97353187179168,
+          "stake": 58.49022380516644,
+          "target_stake": 58.49022380516644,
+          "current_stake": 0,
+          "edge": 1.5000000000000013,
+          "probability": 0.21606435944880295,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035464539383737393300000000000000000000000000000000",
+          "market_name": "Albacete Balompi\u00e9 vs CD Mirand\u00e9s",
+          "outcome": "Away",
+          "odds": 4.635270755444221,
+          "execution_odds": 4.635270755444221,
+          "stake": 40.70159568533909,
+          "target_stake": 40.70159568533909,
+          "current_stake": 0,
+          "edge": 1.1078685639695884,
+          "probability": 0.22681581357887384,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035433434414236463500000000000000000000000000000000",
+          "market_name": "BV De Graafschap vs FC Emmen",
+          "outcome": "Away",
+          "odds": 6.1214138363811905,
+          "execution_odds": 6.1214138363811905,
+          "stake": 62.501307688106806,
+          "target_stake": 62.501307688106806,
+          "current_stake": 0,
+          "edge": 1.0000000000000009,
+          "probability": 0.17336095332368057,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035433434414236463500000000000000000000000000000000",
+          "market_name": "BV De Graafschap vs FC Emmen",
+          "outcome": "Draw",
+          "odds": 4.7247805824609,
+          "execution_odds": 4.7247805824609,
+          "stake": 52.37540993967595,
+          "target_stake": 52.37540993967595,
+          "current_stake": 0,
+          "edge": 1.5000000000000013,
+          "probability": 0.2266500401547008,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035394141324235463600000000000000000000000000000000",
+          "market_name": "Chelsea FC Women vs Manchester City WFC",
+          "outcome": "Away",
+          "odds": 4.954047628743911,
+          "execution_odds": 4.954047628743911,
+          "stake": 46.19986098748906,
+          "target_stake": 46.19986098748906,
+          "current_stake": 0,
+          "edge": 1.0000000000000036,
+          "probability": 0.21185514450807735,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035394141324235463600000000000000000000000000000000",
+          "market_name": "Chelsea FC Women vs Manchester City WFC",
+          "outcome": "Draw",
+          "odds": 4.101951436596678,
+          "execution_odds": 4.101951436596678,
+          "stake": 29.940580830786313,
+          "target_stake": 29.940580830786313,
+          "current_stake": 0,
+          "edge": 1.4999999999999987,
+          "probability": 0.2587864064109164,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035354141324335414300000000000000000000000000000000",
+          "market_name": "Bray Wanderers vs Athlone Town",
+          "outcome": "Away",
+          "odds": 6.557943727170182,
+          "execution_odds": 6.557943727170182,
+          "stake": 65.51150804078797,
+          "target_stake": 65.51150804078797,
+          "current_stake": 0,
+          "edge": 1.0000000000000009,
+          "probability": 0.16248682233379122,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035354141324335414300000000000000000000000000000000",
+          "market_name": "Bray Wanderers vs Athlone Town",
+          "outcome": "Draw",
+          "odds": 4.953129703310944,
+          "execution_odds": 4.953129703310944,
+          "stake": 58.03569700182201,
+          "target_stake": 58.03569700182201,
+          "current_stake": 0,
+          "edge": 1.500000000000004,
+          "probability": 0.2168925527695237,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035343844313745394100000000000000000000000000000000",
+          "market_name": "Wexford FC vs Dundalk FC",
+          "outcome": "Home",
+          "odds": 5.061989135211509,
+          "execution_odds": 5.061989135211509,
+          "stake": 48.45742409904003,
+          "target_stake": 48.45742409904003,
+          "current_stake": 0,
+          "edge": 1.0000000000000009,
+          "probability": 0.2075507993574973,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035343844313745394100000000000000000000000000000000",
+          "market_name": "Wexford FC vs Dundalk FC",
+          "outcome": "Draw",
+          "odds": 4.1704450605309855,
+          "execution_odds": 4.1704450605309855,
+          "stake": 33.039745992843926,
+          "target_stake": 33.039745992843926,
+          "current_stake": 0,
+          "edge": 1.500000000000004,
+          "probability": 0.2547825616896339,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035364638413441383300000000000000000000000000000000",
+          "market_name": "Italy vs Estonia",
+          "outcome": "Away",
+          "odds": 43.08379423824064,
+          "execution_odds": 43.08379423824064,
+          "stake": 47.302096162272235,
+          "target_stake": 47.302096162272235,
+          "current_stake": 0,
+          "edge": 1.011605291707484,
+          "probability": 0.03332663633204279,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035364638413441383300000000000000000000000000000000",
+          "market_name": "Italy vs Estonia",
+          "outcome": "Draw",
+          "odds": 15.8469128232427,
+          "execution_odds": 15.8469128232427,
+          "stake": 78.62082384224414,
+          "target_stake": 78.62082384224414,
+          "current_stake": 0,
+          "edge": 1.5315518868297573,
+          "probability": 0.07841929252781427,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035383046384638324200000000000000000000000000000000",
+          "market_name": "Faroe Islands vs Croatia",
+          "outcome": "Home",
+          "odds": 15.540927586240432,
+          "execution_odds": 15.540927586240432,
+          "stake": 64.02330793297052,
+          "target_stake": 64.02330793297052,
+          "current_stake": 0,
+          "edge": 0.9999999999999996,
+          "probability": 0.07434622350890922,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035383046384638324200000000000000000000000000000000",
+          "market_name": "Faroe Islands vs Croatia",
+          "outcome": "Draw",
+          "odds": 6.943397219840752,
+          "execution_odds": 6.943397219840752,
+          "stake": 80.03302351752887,
+          "target_stake": 80.03302351752887,
+          "current_stake": 0,
+          "edge": 1.5000000000000013,
+          "probability": 0.15902171852454314,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035453642464143453000000000000000000000000000000000",
+          "market_name": "Ukraine vs France",
+          "outcome": "Home",
+          "odds": 9.746105197305852,
+          "execution_odds": 9.746105197305852,
+          "stake": 71.77503098831998,
+          "target_stake": 71.77503098831998,
+          "current_stake": 0,
+          "edge": 1.0513025449528492,
+          "probability": 0.11311811535523086,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035453642464143453000000000000000000000000000000000",
+          "market_name": "Ukraine vs France",
+          "outcome": "Draw",
+          "odds": 5.150380795307749,
+          "execution_odds": 5.150380795307749,
+          "stake": 64.43897633713598,
+          "target_stake": 64.43897633713598,
+          "current_stake": 0,
+          "edge": 1.5970802004495521,
+          "probability": 0.2101312029035998,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035343043394634343200000000000000000000000000000000",
+          "market_name": "Switzerland vs Kosovo",
+          "outcome": "Away",
+          "odds": 7.715700085851245,
+          "execution_odds": 7.715700085851245,
+          "stake": 71.26329683205809,
+          "target_stake": 71.26329683205809,
+          "current_stake": 0,
+          "edge": 1.064802933555814,
+          "probability": 0.14025389644718442,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035343043394634343200000000000000000000000000000000",
+          "market_name": "Switzerland vs Kosovo",
+          "outcome": "Draw",
+          "odds": 4.64526744578695,
+          "execution_odds": 4.64526744578695,
+          "stake": 52.63408417899192,
+          "target_stake": 52.63408417899192,
+          "current_stake": 0,
+          "edge": 1.6076364290829952,
+          "probability": 0.23134922245682324,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035463537314343334400000000000000000000000000000000",
+          "market_name": "Denmark vs Scotland",
+          "outcome": "Away",
+          "odds": 7.40865144313612,
+          "execution_odds": 7.40865144313612,
+          "stake": 70.67628924265895,
+          "target_stake": 70.67628924265895,
+          "current_stake": 0,
+          "edge": 1.0674886656279718,
+          "probability": 0.14565221791222216,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035463537314343334400000000000000000000000000000000",
+          "market_name": "Denmark vs Scotland",
+          "outcome": "Draw",
+          "odds": 3.9717503057475376,
+          "execution_odds": 3.9717503057475376,
+          "stake": 10.0,
+          "target_stake": 10.0,
+          "current_stake": 0,
+          "edge": 0.6258890820191876,
+          "probability": 0.25803705485857453,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035374544394545333700000000000000000000000000000000",
+          "market_name": "Iceland vs Azerbaijan",
+          "outcome": "Away",
+          "odds": 7.388823630040983,
+          "execution_odds": 7.388823630040983,
+          "stake": 70.62827781608483,
+          "target_stake": 70.62827781608483,
+          "current_stake": 0,
+          "edge": 1.0676697705934046,
+          "probability": 0.14601623889274315,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035374544394545333700000000000000000000000000000000",
+          "market_name": "Iceland vs Azerbaijan",
+          "outcome": "Draw",
+          "odds": 4.3283055312833385,
+          "execution_odds": 4.3283055312833385,
+          "stake": 42.143442624806724,
+          "target_stake": 42.143442624806724,
+          "current_stake": 0,
+          "edge": 1.6155186472826792,
+          "probability": 0.2471924810381901,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035354136314433343900000000000000000000000000000000",
+          "market_name": "Greece vs Belarus",
+          "outcome": "Away",
+          "odds": 17.987244304929547,
+          "execution_odds": 17.987244304929547,
+          "stake": 61.34595408927301,
+          "target_stake": 61.34595408927301,
+          "current_stake": 0,
+          "edge": 0.9999999999999988,
+          "probability": 0.06559495290370532,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035354136314433343900000000000000000000000000000000",
+          "market_name": "Greece vs Belarus",
+          "outcome": "Draw",
+          "odds": 6.96312375899624,
+          "execution_odds": 6.96312375899624,
+          "stake": 80.1186684886287,
+          "target_stake": 80.1186684886287,
+          "current_stake": 0,
+          "edge": 1.5000000000000013,
+          "probability": 0.15861370479851328,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035463331394643353300000000000000000000000000000000",
+          "market_name": "Moldova vs Israel",
+          "outcome": "Home",
+          "odds": 6.418154739902974,
+          "execution_odds": 6.418154739902974,
+          "stake": 66.62472069812263,
+          "target_stake": 66.62472069812263,
+          "current_stake": 0,
+          "edge": 1.0779040113962024,
+          "probability": 0.1665870629063694,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035463331394643353300000000000000000000000000000000",
+          "market_name": "Moldova vs Israel",
+          "outcome": "Draw",
+          "odds": 4.031155832002608,
+          "execution_odds": 4.031155832002608,
+          "stake": 29.294646156885463,
+          "target_stake": 29.294646156885463,
+          "current_stake": 0,
+          "edge": 1.6240339051223407,
+          "probability": 0.2643081492959138,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035444242313531313500000000000000000000000000000000",
+          "market_name": "Montenegro vs Czechia",
+          "outcome": "Home",
+          "odds": 5.576235863903813,
+          "execution_odds": 5.576235863903813,
+          "stake": 58.993529592999444,
+          "target_stake": 58.993529592999444,
+          "current_stake": 0,
+          "edge": 1.0896662214804453,
+          "probability": 0.1902291051756945,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035333143304630414300000000000000000000000000000000",
+          "market_name": "C\u00f4te d'Ivoire vs Burundi",
+          "outcome": "Away",
+          "odds": 13.250088671618027,
+          "execution_odds": 13.250088671618027,
+          "stake": 64.65133364601382,
+          "target_stake": 64.65133364601382,
+          "current_stake": 0,
+          "edge": 0.9245288069549273,
+          "probability": 0.08471648111462084,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035333143304630414300000000000000000000000000000000",
+          "market_name": "C\u00f4te d'Ivoire vs Burundi",
+          "outcome": "Draw",
+          "odds": 5.5101341072661985,
+          "execution_odds": 5.5101341072661985,
+          "stake": 63.672916334935344,
+          "target_stake": 63.672916334935344,
+          "current_stake": 0,
+          "edge": 1.3185162138465378,
+          "probability": 0.1946689482919281,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035414430354631304100000000000000000000000000000000",
+          "market_name": "Senegal vs Sudan",
+          "outcome": "Away",
+          "odds": 16.232074850179657,
+          "execution_odds": 16.232074850179657,
+          "stake": 61.49828442010112,
+          "target_stake": 61.49828442010112,
+          "current_stake": 0,
+          "edge": 0.9383935812747352,
+          "probability": 0.07099035453801167,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035414430354631304100000000000000000000000000000000",
+          "market_name": "Senegal vs Sudan",
+          "outcome": "Draw",
+          "odds": 4.677374437898308,
+          "execution_odds": 4.677374437898308,
+          "stake": 46.06994749238224,
+          "target_stake": 46.06994749238224,
+          "current_stake": 0,
+          "edge": 1.2862048434913564,
+          "probability": 0.22665720494355765,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035313544354636324600000000000000000000000000000000",
+          "market_name": "Egypt vs Ethiopia",
+          "outcome": "Away",
+          "odds": 22.782306147348848,
+          "execution_odds": 22.782306147348848,
+          "stake": 55.612139045898196,
+          "target_stake": 55.612139045898196,
+          "current_stake": 0,
+          "edge": 0.9561062873296361,
+          "probability": 0.05345477554366046,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035313544354636324600000000000000000000000000000000",
+          "market_name": "Egypt vs Ethiopia",
+          "outcome": "Draw",
+          "odds": 5.698053951610527,
+          "execution_odds": 5.698053951610527,
+          "stake": 66.26661770834352,
+          "target_stake": 66.26661770834352,
+          "current_stake": 0,
+          "edge": 1.324501486210508,
+          "probability": 0.18874352865159894,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035424433383434313900000000000000000000000000000000",
+          "market_name": "Morocco vs Niger",
+          "outcome": "Away",
+          "odds": 12.764332004019007,
+          "execution_odds": 12.764332004019007,
+          "stake": 65.16226286075823,
+          "target_stake": 65.16226286075823,
+          "current_stake": 0,
+          "edge": 0.9216566914990038,
+          "probability": 0.08755987541598623,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035424433383434313900000000000000000000000000000000",
+          "market_name": "Morocco vs Niger",
+          "outcome": "Draw",
+          "odds": 6.699292262972112,
+          "execution_odds": 6.699292262972112,
+          "stake": 75.09316437785277,
+          "target_stake": 75.09316437785277,
+          "current_stake": 0,
+          "edge": 1.3507305009624493,
+          "probability": 0.1627768040471772,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035394435373845444500000000000000000000000000000000",
+          "market_name": "Paysandu SC vs Volta Redonda FC",
+          "outcome": "Away",
+          "odds": 4.298679608843809,
+          "execution_odds": 4.298679608843809,
+          "stake": 26.931155994284538,
+          "target_stake": 26.931155994284538,
+          "current_stake": 0,
+          "edge": 1.0000000000000036,
+          "probability": 0.24262957256518225,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035383943323634363900000000000000000000000000000000",
+          "market_name": "Bermuda vs Jamaica",
+          "outcome": "Home",
+          "odds": 14.276979842738163,
+          "execution_odds": 14.276979842738163,
+          "stake": 65.54606888649244,
+          "target_stake": 65.54606888649244,
+          "current_stake": 0,
+          "edge": 0.9999999999999996,
+          "probability": 0.08004282495423144,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035383943323634363900000000000000000000000000000000",
+          "market_name": "Bermuda vs Jamaica",
+          "outcome": "Draw",
+          "odds": 4.2008601341559375,
+          "execution_odds": 4.2008601341559375,
+          "stake": 34.356678094902186,
+          "target_stake": 34.356678094902186,
+          "current_stake": 0,
+          "edge": 1.5000000000000013,
+          "probability": 0.2530464876393525,
+          "maturity_date": null
+        },
+        {
+          "market_id": "0x3230323530393035444242313531313500000000000000000000000000000000",
+          "market_name": "Montenegro_vs_Czechia",
+          "outcome": "Draw",
+          "odds": 3.8627566375202114,
+          "execution_odds": 3.7502491626409817,
+          "stake": 12.869496884178465,
+          "target_stake": 12.869496884178465,
+          "current_stake": 0,
+          "edge": 0,
+          "probability": 0.2651768877278232,
+          "maturity_date": "2025-09-05T18:45:00+00:00",
+          "fee_info": {
+            "stake": 12.869496884178465,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 0.38608490652535393,
+            "execution_stake": 13.25558179070382,
+            "entry_odds": 3.8627566375202114,
+            "adjusted_odds": 3.7502491626409817,
+            "implied_prob": 0.26664894961159996
+          }
+        },
+        {
+          "market_id": "0x3230323530393035444242313531313500000000000000000000000000000000",
+          "market_name": "Montenegro_vs_Czechia",
+          "outcome": "Home",
+          "odds": 5.413821227091081,
+          "execution_odds": 5.413821227091081,
+          "stake": -10.603023123979966,
+          "target_stake": 48.39050646901948,
+          "current_stake": 58.993529592999444,
+          "edge": 0,
+          "probability": 0.1902291051756945,
+          "maturity_date": "2025-09-05T18:45:00+00:00",
+          "fee_info": {}
+        },
+        {
+          "market_id": "0x3230323530393035463331394643353300000000000000000000000000000000",
+          "market_name": "Moldova_vs_Israel",
+          "outcome": "Draw",
+          "odds": 4.031155832002608,
+          "execution_odds": 3.913743526216124,
+          "stake": 11.462197922311965,
+          "target_stake": 40.75684407919743,
+          "current_stake": 29.294646156885463,
+          "edge": 0,
+          "probability": 0.2643081492959138,
+          "maturity_date": "2025-09-05T18:45:00+00:00",
+          "fee_info": {
+            "stake": 11.462197922311965,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 0.34386593766935897,
+            "execution_stake": 11.806063859981323,
+            "entry_odds": 4.031155832002608,
+            "adjusted_odds": 3.913743526216124,
+            "implied_prob": 0.25550984455203113
+          }
+        },
+        {
+          "market_id": "0x3230323530393035463537314343334400000000000000000000000000000000",
+          "market_name": "Denmark_vs_Scotland",
+          "outcome": "Away",
+          "odds": 7.192865478772932,
+          "execution_odds": 7.192865478772932,
+          "stake": -11.852405656027067,
+          "target_stake": 58.82388358663189,
+          "current_stake": 70.67628924265895,
+          "edge": 0,
+          "probability": 0.14565221791222216,
+          "maturity_date": "2025-09-05T18:45:00+00:00",
+          "fee_info": {}
+        },
+        {
+          "market_id": "0x3230323530393035463537314343334400000000000000000000000000000000",
+          "market_name": "Denmark_vs_Scotland",
+          "outcome": "Draw",
+          "odds": 3.9717503057475376,
+          "execution_odds": 3.856068258007318,
+          "stake": 10.639860031609423,
+          "target_stake": 20.639860031609423,
+          "current_stake": 10.0,
+          "edge": 0,
+          "probability": 0.25803705485857453,
+          "maturity_date": "2025-09-05T18:45:00+00:00",
+          "fee_info": {
+            "stake": 10.639860031609423,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 0.3191958009482827,
+            "execution_stake": 10.959055832557706,
+            "entry_odds": 3.9717503057475376,
+            "adjusted_odds": 3.856068258007318,
+            "implied_prob": 0.25933150895953416
+          }
+        },
+        {
+          "market_id": "0x3230323530393035364638413441383300000000000000000000000000000000",
+          "market_name": "Italy_vs_Estonia",
+          "outcome": "Draw",
+          "odds": 15.385352255575437,
+          "execution_odds": 15.385352255575437,
+          "stake": -12.500203899251545,
+          "target_stake": 66.12061994299259,
+          "current_stake": 78.62082384224414,
+          "edge": 0,
+          "probability": 0.07841929252781427,
+          "maturity_date": "2025-09-05T18:45:00+00:00",
+          "fee_info": {}
+        },
+        {
+          "market_id": "0x3230323530393035334544344531464300000000000000000000000000000000",
+          "market_name": "Lesotho vs South Africa",
+          "outcome": "Home",
+          "odds": 19.872075456619964,
+          "stake": -59.41824836948345,
+          "target_stake": 0,
+          "current_stake": 59.41824836948345,
+          "edge": 0,
+          "probability": 0
+        },
+        {
+          "market_id": "0x3230323530393035334544344531464300000000000000000000000000000000",
+          "market_name": "Lesotho vs South Africa",
+          "outcome": "Draw",
+          "odds": 5.16119208019179,
+          "stake": -62.330883632344865,
+          "target_stake": 0,
+          "current_stake": 62.330883632344865,
+          "edge": 0,
+          "probability": 0
+        },
+        {
+          "market_id": "0x3230323530393035443139323642464500000000000000000000000000000000",
+          "market_name": "Uganda vs Mozambique",
+          "outcome": "Away",
+          "odds": 4.507673110580429,
+          "stake": -34.28815925638643,
+          "target_stake": 0,
+          "current_stake": 34.28815925638643,
+          "edge": 0,
+          "probability": 0
+        },
+        {
+          "market_id": "0x3230323530393035313436304632304600000000000000000000000000000000",
+          "market_name": "Djibouti vs Burkina Faso",
+          "outcome": "Home",
+          "odds": 20.61715624653404,
+          "stake": -58.743460438287855,
+          "target_stake": 0,
+          "current_stake": 58.743460438287855,
+          "edge": 0,
+          "probability": 0
+        },
+        {
+          "market_id": "0x3230323530393035313436304632304600000000000000000000000000000000",
+          "market_name": "Djibouti vs Burkina Faso",
+          "outcome": "Draw",
+          "odds": 9.56057461697988,
+          "stake": -83.8546289158123,
+          "target_stake": 0,
+          "current_stake": 83.8546289158123,
+          "edge": 0,
+          "probability": 0
+        },
+        {
+          "market_id": "0x3230323530393035353135333243343700000000000000000000000000000000",
+          "market_name": "Eintracht Frankfurt vs SGS Essen",
+          "outcome": "Away",
+          "odds": 7.044185579371134,
+          "stake": -67.74905885639772,
+          "target_stake": 0,
+          "current_stake": 67.74905885639772,
+          "edge": 0,
+          "probability": 0
+        },
+        {
+          "market_id": "0x3230323530393035353135333243343700000000000000000000000000000000",
+          "market_name": "Eintracht Frankfurt vs SGS Essen",
+          "outcome": "Draw",
+          "odds": 4.97353187179168,
+          "stake": -58.49022380516644,
+          "target_stake": 0,
+          "current_stake": 58.49022380516644,
+          "edge": 0,
+          "probability": 0
+        },
+        {
+          "market_id": "0x3230323530393035464539383737393300000000000000000000000000000000",
+          "market_name": "Albacete Balompi\u00e9 vs CD Mirand\u00e9s",
+          "outcome": "Away",
+          "odds": 4.635270755444221,
+          "stake": -40.70159568533909,
+          "target_stake": 0,
+          "current_stake": 40.70159568533909,
+          "edge": 0,
+          "probability": 0
+        },
+        {
+          "market_id": "0x3230323530393035394435373845444500000000000000000000000000000000",
+          "market_name": "Paysandu SC vs Volta Redonda FC",
+          "outcome": "Away",
+          "odds": 4.298679608843809,
+          "stake": -26.931155994284538,
+          "target_stake": 0,
+          "current_stake": 26.931155994284538,
+          "edge": 0,
+          "probability": 0
+        },
+        {
+          "market_id": "0x3230323530393035383943323634363900000000000000000000000000000000",
+          "market_name": "Bermuda vs Jamaica",
+          "outcome": "Home",
+          "odds": 14.276979842738163,
+          "stake": -65.54606888649244,
+          "target_stake": 0,
+          "current_stake": 65.54606888649244,
+          "edge": 0,
+          "probability": 0
+        },
+        {
+          "market_id": "0x3230323530393035383943323634363900000000000000000000000000000000",
+          "market_name": "Bermuda vs Jamaica",
+          "outcome": "Draw",
+          "odds": 4.2008601341559375,
+          "stake": -34.356678094902186,
+          "target_stake": 0,
+          "current_stake": 34.356678094902186,
+          "edge": 0,
+          "probability": 0
+        },
+        {
+          "market_id": "0x3230323530393035374544394545333700000000000000000000000000000000",
+          "market_name": "Iceland_vs_Azerbaijan",
+          "outcome": "Draw",
+          "odds": 4.3283055312833385,
+          "execution_odds": 4.202238379886737,
+          "stake": 18.913928441508993,
+          "target_stake": 61.05737106631572,
+          "current_stake": 42.143442624806724,
+          "edge": 0,
+          "probability": 0.2471924810381901,
+          "maturity_date": "2025-09-05T18:45:00+00:00",
+          "fee_info": {
+            "stake": 18.913928441508993,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 0.5674178532452697,
+            "execution_stake": 19.481346294754264,
+            "entry_odds": 4.3283055312833385,
+            "adjusted_odds": 4.202238379886737,
+            "implied_prob": 0.2379684134023242
+          }
+        },
+        {
+          "market_id": "0x3230323530393035414430354631304100000000000000000000000000000000",
+          "market_name": "Senegal_vs_Sudan",
+          "outcome": "Draw",
+          "odds": 4.677374437898308,
+          "execution_odds": 4.541140230969231,
+          "stake": 12.890141766287933,
+          "target_stake": 58.96008925867017,
+          "current_stake": 46.06994749238224,
+          "edge": 0,
+          "probability": 0.22665720494355765,
+          "maturity_date": "2025-09-05T19:00:00+00:00",
+          "fee_info": {
+            "stake": 12.890141766287933,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 0.386704252988638,
+            "execution_stake": 13.27684601927657,
+            "entry_odds": 4.677374437898308,
+            "adjusted_odds": 4.541140230969231,
+            "implied_prob": 0.22020901120390343
+          }
+        },
+        {
+          "market_id": "0x3230323530393035343844313745394100000000000000000000000000000000",
+          "market_name": "Wexford FC_vs_Dundalk FC",
+          "outcome": "Draw",
+          "odds": 4.1704450605309855,
+          "execution_odds": 4.048975786923287,
+          "stake": 15.360682455665568,
+          "target_stake": 48.400428448509494,
+          "current_stake": 33.039745992843926,
+          "edge": 0,
+          "probability": 0.2547825616896339,
+          "maturity_date": "2025-09-05T18:45:00+00:00",
+          "fee_info": {
+            "stake": 15.360682455665568,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 0.46082047366996703,
+            "execution_stake": 15.821502929335535,
+            "entry_odds": 4.1704450605309855,
+            "adjusted_odds": 4.048975786923287,
+            "implied_prob": 0.2469760385403229
+          }
+        },
+        {
+          "market_id": "0x3230323530393035354141324335414300000000000000000000000000000000",
+          "market_name": "Bray Wanderers_vs_Athlone Town",
+          "outcome": "Draw",
+          "odds": 4.953129703310944,
+          "execution_odds": 4.808863789622276,
+          "stake": 14.217645132317806,
+          "target_stake": 72.25334213413981,
+          "current_stake": 58.03569700182201,
+          "edge": 0,
+          "probability": 0.2168925527695237,
+          "maturity_date": "2025-09-05T18:45:00+00:00",
+          "fee_info": {
+            "stake": 14.217645132317806,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 0.4265293539695342,
+            "execution_stake": 14.64417448628734,
+            "entry_odds": 4.953129703310944,
+            "adjusted_odds": 4.808863789622276,
+            "implied_prob": 0.2079493293526094
+          }
+        },
+        {
+          "market_id": "0x3230323530393035394141324235463600000000000000000000000000000000",
+          "market_name": "Chelsea FC Women_vs_Manchester City WFC",
+          "outcome": "Draw",
+          "odds": 4.101951436596678,
+          "execution_odds": 3.982477122909396,
+          "stake": 15.217626370543282,
+          "target_stake": 45.158207201329596,
+          "current_stake": 29.940580830786313,
+          "edge": 0,
+          "probability": 0.2587864064109164,
+          "maturity_date": "2025-09-05T18:30:00+00:00",
+          "fee_info": {
+            "stake": 15.217626370543282,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 0.45652879111629846,
+            "execution_stake": 15.67415516165958,
+            "entry_odds": 4.101951436596678,
+            "adjusted_odds": 3.982477122909396,
+            "implied_prob": 0.2510999986032439
+          }
+        },
+        {
+          "market_id": "0x3230323530393035453642464143453000000000000000000000000000000000",
+          "market_name": "Ukraine_vs_France",
+          "outcome": "Draw",
+          "odds": 5.150380795307749,
+          "execution_odds": 5.0003697041822806,
+          "stake": 12.901909989056008,
+          "target_stake": 77.34088632619199,
+          "current_stake": 64.43897633713598,
+          "edge": 0,
+          "probability": 0.2101312029035998,
+          "maturity_date": "2025-09-05T18:45:00+00:00",
+          "fee_info": {
+            "stake": 12.901909989056008,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 0.38705729967168023,
+            "execution_stake": 13.288967288727688,
+            "entry_odds": 5.150380795307749,
+            "adjusted_odds": 5.0003697041822806,
+            "implied_prob": 0.1999852129260774
+          }
+        },
+        {
+          "market_id": "0x3230323530393035343043394634343200000000000000000000000000000000",
+          "market_name": "Switzerland_vs_Kosovo",
+          "outcome": "Draw",
+          "odds": 4.64526744578695,
+          "execution_odds": 4.509968393967912,
+          "stake": 16.71143388501128,
+          "target_stake": 69.3455180640032,
+          "current_stake": 52.63408417899192,
+          "edge": 0,
+          "probability": 0.23134922245682324,
+          "maturity_date": "2025-09-05T18:45:00+00:00",
+          "fee_info": {
+            "stake": 16.71143388501128,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 0.5013430165503384,
+            "execution_stake": 17.21277690156162,
+            "entry_odds": 4.64526744578695,
+            "adjusted_odds": 4.509968393967912,
+            "implied_prob": 0.2217310439109731
+          }
+        },
+        {
+          "market_id": "0x3230323530393035433434414236463500000000000000000000000000000000",
+          "market_name": "BV De Graafschap vs FC Emmen",
+          "outcome": "Away",
+          "odds": 6.1214138363811905,
+          "stake": -62.501307688106806,
+          "target_stake": 0,
+          "current_stake": 62.501307688106806,
+          "edge": 0,
+          "probability": 0
+        },
+        {
+          "market_id": "0x3230323530393035433434414236463500000000000000000000000000000000",
+          "market_name": "BV De Graafschap vs FC Emmen",
+          "outcome": "Draw",
+          "odds": 4.7247805824609,
+          "stake": -52.37540993967595,
+          "target_stake": 0,
+          "current_stake": 52.37540993967595,
+          "edge": 0,
+          "probability": 0
+        },
+        {
+          "market_id": "DEMO_MARKET_000",
+          "market_name": "Demo Match A vs Demo Team B",
+          "outcome": "Home",
+          "odds": 2.5,
+          "stake": 200.0,
+          "edge": 5.0,
+          "probability": 0.45,
+          "maturity_date": "2025-09-05T18:06:47.996052+00:00",
+          "fee_info": {
+            "stake": 200.0,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 6.0,
+            "execution_stake": 206.0,
+            "entry_odds": 2.5,
+            "adjusted_odds": 2.4271844660194173,
+            "implied_prob": 0.41200000000000003
+          }
+        },
+        {
+          "market_id": "DEMO_MARKET_001",
+          "market_name": "Demo Match A vs Demo Team B",
+          "outcome": "Draw",
+          "odds": 3.2,
+          "stake": 150.0,
+          "edge": 5.0,
+          "probability": 0.45,
+          "maturity_date": "2025-09-05T18:06:47.996075+00:00",
+          "fee_info": {
+            "stake": 150.0,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 4.5,
+            "execution_stake": 154.5,
+            "entry_odds": 3.2,
+            "adjusted_odds": 3.1067961165048543,
+            "implied_prob": 0.321875
+          }
+        },
+        {
+          "market_id": "DEMO_MARKET_002",
+          "market_name": "Demo Match C vs Demo Team D",
+          "outcome": "Away",
+          "odds": 4.5,
+          "stake": 100.0,
+          "edge": 5.0,
+          "probability": 0.45,
+          "maturity_date": "2025-09-05T18:06:47.996081+00:00",
+          "fee_info": {
+            "stake": 100.0,
+            "safebox_fee_pct": 0.02,
+            "skew_fee_pct": 0.01,
+            "total_fee_pct": 0.03,
+            "fee_amount": 3.0,
+            "execution_stake": 103.0,
+            "entry_odds": 4.5,
+            "adjusted_odds": 4.368932038834951,
+            "implied_prob": 0.2288888888888889
+          }
+        }
+      ],
+      "performance": {
+        "total_trades": 73,
+        "winning_trades": 0,
+        "losing_trades": 0,
+        "pending_trades": 73,
+        "total_pnl": 0.0,
+        "total_stake": 3557.4721202661644,
+        "max_drawdown": 0.001773554768635404,
+        "peak_value": 10000.0,
+        "total_fees": 17.73554768635472
+      },
+      "status": "active",
+      "trading_logs": [
+        {
+          "timestamp": "13:52:22",
+          "message": "[PAPER_TRADE] Evaluating markets in first active game chunk..."
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Lesotho vs South Africa Home @ 19.87 - Stake: $59.42 - Edge: 1.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Lesotho vs South Africa Draw @ 5.16 - Stake: $62.33 - Edge: 1.5%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Uganda vs Mozambique Away @ 4.51 - Stake: $34.29 - Edge: 1.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Djibouti vs Burkina Faso Home @ 20.62 - Stake: $58.74 - Edge: 1.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Djibouti vs Burkina Faso Draw @ 9.56 - Stake: $83.85 - Edge: 1.5%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Eintracht Frankfurt vs SGS Essen Away @ 7.04 - Stake: $67.75 - Edge: 1.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Eintracht Frankfurt vs SGS Essen Draw @ 4.97 - Stake: $58.49 - Edge: 1.5%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Albacete Balompi\u00e9 vs CD Mirand\u00e9s Away @ 4.64 - Stake: $40.70 - Edge: 1.1%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: BV De Graafschap vs FC Emmen Away @ 6.12 - Stake: $62.50 - Edge: 1.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: BV De Graafschap vs FC Emmen Draw @ 4.72 - Stake: $52.38 - Edge: 1.5%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Chelsea FC Women vs Manchester City WFC Away @ 4.95 - Stake: $46.20 - Edge: 1.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Chelsea FC Women vs Manchester City WFC Draw @ 4.10 - Stake: $29.94 - Edge: 1.5%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Bray Wanderers vs Athlone Town Away @ 6.56 - Stake: $65.51 - Edge: 1.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Bray Wanderers vs Athlone Town Draw @ 4.95 - Stake: $58.04 - Edge: 1.5%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Wexford FC vs Dundalk FC Home @ 5.06 - Stake: $48.46 - Edge: 1.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Wexford FC vs Dundalk FC Draw @ 4.17 - Stake: $33.04 - Edge: 1.5%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Italy vs Estonia Away @ 43.08 - Stake: $47.30 - Edge: 1.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Italy vs Estonia Draw @ 15.85 - Stake: $78.62 - Edge: 1.5%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Faroe Islands vs Croatia Home @ 15.54 - Stake: $64.02 - Edge: 1.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Faroe Islands vs Croatia Draw @ 6.94 - Stake: $80.03 - Edge: 1.5%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Ukraine vs France Home @ 9.75 - Stake: $71.78 - Edge: 1.1%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Ukraine vs France Draw @ 5.15 - Stake: $64.44 - Edge: 1.6%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Switzerland vs Kosovo Away @ 7.72 - Stake: $71.26 - Edge: 1.1%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Switzerland vs Kosovo Draw @ 4.65 - Stake: $52.63 - Edge: 1.6%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Denmark vs Scotland Away @ 7.41 - Stake: $70.68 - Edge: 1.1%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Denmark vs Scotland Draw @ 3.97 - Stake: $10.00 - Edge: 0.6%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Iceland vs Azerbaijan Away @ 7.39 - Stake: $70.63 - Edge: 1.1%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Iceland vs Azerbaijan Draw @ 4.33 - Stake: $42.14 - Edge: 1.6%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Greece vs Belarus Away @ 17.99 - Stake: $61.35 - Edge: 1.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Greece vs Belarus Draw @ 6.96 - Stake: $80.12 - Edge: 1.5%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Moldova vs Israel Home @ 6.42 - Stake: $66.62 - Edge: 1.1%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Moldova vs Israel Draw @ 4.03 - Stake: $29.29 - Edge: 1.6%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Montenegro vs Czechia Home @ 5.58 - Stake: $58.99 - Edge: 1.1%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: C\u00f4te d'Ivoire vs Burundi Away @ 13.25 - Stake: $64.65 - Edge: 0.9%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: C\u00f4te d'Ivoire vs Burundi Draw @ 5.51 - Stake: $63.67 - Edge: 1.3%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Senegal vs Sudan Away @ 16.23 - Stake: $61.50 - Edge: 0.9%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Senegal vs Sudan Draw @ 4.68 - Stake: $46.07 - Edge: 1.3%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Egypt vs Ethiopia Away @ 22.78 - Stake: $55.61 - Edge: 1.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Egypt vs Ethiopia Draw @ 5.70 - Stake: $66.27 - Edge: 1.3%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Morocco vs Niger Away @ 12.76 - Stake: $65.16 - Edge: 0.9%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Morocco vs Niger Draw @ 6.70 - Stake: $75.09 - Edge: 1.4%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Paysandu SC vs Volta Redonda FC Away @ 4.30 - Stake: $26.93 - Edge: 1.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Bermuda vs Jamaica Home @ 14.28 - Stake: $65.55 - Edge: 1.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:52:24",
+          "message": "Trade executed: Bermuda vs Jamaica Draw @ 4.20 - Stake: $34.36 - Edge: 1.5%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "13:52:24",
+          "message": "[PAPER_TRADE] Found 44 markets with edge suitable for betting"
+        },
+        {
+          "timestamp": "13:52:24",
+          "message": "[PAPER_TRADE] Portfolio value: $10000.00"
+        },
+        {
+          "timestamp": "13:52:24",
+          "message": "[TRADE] Lesotho vs South Africa - Home @ 19.87 - $59.42"
+        },
+        {
+          "timestamp": "13:52:24",
+          "message": "[TRADE] Lesotho vs South Africa - Draw @ 5.16 - $62.33"
+        },
+        {
+          "timestamp": "13:52:24",
+          "message": "[TRADE] Uganda vs Mozambique - Away @ 4.51 - $34.29"
+        },
+        {
+          "timestamp": "13:52:24",
+          "message": "[TRADE] ... and 41 more trades"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Montenegro_vs_Czechia Draw @ 3.86 - Stake: $12.87 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Montenegro_vs_Czechia Home @ 5.41 - Stake: $10.60 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Moldova_vs_Israel Draw @ 4.03 - Stake: $11.46 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Denmark_vs_Scotland Away @ 7.19 - Stake: $11.85 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Denmark_vs_Scotland Draw @ 3.97 - Stake: $10.64 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Italy_vs_Estonia Draw @ 15.39 - Stake: $12.50 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Lesotho vs South Africa Home @ 19.87 - Stake: $59.42 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Lesotho vs South Africa Draw @ 5.16 - Stake: $62.33 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Uganda vs Mozambique Away @ 4.51 - Stake: $34.29 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Djibouti vs Burkina Faso Home @ 20.62 - Stake: $58.74 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Djibouti vs Burkina Faso Draw @ 9.56 - Stake: $83.85 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Eintracht Frankfurt vs SGS Essen Away @ 7.04 - Stake: $67.75 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Eintracht Frankfurt vs SGS Essen Draw @ 4.97 - Stake: $58.49 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Albacete Balompi\u00e9 vs CD Mirand\u00e9s Away @ 4.64 - Stake: $40.70 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Paysandu SC vs Volta Redonda FC Away @ 4.30 - Stake: $26.93 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Bermuda vs Jamaica Home @ 14.28 - Stake: $65.55 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "17:53:08",
+          "message": "Trade executed: Bermuda vs Jamaica Draw @ 4.20 - Stake: $34.36 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "14:03:46",
+          "message": "[PAPER_TRADE] Evaluating markets in first active game chunk..."
+        },
+        {
+          "timestamp": "18:03:49",
+          "message": "Trade executed: Iceland_vs_Azerbaijan Draw @ 4.33 - Stake: $18.91 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "18:03:49",
+          "message": "Trade executed: Senegal_vs_Sudan Draw @ 4.68 - Stake: $12.89 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "18:03:49",
+          "message": "Trade executed: Wexford FC_vs_Dundalk FC Draw @ 4.17 - Stake: $15.36 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "18:03:49",
+          "message": "Trade executed: Bray Wanderers_vs_Athlone Town Draw @ 4.95 - Stake: $14.22 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "18:03:49",
+          "message": "Trade executed: Chelsea FC Women_vs_Manchester City WFC Draw @ 4.10 - Stake: $15.22 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "18:03:49",
+          "message": "Trade executed: Ukraine_vs_France Draw @ 5.15 - Stake: $12.90 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "18:03:49",
+          "message": "Trade executed: Switzerland_vs_Kosovo Draw @ 4.65 - Stake: $16.71 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "18:03:49",
+          "message": "Trade executed: BV De Graafschap vs FC Emmen Away @ 6.12 - Stake: $62.50 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "18:03:49",
+          "message": "Trade executed: BV De Graafschap vs FC Emmen Draw @ 4.72 - Stake: $52.38 - Edge: 0.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "14:03:49",
+          "message": "[PAPER_TRADE] Found 9 markets with edge suitable for betting"
+        },
+        {
+          "timestamp": "14:03:49",
+          "message": "[PAPER_TRADE] Portfolio value: $9995.76"
+        },
+        {
+          "timestamp": "14:03:49",
+          "message": "[TRADE] Iceland_vs_Azerbaijan - Draw @ 4.33 - $18.91"
+        },
+        {
+          "timestamp": "14:03:49",
+          "message": "[TRADE] Senegal_vs_Sudan - Draw @ 4.68 - $12.89"
+        },
+        {
+          "timestamp": "14:03:49",
+          "message": "[TRADE] Wexford FC_vs_Dundalk FC - Draw @ 4.17 - $15.36"
+        },
+        {
+          "timestamp": "14:03:49",
+          "message": "[TRADE] ... and 6 more trades"
+        },
+        {
+          "timestamp": "18:06:47",
+          "message": "Trade executed: Demo Match A vs Demo Team B Home @ 2.50 - Stake: $200.00 - Edge: 5.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "18:06:47",
+          "message": "Trade executed: Demo Match A vs Demo Team B Draw @ 3.20 - Stake: $150.00 - Edge: 5.0%",
+          "level": "trade"
+        },
+        {
+          "timestamp": "18:06:47",
+          "message": "Trade executed: Demo Match C vs Demo Team D Away @ 4.50 - Stake: $100.00 - Edge: 5.0%",
+          "level": "trade"
+        }
+      ]
+    }
+  },
+  "metadata": {}
+}

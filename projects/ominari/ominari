@@ -1,0 +1,8 @@
+#!/bin/bash
+# Ominari Trading System CLI Wrapper
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# Execute the Python CLI with all arguments
+exec uv run python ominari_cli.py "$@"
