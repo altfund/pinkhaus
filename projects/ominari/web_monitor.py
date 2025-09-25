@@ -316,14 +316,17 @@ def get_market_data(sport_filter='Soccer'):
                             'home_edge': round(home_edge, 2),
                             'home_stake': round(home_stake, 2),
                             'home_confidence': edges.get('home', {}).get('confidence', 0.5),
+                            'home_implied_prob': 1.0 / home_odds if home_odds > 0 else 0,
                             'draw_odds': draw_odds,
                             'draw_edge': round(draw_edge, 2),
                             'draw_stake': round(draw_stake, 2),
                             'draw_confidence': edges.get('draw', {}).get('confidence', 0.5),
+                            'draw_implied_prob': 1.0 / draw_odds if draw_odds > 0 else 0,
                             'away_odds': away_odds,
                             'away_edge': round(away_edge, 2),
                             'away_stake': round(away_stake, 2),
-                            'away_confidence': edges.get('away', {}).get('confidence', 0.5)
+                            'away_confidence': edges.get('away', {}).get('confidence', 0.5),
+                            'away_implied_prob': 1.0 / away_odds if away_odds > 0 else 0
                         }
                         signals.append(signal)
                     
@@ -349,14 +352,17 @@ def get_market_data(sport_filter='Soccer'):
                             'home_edge': round(home_edge, 2),
                             'home_stake': 0,
                             'home_confidence': 0.5,
+                            'home_implied_prob': 1.0 / home_odds if home_odds > 0 else 0,
                             'draw_odds': draw_odds,
                             'draw_edge': round(draw_edge, 2),
                             'draw_stake': 0,
                             'draw_confidence': 0.5,
+                            'draw_implied_prob': 1.0 / draw_odds if draw_odds > 0 else 0,
                             'away_odds': away_odds,
                             'away_edge': round(away_edge, 2),
                             'away_stake': 0,
-                            'away_confidence': 0.5
+                            'away_confidence': 0.5,
+                            'away_implied_prob': 1.0 / away_odds if away_odds > 0 else 0
                         }
                         signals.append(signal)
                     
@@ -1491,10 +1497,10 @@ def execute_paper_trades():
                 stake = signal.get(f'{outcome}_stake', 0)
                 if stake > 0:
                     trades_to_execute.append({
-                        'match_id': market['id'],
-                        'sport': market['sport'],
-                        'home_team': market['home_team'],
-                        'away_team': market['away_team'],
+                        'match_id': market.get('market_id', market.get('source_id', '')),
+                        'sport': market.get('sport', 'Soccer'),
+                        'home_team': market.get('home_team', ''),
+                        'away_team': market.get('away_team', ''),
                         'bet_type': 'moneyline',
                         'bet_on': outcome,
                         'odds': signal.get(f'{outcome}_odds', 0),
@@ -1502,7 +1508,7 @@ def execute_paper_trades():
                         'signal_name': 'enhanced_edge',
                         'signal_value': signal.get(f'{outcome}_implied_prob', 0),
                         'edge': signal.get(f'{outcome}_edge', 0),
-                        'kickoff_time': market['maturity_date']
+                        'kickoff_time': market.get('maturity_date')
                     })
         
         # Record trades
@@ -1513,7 +1519,7 @@ def execute_paper_trades():
             for trade in trades_to_execute:
                 socketio.emit('activity', {
                     'type': 'trade',
-                    'message': f"Placed {trade['outcome']} ${trade['stake']:.2f} on {trade['market_name']} @ {trade['odds']:.2f}",
+                    'message': f"Placed {trade['bet_on']} ${trade['stake']:.2f} on {trade['home_team']} vs {trade['away_team']} @ {trade['odds']:.2f}",
                     'timestamp': datetime.now(timezone.utc).isoformat()
                 })
         

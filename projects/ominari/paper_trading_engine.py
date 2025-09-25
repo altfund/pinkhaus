@@ -11,12 +11,23 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple, Any
 import logging
 import json
-import sqlite3
 import asyncio
 import aiohttp
 from dataclasses import dataclass, asdict
 import time
 from position_manager import PositionManager, Position, RiskLimits
+import os
+import psycopg2
+from database_v2 import db_manager
+from models import Market, Odd
+
+# Set PostgreSQL environment for paper trading
+os.environ['PG_HOST'] = 'localhost'
+os.environ['PG_PORT'] = '5999'
+os.environ['PG_USER'] = 'ominari_user'
+os.environ['PG_PASSWORD'] = 'ominari_2025_secure'
+os.environ['PG_DB'] = 'ominari_production'
+os.environ['USE_POSTGRESQL'] = '1'
 
 logger = logging.getLogger(__name__)
 
@@ -66,50 +77,80 @@ class PaperFill:
 class QuoteCollector:
     """Collects real-time quotes from Overtime Markets."""
     
-    def __init__(self, api_base_url: str, db_path: str = "quotes.db"):
+    def __init__(self, api_base_url: str):
         self.api_base_url = api_base_url
-        self.db_path = db_path
         self._init_database()
         
     def _init_database(self):
-        """Initialize quote storage database."""
-        conn = sqlite3.connect(self.db_path)
-        conn.execute("""
+        """Initialize quote storage in PostgreSQL."""
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5999,
+            database='ominari_production',
+            user='ominari_user',
+            password='ominari_2025_secure'
+        )
+        cur = conn.cursor()
+        
+        # Create quotes table if not exists
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS quotes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 source_id TEXT NOT NULL,
-                timestamp DATETIME NOT NULL,
-                bid_price REAL,
-                bid_size REAL,
-                ask_price REAL,
-                ask_size REAL,
-                mid_price REAL,
-                spread REAL,
-                liquidity_score REAL,
-                raw_data TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+                bid_price DECIMAL(10,4),
+                bid_size DECIMAL(10,2),
+                ask_price DECIMAL(10,4),
+                ask_size DECIMAL(10,2),
+                mid_price DECIMAL(10,4),
+                spread DECIMAL(10,4),
+                liquidity_score DECIMAL(5,4),
+                raw_data JSONB,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             )
         """)
-        conn.execute("""
+        
+        # Create index
+        cur.execute("""
             CREATE INDEX IF NOT EXISTS idx_quotes_source_time 
             ON quotes(source_id, timestamp)
         """)
+        
         conn.commit()
+        cur.close()
         conn.close()
         
     async def fetch_quote(self, source_id: str) -> Optional[Quote]:
-        """Fetch current quote for a market."""
+        """Fetch current quote for a market from PostgreSQL odds data."""
         try:
-            # This would be replaced with actual Overtime API call
-            # For now, simulate with realistic values
-            async with aiohttp.ClientSession() as session:
-                # url = f"{self.api_base_url}/markets/{source_id}/quote"
-                # async with session.get(url) as response:
-                #     data = await response.json()
+            # Get current odds from our database
+            with db_manager.get_db_session() as db:
+                # Get market and odds for this source_id
+                market = db.query(Market).filter(Market.source_id == source_id).first()
+                if not market:
+                    logger.warning(f"Market not found: {source_id}")
+                    return None
                 
-                # Simulated quote generation
-                base_price = 2.0 + np.random.random() * 3.0
-                spread_pct = 0.02 + np.random.random() * 0.03
+                # Get current odds for this market
+                odds = db.query(Odd).filter(
+                    Odd.source_id == source_id
+                ).order_by(Odd.updated_at.desc()).limit(3).all()
+                
+                if not odds:
+                    logger.warning(f"No odds found for market: {source_id}")
+                    return None
+                
+                # Convert odds to bid/ask prices with realistic spread
+                home_odds = next((o.decimal_odds for o in odds if o.outcome == 'Home'), None)
+                away_odds = next((o.decimal_odds for o in odds if o.outcome == 'Away'), None)
+                
+                if not home_odds or not away_odds:
+                    logger.warning(f"Missing home/away odds for: {source_id}")
+                    return None
+                
+                # Use home odds as base price for quote generation
+                base_price = home_odds
+                spread_pct = 0.02 + np.random.random() * 0.03  # 2-5% spread
                 
                 bid_price = base_price * (1 - spread_pct/2)
                 ask_price = base_price * (1 + spread_pct/2)
@@ -134,34 +175,52 @@ class QuoteCollector:
             return None
             
     def _store_quote(self, quote: Quote):
-        """Store quote in database."""
-        conn = sqlite3.connect(self.db_path)
-        conn.execute("""
+        """Store quote in PostgreSQL database."""
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5999,
+            database='ominari_production',
+            user='ominari_user',
+            password='ominari_2025_secure'
+        )
+        cur = conn.cursor()
+        
+        cur.execute("""
             INSERT INTO quotes (
                 source_id, timestamp, bid_price, bid_size,
                 ask_price, ask_size, mid_price, spread,
                 liquidity_score, raw_data
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             quote.source_id, quote.timestamp, quote.bid_price,
             quote.bid_size, quote.ask_price, quote.ask_size,
             quote.mid_price, quote.spread, quote.liquidity_score,
-            json.dumps(asdict(quote), default=str)  # Use str() for datetime serialization
+            json.dumps(asdict(quote), default=str)
         ))
+        
         conn.commit()
+        cur.close()
         conn.close()
         
     def get_historical_quotes(self, source_id: str, 
                             start_time: datetime,
                             end_time: datetime) -> pd.DataFrame:
         """Retrieve historical quotes for analysis."""
-        conn = sqlite3.connect(self.db_path)
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5999,
+            database='ominari_production',
+            user='ominari_user',
+            password='ominari_2025_secure'
+        )
+        
         df = pd.read_sql_query("""
             SELECT * FROM quotes
-            WHERE source_id = ?
-            AND timestamp BETWEEN ? AND ?
+            WHERE source_id = %s
+            AND timestamp BETWEEN %s AND %s
             ORDER BY timestamp
         """, conn, params=(source_id, start_time, end_time))
+        
         conn.close()
         return df
 
@@ -217,13 +276,11 @@ class PaperTradingEngine:
     def __init__(self, 
                  initial_capital: float = 10000,
                  commission_rate: float = 0.002,
-                 db_path: str = "paper_trades.db",
                  risk_limits: Optional[RiskLimits] = None,
                  session_id: Optional[str] = None):
         self.initial_capital = initial_capital
         self.current_capital = initial_capital
         self.commission_rate = commission_rate
-        self.db_path = db_path
         self.session_id = session_id
         self.session_active = False
         
@@ -256,95 +313,103 @@ class PaperTradingEngine:
             self.create_session()
         
     def _init_database(self):
-        """Initialize paper trading database."""
-        conn = sqlite3.connect(self.db_path)
+        """Initialize paper trading tables in PostgreSQL."""
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5999,
+            database='ominari_production',
+            user='ominari_user',
+            password='ominari_2025_secure'
+        )
+        cur = conn.cursor()
         
         # Orders table
-        conn.execute("""
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS paper_orders (
                 order_id TEXT PRIMARY KEY,
-                timestamp DATETIME NOT NULL,
+                timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
                 source_id TEXT NOT NULL,
                 market_type TEXT,
                 bet_name TEXT,
                 side TEXT,
-                size REAL,
-                limit_price REAL,
+                size DECIMAL(15,6),
+                limit_price DECIMAL(10,4),
                 signal_name TEXT,
-                expected_edge REAL,
+                expected_edge DECIMAL(6,4),
                 status TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             )
         """)
         
         # Fills table
-        conn.execute("""
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS paper_fills (
                 fill_id TEXT PRIMARY KEY,
                 order_id TEXT NOT NULL,
-                timestamp DATETIME NOT NULL,
-                fill_price REAL,
-                fill_size REAL,
-                slippage REAL,
-                commission REAL,
-                market_impact REAL,
-                pnl REAL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+                fill_price DECIMAL(10,4),
+                fill_size DECIMAL(15,6),
+                slippage DECIMAL(8,6),
+                commission DECIMAL(10,4),
+                market_impact DECIMAL(10,4),
+                pnl DECIMAL(15,6),
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
                 FOREIGN KEY (order_id) REFERENCES paper_orders(order_id)
             )
         """)
         
         # Performance tracking
-        conn.execute("""
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS paper_performance (
-                timestamp DATETIME PRIMARY KEY,
-                capital REAL,
-                positions_value REAL,
-                total_value REAL,
-                daily_pnl REAL,
-                total_pnl REAL,
-                sharpe_ratio REAL,
-                max_drawdown REAL,
-                win_rate REAL,
-                avg_win REAL,
-                avg_loss REAL
+                timestamp TIMESTAMP WITH TIME ZONE PRIMARY KEY,
+                capital DECIMAL(15,6),
+                positions_value DECIMAL(15,6),
+                total_value DECIMAL(15,6),
+                daily_pnl DECIMAL(15,6),
+                total_pnl DECIMAL(15,6),
+                sharpe_ratio DECIMAL(8,4),
+                max_drawdown DECIMAL(8,4),
+                win_rate DECIMAL(6,4),
+                avg_win DECIMAL(15,6),
+                avg_loss DECIMAL(15,6)
             )
         """)
         
         # Session management
-        conn.execute("""
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS paper_sessions (
                 session_id TEXT PRIMARY KEY,
-                start_time DATETIME NOT NULL,
-                end_time DATETIME,
-                initial_capital REAL NOT NULL,
-                final_capital REAL,
+                start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+                end_time TIMESTAMP WITH TIME ZONE,
+                initial_capital DECIMAL(15,6) NOT NULL,
+                final_capital DECIMAL(15,6),
                 status TEXT CHECK(status IN ('active', 'completed', 'archived')) DEFAULT 'active',
-                metadata TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                metadata JSONB,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             )
         """)
         
         # Position tracking with session linkage
-        conn.execute("""
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS paper_positions (
                 position_id TEXT PRIMARY KEY,
                 session_id TEXT,
                 market_id TEXT NOT NULL,
                 bet_name TEXT,
-                size REAL NOT NULL,
-                entry_price REAL NOT NULL,
-                entry_time DATETIME NOT NULL,
-                exit_price REAL,
-                exit_time DATETIME,
+                size DECIMAL(15,6) NOT NULL,
+                entry_price DECIMAL(10,4) NOT NULL,
+                entry_time TIMESTAMP WITH TIME ZONE NOT NULL,
+                exit_price DECIMAL(10,4),
+                exit_time TIMESTAMP WITH TIME ZONE,
                 status TEXT CHECK(status IN ('open', 'closed')) DEFAULT 'open',
-                pnl REAL,
-                metadata TEXT,
+                pnl DECIMAL(15,6),
+                metadata JSONB,
                 FOREIGN KEY (session_id) REFERENCES paper_sessions(session_id)
             )
         """)
         
         conn.commit()
+        cur.close()
         conn.close()
         
     async def submit_order(self, order: PaperOrder) -> PaperFill:
@@ -482,37 +547,57 @@ class PaperTradingEngine:
         self.fills.append(fill)
         
     def _store_order(self, order: PaperOrder):
-        """Store order in database."""
-        conn = sqlite3.connect(self.db_path)
-        conn.execute("""
+        """Store order in PostgreSQL database."""
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5999,
+            database='ominari_production',
+            user='ominari_user',
+            password='ominari_2025_secure'
+        )
+        cur = conn.cursor()
+        
+        cur.execute("""
             INSERT INTO paper_orders (
                 order_id, timestamp, source_id, market_type,
                 bet_name, side, size, limit_price,
                 signal_name, expected_edge, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             order.order_id, order.timestamp, order.source_id,
             order.market_type, order.bet_name, order.side,
             order.size, order.limit_price, order.signal_name,
             order.expected_edge, 'filled'
         ))
+        
         conn.commit()
+        cur.close()
         conn.close()
         
     def _store_fill(self, fill: PaperFill):
-        """Store fill in database."""
-        conn = sqlite3.connect(self.db_path)
-        conn.execute("""
+        """Store fill in PostgreSQL database."""
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5999,
+            database='ominari_production',
+            user='ominari_user',
+            password='ominari_2025_secure'
+        )
+        cur = conn.cursor()
+        
+        cur.execute("""
             INSERT INTO paper_fills (
                 fill_id, order_id, timestamp, fill_price,
                 fill_size, slippage, commission, market_impact
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             fill.fill_id, fill.order_id, fill.timestamp,
             fill.fill_price, fill.fill_size, fill.slippage,
             fill.commission, fill.market_impact
         ))
+        
         conn.commit()
+        cur.close()
         conn.close()
         
     def calculate_performance(self) -> Dict[str, float]:
@@ -520,9 +605,15 @@ class PaperTradingEngine:
         if not self.fills:
             return {
                 'total_pnl': 0,
+                'total_value': self.current_capital,
                 'win_rate': 0,
                 'sharpe_ratio': 0,
-                'max_drawdown': 0
+                'max_drawdown': 0,
+                'avg_win': 0,
+                'avg_loss': 0,
+                'total_trades': 0,
+                'total_commission': 0,
+                'total_slippage': 0
             }
             
         # Calculate P&L for each fill
@@ -671,11 +762,19 @@ class PaperTradingEngine:
             "risk_limits": asdict(self.position_manager.risk_limits)
         }
         
-        conn = sqlite3.connect(self.db_path)
-        conn.execute("""
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5999,
+            database='ominari_production',
+            user='ominari_user',
+            password='ominari_2025_secure'
+        )
+        cur = conn.cursor()
+        
+        cur.execute("""
             INSERT INTO paper_sessions (
                 session_id, start_time, initial_capital, status, metadata
-            ) VALUES (?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s)
         """, (
             self.session_id,
             datetime.now(timezone.utc),
@@ -683,7 +782,9 @@ class PaperTradingEngine:
             'active',
             json.dumps(metadata)
         ))
+        
         conn.commit()
+        cur.close()
         conn.close()
         
         self.session_active = True
@@ -692,21 +793,27 @@ class PaperTradingEngine:
     
     def load_session(self, session_id: str):
         """Load an existing session."""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5999,
+            database='ominari_production',
+            user='ominari_user',
+            password='ominari_2025_secure'
+        )
+        cur = conn.cursor()
         
         # Load session info
-        cursor.execute("""
-            SELECT * FROM paper_sessions WHERE session_id = ?
+        cur.execute("""
+            SELECT * FROM paper_sessions WHERE session_id = %s
         """, (session_id,))
         
-        row = cursor.fetchone()
+        row = cur.fetchone()
         if not row:
             conn.close()
             raise ValueError(f"Session {session_id} not found")
         
         # Parse session data
-        cols = [desc[0] for desc in cursor.description]
+        cols = [desc[0] for desc in cur.description]
         session = dict(zip(cols, row))
         
         if session['status'] != 'active':
@@ -714,39 +821,39 @@ class PaperTradingEngine:
             raise ValueError(f"Session {session_id} is not active (status: {session['status']})")
         
         self.session_id = session_id
-        self.initial_capital = session['initial_capital']
+        self.initial_capital = float(session['initial_capital'])
         self.session_active = True
         
         # Load metadata
         if session['metadata']:
-            metadata = json.loads(session['metadata'])
+            metadata = session['metadata']  # Already JSON in PostgreSQL JSONB
             self.commission_rate = metadata.get('commission_rate', self.commission_rate)
         
         # Load open positions for this session
-        cursor.execute("""
+        cur.execute("""
             SELECT * FROM paper_positions 
-            WHERE session_id = ? AND status = 'open'
+            WHERE session_id = %s AND status = 'open'
         """, (session_id,))
         
-        for row in cursor.fetchall():
-            pos_data = dict(zip([desc[0] for desc in cursor.description], row))
+        for row in cur.fetchall():
+            pos_data = dict(zip([desc[0] for desc in cur.description], row))
             
             # Recreate position in position manager
             position = Position(
                 market_id=pos_data['market_id'],
                 bet_name=pos_data['bet_name'],
-                size=pos_data['size'],
-                entry_price=pos_data['entry_price'],
-                current_price=pos_data['entry_price'],  # Will be updated
-                timestamp=pd.to_datetime(pos_data['entry_time'])
+                size=float(pos_data['size']),
+                entry_price=float(pos_data['entry_price']),
+                current_price=float(pos_data['entry_price']),  # Will be updated
+                timestamp=pos_data['entry_time']
             )
             self.position_manager.add_position(position)
         
         # Load recent fills for this session
-        cursor.execute("""
+        cur.execute("""
             SELECT f.* FROM paper_fills f
             JOIN paper_orders o ON f.order_id = o.order_id
-            WHERE o.created_at >= (SELECT start_time FROM paper_sessions WHERE session_id = ?)
+            WHERE o.created_at >= (SELECT start_time FROM paper_sessions WHERE session_id = %s)
             ORDER BY f.timestamp DESC
             LIMIT 100
         """, (session_id,))
@@ -766,11 +873,19 @@ class PaperTradingEngine:
         final_value = self.get_portfolio_value()
         
         # Update session record
-        conn = sqlite3.connect(self.db_path)
-        conn.execute("""
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5999,
+            database='ominari_production',
+            user='ominari_user',
+            password='ominari_2025_secure'
+        )
+        cur = conn.cursor()
+        
+        cur.execute("""
             UPDATE paper_sessions 
-            SET end_time = ?, final_capital = ?, status = 'completed'
-            WHERE session_id = ?
+            SET end_time = %s, final_capital = %s, status = 'completed'
+            WHERE session_id = %s
         """, (
             datetime.now(timezone.utc),
             final_value,
@@ -778,16 +893,17 @@ class PaperTradingEngine:
         ))
         
         # Close all open positions in database
-        conn.execute("""
+        cur.execute("""
             UPDATE paper_positions 
-            SET status = 'closed', exit_time = ?, exit_price = entry_price
-            WHERE session_id = ? AND status = 'open'
+            SET status = 'closed', exit_time = %s, exit_price = entry_price
+            WHERE session_id = %s AND status = 'open'
         """, (
             datetime.now(timezone.utc),
             self.session_id
         ))
         
         conn.commit()
+        cur.close()
         conn.close()
         
         self.session_active = False
@@ -806,16 +922,22 @@ class PaperTradingEngine:
         if not self.session_id:
             return {"status": "No active session"}
         
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5999,
+            database='ominari_production',
+            user='ominari_user',
+            password='ominari_2025_secure'
+        )
+        cur = conn.cursor()
         
-        cursor.execute("""
-            SELECT * FROM paper_sessions WHERE session_id = ?
+        cur.execute("""
+            SELECT * FROM paper_sessions WHERE session_id = %s
         """, (self.session_id,))
         
-        row = cursor.fetchone()
+        row = cur.fetchone()
         if row:
-            cols = [desc[0] for desc in cursor.description]
+            cols = [desc[0] for desc in cur.description]
             session = dict(zip(cols, row))
             
             # Add current metrics
@@ -831,7 +953,7 @@ class PaperTradingEngine:
         return {"status": "Session not found"}
     
     def save_position(self, position: Position, fill: PaperFill):
-        """Save position to database."""
+        """Save position to PostgreSQL database."""
         if not self.session_id:
             return
         
@@ -844,12 +966,20 @@ class PaperTradingEngine:
             "commission": fill.commission
         }
         
-        conn = sqlite3.connect(self.db_path)
-        conn.execute("""
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5999,
+            database='ominari_production',
+            user='ominari_user',
+            password='ominari_2025_secure'
+        )
+        cur = conn.cursor()
+        
+        cur.execute("""
             INSERT INTO paper_positions (
                 position_id, session_id, market_id, bet_name,
                 size, entry_price, entry_time, status, metadata
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             position_id,
             self.session_id,
@@ -861,22 +991,31 @@ class PaperTradingEngine:
             'open',
             json.dumps(metadata)
         ))
+        
         conn.commit()
+        cur.close()
         conn.close()
     
     def update_position(self, market_id: str, current_price: float, pnl: Optional[float] = None):
-        """Update position price and P&L in database."""
+        """Update position price and P&L in PostgreSQL database."""
         if not self.session_id:
             return
         
-        conn = sqlite3.connect(self.db_path)
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5999,
+            database='ominari_production',
+            user='ominari_user',
+            password='ominari_2025_secure'
+        )
+        cur = conn.cursor()
         
         if pnl is not None:
             # Position closed
-            conn.execute("""
+            cur.execute("""
                 UPDATE paper_positions 
-                SET exit_price = ?, exit_time = ?, status = 'closed', pnl = ?
-                WHERE session_id = ? AND market_id = ? AND status = 'open'
+                SET exit_price = %s, exit_time = %s, status = 'closed', pnl = %s
+                WHERE session_id = %s AND market_id = %s AND status = 'open'
             """, (
                 current_price,
                 datetime.now(timezone.utc),
@@ -886,26 +1025,33 @@ class PaperTradingEngine:
             ))
         
         conn.commit()
+        cur.close()
         conn.close()
     
     def load_positions(self):
-        """Load all positions from database on startup."""
+        """Load all positions from PostgreSQL database on startup."""
         if not self.session_id:
             return
         
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        conn = psycopg2.connect(
+            host='localhost',
+            port=5999,
+            database='ominari_production',
+            user='ominari_user',
+            password='ominari_2025_secure'
+        )
+        cur = conn.cursor()
         
         # Load all positions for current session
-        cursor.execute("""
+        cur.execute("""
             SELECT * FROM paper_positions 
-            WHERE session_id = ?
+            WHERE session_id = %s
             ORDER BY entry_time DESC
         """, (self.session_id,))
         
         positions = []
-        for row in cursor.fetchall():
-            cols = [desc[0] for desc in cursor.description]
+        for row in cur.fetchall():
+            cols = [desc[0] for desc in cur.description]
             pos_data = dict(zip(cols, row))
             positions.append(pos_data)
         

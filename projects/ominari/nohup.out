@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/ess/Documents/apps/ominari/projects/ominari/web_monitor.py", line 33, in <module>
+    from evaluate_open_markets import (
+  File "/home/ess/Documents/apps/ominari/projects/ominari/evaluate_open_markets.py", line 12, in <module>
+    from kelly_multimarket import *
+  File "/home/ess/Documents/apps/ominari/projects/ominari/kelly_multimarket.py", line 10, in <module>
+    from scipy.optimize import minimize
+ModuleNotFoundError: No module named 'scipy'

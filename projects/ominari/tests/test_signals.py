@@ -8,6 +8,7 @@ import pandas as pd
 from datetime import datetime, timezone
 
 from signals import ImpliedRawSignal
+from signal_registry import BaseSignalProvider
 from signal_registry import SignalRegistry, DynamicWeightManager, SignalAggregator
 
 
@@ -38,8 +39,11 @@ class TestSignals:
         """Test signal registration and management."""
         registry = SignalRegistry()
         
-        # Register signal
-        signal = ImpliedRawSignal()
+        # Wrap legacy signal to work with registry
+        from integrations import SystemIntegrator
+        integrator = SystemIntegrator()
+        wrapped_signal = integrator._wrap_legacy_signal(ImpliedRawSignal)
+        signal = wrapped_signal
         registry.register(signal)
         
         # Check registration
@@ -56,9 +60,25 @@ class TestSignals:
         manager = DynamicWeightManager(registry)
         
         # Register some signals
+        from integrations import SystemIntegrator
+        integrator = SystemIntegrator()
+        
         for i in range(3):
-            signal = ImpliedRawSignal()
-            signal.name = f"signal_{i}"
+            # Create a mock signal provider
+            class MockSignal(BaseSignalProvider):
+                def __init__(self, idx):
+                    super().__init__(name=f"signal_{idx}", version="1.0")
+                    
+                def get_probs(self, df: pd.DataFrame) -> pd.Series:
+                    return pd.Series(0.5, index=df.index)
+                    
+                def get_parameters(self):
+                    return {}
+                    
+                def get_required_columns(self):
+                    return ['implied_raw']
+            
+            signal = MockSignal(i)
             registry.register(signal)
             
         # Calculate equal weights
@@ -77,8 +97,10 @@ class TestSignals:
         manager = DynamicWeightManager(registry)
         aggregator = SignalAggregator(registry, manager)
         
-        # Register signal
-        signal = ImpliedRawSignal()
+        # Register signal - wrap legacy signal
+        from integrations import SystemIntegrator
+        integrator = SystemIntegrator()
+        signal = integrator._wrap_legacy_signal(ImpliedRawSignal)
         registry.register(signal)
         
         # Set weights

@@ -22,8 +22,8 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from testnet_config import TestnetConfig
-from blockchain_reader import BlockchainReader, MarketData
-from signal_registry import SignalRegistry, SignalProvider
+from blockchain_reader import BlockchainReader
+from signal_registry import SignalRegistry, BaseSignalProvider
 from paper_trading_engine import PaperTradingEngine
 from redis_caching_system import RedisCache, trading_cache
 
@@ -39,6 +39,36 @@ class TestResult:
     duration: float
     error_message: Optional[str] = None
     details: Optional[Dict] = None
+
+
+@dataclass
+class MarketData:
+    """Market data structure for testing."""
+    market_id: str
+    blockchain_address: str
+    network: str
+    sport: str
+    league: str
+    home_team: str
+    away_team: str
+    starts_at: datetime
+    is_finished: bool
+    positions: Dict[int, str]
+    odds: Dict[int, float]
+    liquidity: Dict[int, float]
+    
+    def __post_init__(self):
+        """Validate market data."""
+        if not self.market_id:
+            raise ValueError("market_id cannot be empty")
+        if not self.blockchain_address.startswith('0x') or len(self.blockchain_address) != 42:
+            raise ValueError("Invalid blockchain address format")
+        if self.starts_at is None:
+            raise ValueError("starts_at cannot be None")
+        if not self.positions:
+            raise ValueError("positions cannot be empty")
+        if not self.odds:
+            raise ValueError("odds cannot be empty")
 
 
 class BlockchainIntegrationTests:
@@ -96,11 +126,11 @@ class BlockchainIntegrationTests:
             try:
                 # Test RPC connectivity
                 reader = BlockchainReader(
-                    networks={network_name: network_config.rpc_url}
+                    network=network_name
                 )
                 
                 # Try to get latest block
-                latest_block = await reader._get_latest_block(network_name)
+                latest_block = reader.w3.eth.block_number
                 
                 if latest_block:
                     networks_tested.append({
@@ -166,16 +196,20 @@ class BlockchainIntegrationTests:
         ]
         
         reader = BlockchainReader(
-            networks={test_network: network_config.rpc_url}
+            network=test_network
         )
         
         for test_call in test_calls:
             try:
-                result = await reader._make_rpc_call(
-                    test_network,
-                    test_call['method'],
-                    test_call['params']
-                )
+                # Make direct web3 calls
+                if test_call['method'] == 'eth_blockNumber':
+                    result = reader.w3.eth.block_number
+                elif test_call['method'] == 'eth_chainId':
+                    result = reader.w3.eth.chain_id
+                elif test_call['method'] == 'eth_gasPrice':
+                    result = reader.w3.eth.gas_price
+                else:
+                    result = None
                 
                 rpc_tests.append({
                     'method': test_call['method'],
@@ -210,15 +244,11 @@ class BlockchainIntegrationTests:
         
         try:
             # Initialize reader with testnet
-            test_networks = {
-                'optimism_sepolia': self.config.get_network('optimism_sepolia').rpc_url
-            }
-            
-            reader = BlockchainReader(networks=test_networks)
+            reader = BlockchainReader(network='optimism_sepolia')
             
             # Test initialization
-            assert len(reader.networks) == 1
-            assert 'optimism_sepolia' in reader.networks
+            assert reader.network == 'optimism_sepolia'
+            assert reader.w3.is_connected()
             
             # Test market data structure
             test_market = MarketData(
@@ -244,7 +274,8 @@ class BlockchainIntegrationTests:
             logger.info("✅ Blockchain reader initialized successfully")
             passed = True
             details = {
-                'networks_loaded': len(reader.networks),
+                'network': reader.network,
+                'connected': reader.w3.is_connected(),
                 'test_market_created': True,
                 'serialization_works': True
             }
@@ -612,10 +643,11 @@ class BlockchainIntegrationTests:
         
         # Test 1: Invalid RPC URL
         try:
+            # This should fail since 'invalid' is not a known network
             reader = BlockchainReader(
-                networks={'invalid': 'https://invalid-rpc-url.com'}
+                network='invalid'
             )
-            result = await reader._get_latest_block('invalid')
+            result = reader.w3.eth.block_number
             error_tests.append({
                 'test': 'invalid_rpc',
                 'handled': result is None,

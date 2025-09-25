@@ -23,12 +23,13 @@ class TestPaperTrading:
     """Test paper trading engine."""
     
     @pytest.mark.asyncio
-    async def test_paper_order_submission(self):
+    async def test_paper_order_submission(self, paper_trading_engine):
         """Test submitting a paper order."""
-        engine = PaperTradingEngine(initial_capital=10000)
+        engine = paper_trading_engine
         
+        import uuid
         order = PaperOrder(
-            order_id="TEST_001",
+            order_id=f"TEST_{uuid.uuid4().hex[:8]}",
             timestamp=datetime.now(timezone.utc),
             source_id="0x12345",
             market_type="winner",
@@ -81,9 +82,9 @@ class TestPaperTrading:
         assert exec_price >= quote.ask_price
         assert slippage >= 0
         
-    def test_performance_calculation(self):
+    def test_performance_calculation(self, paper_trading_engine):
         """Test performance metric calculation."""
-        engine = PaperTradingEngine()
+        engine = paper_trading_engine
         
         # No trades yet
         metrics = engine.calculate_performance()

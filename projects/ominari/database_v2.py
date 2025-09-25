@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # PostgreSQL Configuration
 PG_CONFIG = {
     'host': os.getenv('PG_HOST', 'localhost'),
-    'port': os.getenv('PG_PORT', '5435'),
+    'port': os.getenv('PG_PORT', '5432'),
     'user': os.getenv('PG_USER', 'ominari_user'),
     'password': os.getenv('PG_PASSWORD', 'ominari_2025_secure'),
     'database': os.getenv('PG_DB', 'ominari_production')
