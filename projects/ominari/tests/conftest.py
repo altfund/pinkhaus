@@ -22,6 +22,15 @@ def test_data_dir(tmp_path_factory):
     return tmp_path_factory.mktemp('test_data')
 
 
+@pytest.fixture
+def paper_trading_engine(tmp_path):
+    """Create paper trading engine with unique database."""
+    from paper_trading_engine import PaperTradingEngine
+    db_path = str(tmp_path / f"paper_trades_{datetime.now().timestamp()}.db")
+    engine = PaperTradingEngine(db_path=db_path)
+    return engine
+
+
 @pytest.fixture(scope='session')
 def test_config():
     """Get test configuration."""

@@ -4,6 +4,15 @@ Unified Ominari Web Monitor - Real blockchain data with enhanced features
 Shows soccer markets with signals, paper trading, and portfolio management
 """
 
+import os
+# Set PostgreSQL environment variables BEFORE imports
+os.environ['PG_HOST'] = 'localhost'
+os.environ['PG_PORT'] = '5999'
+os.environ['PG_USER'] = 'ominari_user'
+os.environ['PG_PASSWORD'] = 'ominari_2025_secure'
+os.environ['PG_DB'] = 'ominari_production'
+os.environ['USE_POSTGRESQL'] = '1'
+
 import logging
 from datetime import datetime, timezone, timedelta
 from flask import Flask, render_template_string, jsonify, request
@@ -67,7 +76,7 @@ UNIFIED_HTML = """
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Ominari Trading System - Soccer Markets</title>
+    <title>Ominari Trading System - Soccer Markets Only</title>
     <meta charset="utf-8">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -408,15 +417,21 @@ UNIFIED_HTML = """
 </head>
 <body>
     <div class="header">
-        <div>
-            <h1 style="display: inline; margin-right: 20px;">⚽ Ominari Soccer Trading</h1>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <h1 style="display: inline; margin: 0;">⚽ Ominari Soccer Trading</h1>
+            <span style="background: #1a4d1a; border: 1px solid #00ff00; padding: 5px 15px; border-radius: 4px; font-size: 0.9em;">
+                ⚽ SOCCER ONLY MODE
+            </span>
             <span class="ws-status">
                 <span class="ws-indicator" id="ws-indicator"></span>
                 <span id="ws-status">Connecting...</span>
             </span>
         </div>
-        <div>
-            <span style="margin-right: 20px;">⏰ <span id="current-time"></span></span>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <span style="background: #4d1a4d; border: 1px solid #ff00ff; padding: 5px 15px; border-radius: 4px; font-size: 0.9em;">
+                📝 PAPER TRADING
+            </span>
+            <span>⏰ <span id="current-time"></span></span>
             <span>🌐 Live Blockchain Data</span>
         </div>
     </div>
@@ -430,7 +445,7 @@ UNIFIED_HTML = """
     <div class="main-container">
         <!-- Soccer Markets with Signals -->
         <div class="markets-section">
-            <div class="section-title">⚽ Soccer Markets & Signals</div>
+            <div class="section-title">⚽ Live Soccer Markets (Filtered)</div>
             <div id="markets-container">
                 <!-- Populated by JavaScript -->
             </div>
@@ -442,7 +457,7 @@ UNIFIED_HTML = """
             
             <!-- Best Betting Opportunities -->
             <div class="best-bets" style="margin-bottom: 20px;">
-                <h3 style="color: #00ff00; margin-bottom: 10px;">🎯 Best Opportunities</h3>
+                <h3 style="color: #00ff00; margin-bottom: 10px;">🎯 Best Soccer Opportunities (Paper Trading)</h3>
                 <div id="best-bets-container">
                     <!-- Populated by JavaScript -->
                 </div>
@@ -895,11 +910,13 @@ def get_soccer_markets_with_signals():
     try:
         with db_manager.get_db_session() as db:
             # Get active soccer markets
-            now = datetime.now(timezone.utc)
+            # Use timezone-naive datetime to match database column type
+            now = datetime.now()  # No timezone
             future_time = now + timedelta(hours=48)
             
+            # Soccer-only filter (not configurable by user)
             active_markets = db.query(Market).filter(
-                Market.sport == 'Soccer',
+                Market.sport == 'Soccer',  # Hardcoded to soccer only
                 Market.is_finished == False,
                 Market.maturity_date > now,
                 Market.maturity_date <= future_time
@@ -968,22 +985,30 @@ def get_soccer_markets_with_signals():
                         fair_draw = draw_prob / total_prob
                         fair_away = away_prob / total_prob
                         
-                        # Find value bets
+                        # Find value bets - prefer underdogs
                         edges = []
-                        if home_prob < fair_home * 0.95:
-                            edges.append(('Home', (fair_home - home_prob) / home_prob))
-                        if draw_prob < fair_draw * 0.95:
-                            edges.append(('Draw', (fair_draw - draw_prob) / draw_prob))
-                        if away_prob < fair_away * 0.95:
-                            edges.append(('Away', (fair_away - away_prob) / away_prob))
+                        # Check for underdog opportunities (odds > 2.5)
+                        if best_home and best_home > 2.5 and best_home > best_away:
+                            edges.append(('Home', 0.05))  # Fixed 5% edge for underdogs
+                        if best_away and best_away > 2.5 and best_away > best_home:
+                            edges.append(('Away', 0.05))
+                        # Original value betting as fallback
+                        if not edges:
+                            if home_prob < fair_home * 0.95:
+                                edges.append(('Home', (fair_home - home_prob) / home_prob))
+                            if draw_prob < fair_draw * 0.95:
+                                edges.append(('Draw', (fair_draw - draw_prob) / draw_prob))
+                            if away_prob < fair_away * 0.95:
+                                edges.append(('Away', (fair_away - away_prob) / away_prob))
                         
                         if edges:
                             best_edge = max(edges, key=lambda x: x[1])
                             if best_edge[1] > 0.02:  # 2% edge threshold
+                                bet_type = 'Underdog bet' if (best_edge[0] == 'Home' and best_home > 2.5) or (best_edge[0] == 'Away' and best_away > 2.5) else 'Value bet'
                                 signal = {
-                                    'provider': 'Implied Probability',
+                                    'provider': 'Underdog Strategy',
                                     'confidence': min(best_edge[1] * 10, 1.0),
-                                    'recommendation': f'Back {best_edge[0]} - Value bet detected',
+                                    'recommendation': f'Back {best_edge[0]} - {bet_type} detected',
                                     'edge': best_edge[1]
                                 }
                     
@@ -1105,10 +1130,11 @@ def get_ticker_data():
             total_odds = db.query(func.count(Odd.id)).scalar() or 0
             
             return [
-                {'label': 'Soccer Markets', 'value': str(active_markets), 'color': '#00ff00'},
+                {'label': 'Soccer Markets (Filtered)', 'value': str(active_markets), 'color': '#00ff00'},
                 {'label': 'Total Odds', 'value': f'{total_odds:,}', 'color': '#00ffff'},
                 {'label': 'Data Source', 'value': 'Blockchain V2', 'color': '#00ff00'},
-                {'label': 'Signal Provider', 'value': 'Implied Probability', 'color': '#00ff00'}
+                {'label': 'Strategy', 'value': 'Underdog Betting', 'color': '#00ff00'},
+                {'label': 'Mode', 'value': 'Paper Trading', 'color': '#ff00ff'}
             ]
     except:
         return [
@@ -1138,6 +1164,11 @@ def get_performance_data():
 @app.route('/')
 def index():
     """Main dashboard."""
+    return render_template_string(UNIFIED_HTML)
+
+@app.route('/unified')
+def unified():
+    """Unified dashboard route - accessible at /unified for consistency."""
     return render_template_string(UNIFIED_HTML)
 
 @app.route('/api/status')
@@ -1269,8 +1300,10 @@ update_thread.start()
 if __name__ == '__main__':
     print("🚀 Unified Ominari Monitor Starting...")
     print("⚽ Soccer Markets Only - Real Blockchain Data")
-    print("📊 Dashboard: http://localhost:8888")
+    port = int(os.environ.get('DASHBOARD_PORT', 8888))
+    print(f"📊 Dashboard: http://localhost:{port}")
     print("🔌 WebSocket enabled for live updates")
     print("📡 Integrated with paper trading and signals")
     
-    socketio.run(app, host='0.0.0.0', port=8888, debug=False, allow_unsafe_werkzeug=True)
+    port = int(os.environ.get('DASHBOARD_PORT', 8888))
+    socketio.run(app, host='0.0.0.0', port=port, debug=False, allow_unsafe_werkzeug=True)

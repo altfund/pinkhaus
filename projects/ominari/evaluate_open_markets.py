@@ -7,12 +7,12 @@ Created on Thu Apr  3 16:51:44 2025
 """
 
 import pandas as pd
-import sqlite3
 
 from odds_formatting_helpers import *
 from kelly_multimarket import *
 
-DB_NAME = "sport_odds.db"
+# Database connection now handled by database_v2.py
+DB_NAME = "sport_odds.db"  # Legacy SQLite database name for compatibility
 
 import time
 

@@ -96,13 +96,21 @@ class SystemIntegrator:
         class WrappedSignal(BaseSignalProvider):
             def __init__(self, legacy_provider):
                 self.legacy_provider = legacy_provider
+                # Create instance of legacy provider if it's a class
+                if isinstance(legacy_provider, type):
+                    self.legacy_instance = legacy_provider()
+                    signal_name = getattr(self.legacy_instance, 'name', legacy_provider.__name__)
+                else:
+                    self.legacy_instance = legacy_provider
+                    signal_name = getattr(legacy_provider, 'name', 'unknown')
+                    
                 super().__init__(
-                    name=self.legacy_provider.name,
+                    name=signal_name,
                     version="1.0.0"
                 )
                 
             def get_probs(self, df: pd.DataFrame) -> pd.Series:
-                return self.legacy_provider.get_probs(df)
+                return self.legacy_instance.get_probs(df)
                 
             def get_parameters(self) -> Dict[str, Any]:
                 return {}
@@ -342,14 +350,16 @@ class SystemIntegrator:
         
         # Simple Kelly sizing
         positions['kelly_fraction'] = positions['edge'] / (odds - 1)
-        positions['kelly_fraction'] = positions['kelly_fraction'].clip(0, self.settings.trading.max_position_size)
+        max_pos_size = getattr(self.settings.trading, 'max_position_size', 0.25)
+        positions['kelly_fraction'] = positions['kelly_fraction'].clip(0, max_pos_size)
         
         # Apply capital allocation
-        total_capital = self.settings.trading.initial_capital
+        total_capital = getattr(self.settings.trading, 'initial_capital', 10000.0)
         positions['bet_size'] = positions['kelly_fraction'] * total_capital
         
         # Filter by minimum bet size
-        positions = positions[positions['bet_size'] >= self.settings.trading.min_bet_size]
+        min_bet = getattr(self.settings.trading, 'min_bet_size', 1.0)
+        positions = positions[positions['bet_size'] >= min_bet]
         
         return positions
         
