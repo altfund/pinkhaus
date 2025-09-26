@@ -34,6 +34,9 @@ from paper_trading_postgres_integrated import PaperTradingSessionManager
 # Import enhanced edge calculator
 from edge_calculator import EdgeCalculator
 
+# Import portfolio trading engine
+from portfolio_trading_engine import PortfolioTradingEngine
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -58,6 +61,9 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', json=
 session_manager = PaperTradingSessionManager()
 paper_engine = PaperTradingEngine()
 edge_calculator = EdgeCalculator()
+
+# Initialize portfolio trading engine
+portfolio_engine = PortfolioTradingEngine(session_manager, edge_calculator, STRATEGY_CONFIG)
 
 # Database connection
 @contextmanager
@@ -1407,10 +1413,11 @@ def handle_request_dashboard_data():
 @socketio.on('execute_trades')
 def handle_execute_trades():
     """Execute paper trades"""
-    result = execute_paper_trades()
+    # Use portfolio-based trading
+    result = execute_portfolio_trades()
     emit('activity', {
         'type': 'trade',
-        'message': f"Executed {result.get('trades_made', 0)} trades",
+        'message': f"Portfolio rebalanced: {result.get('trades_made', 0)} trades",
         'timestamp': datetime.now(timezone.utc).isoformat()
     })
     emit('dashboard_update', get_dashboard_data())
@@ -1474,6 +1481,62 @@ def get_dashboard_data(sport_filter='Soccer'):
     except Exception as e:
         logger.error(f"Error getting dashboard data: {e}")
         return {}
+
+def execute_portfolio_trades():
+    """Execute portfolio-based trades using optimal allocation"""
+    try:
+        session_id = session_manager.get_current_session()
+        if not session_id:
+            return {'success': False, 'error': 'No active session'}
+        
+        session = session_manager.get_session(session_id)
+        if not session:
+            return {'success': False, 'error': 'Failed to get session data'}
+        
+        # Check if we're over-leveraged
+        positions = session_manager.get_positions(session_id)
+        open_positions = [p for p in positions if p['status'] in ['pending', 'open']]
+        current_exposure = sum(float(p['stake']) for p in open_positions)
+        exposure_pct = (current_exposure / STRATEGY_CONFIG['bankroll'] * 100) if STRATEGY_CONFIG['bankroll'] else 0
+        
+        MAX_EXPOSURE_PCT = 30
+        if exposure_pct > MAX_EXPOSURE_PCT:
+            logger.warning(f"⚠️ Exposure at {exposure_pct:.1f}% - skipping new trades (max: {MAX_EXPOSURE_PCT}%)")
+            return {'success': True, 'trades_made': 0, 'reason': 'exposure_limit'}
+        
+        # Get market data
+        markets, signals, stats, chunks = get_market_data()
+        
+        # Use portfolio engine for optimization
+        result = portfolio_engine.execute_portfolio_trades(
+            session_id, 
+            markets, 
+            signals,
+            STRATEGY_CONFIG['bankroll']
+        )
+        
+        # Log trades if successful
+        if result.get('success') and result.get('trades_made', 0) > 0:
+            logger.info(f"✅ Portfolio rebalanced: {result.get('trades_made')} trades, "
+                       f"${result.get('total_stake', 0):.2f} deployed, "
+                       f"portfolio size: {result.get('portfolio_size', 0)}")
+            
+            # Emit activity for each trade
+            positions = session_manager.get_positions(session_id)
+            recent_trades = sorted(positions, key=lambda x: x.get('placed_at', ''), reverse=True)[:result['trades_made']]
+            
+            for trade in recent_trades:
+                socketio.emit('activity', {
+                    'type': 'trade',
+                    'message': f"Portfolio: {trade['bet_on']} ${trade['stake']:.2f} on {trade['home_team']} vs {trade['away_team']} @ {trade['odds']:.2f}",
+                    'timestamp': datetime.now(timezone.utc).isoformat()
+                })
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in portfolio trading: {e}")
+        return {'success': False, 'error': str(e)}
 
 def execute_paper_trades():
     """Execute paper trades using evaluate_open_markets logic"""
@@ -1595,17 +1658,19 @@ def paper_trading_background_loop():
     
     while True:
         try:
-            logger.info("⚡ Paper trading cycle starting...")
-            result = execute_paper_trades()
+            logger.info("⚡ Portfolio optimization cycle starting...")
+            result = execute_portfolio_trades()
             
             if result.get("success"):
                 trades_made = result.get("trades_made", 0)
                 if trades_made > 0:
-                    logger.info(f"✅ Paper trading cycle complete: {trades_made} trades executed")
+                    logger.info(f"✅ Portfolio rebalanced: {trades_made} trades, "
+                               f"portfolio size: {result.get('portfolio_size', 0)}")
                 else:
-                    logger.info("📊 Paper trading cycle complete: No suitable trades found")
+                    reason = result.get('reason', 'No rebalancing needed')
+                    logger.info(f"📊 Portfolio optimization complete: {reason}")
             else:
-                logger.warning(f"⚠️ Paper trading cycle failed: {result.get('error', 'Unknown error')}")
+                logger.warning(f"⚠️ Portfolio optimization failed: {result.get('error', 'Unknown error')}")
                 
         except Exception as e:
             logger.error(f"❌ Paper trading background error: {e}")
