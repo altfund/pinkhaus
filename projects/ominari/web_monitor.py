@@ -1486,18 +1486,71 @@ def execute_paper_trades():
         if not session:
             return {'success': False, 'error': 'Failed to get session data'}
         
+        # Get existing positions to avoid duplicates
+        existing_positions = session_manager.get_positions(session_id)
+        existing_bets = set()
+        for pos in existing_positions:
+            if pos['status'] in ['pending', 'open']:
+                existing_bets.add((pos['match_id'], pos['bet_on']))
+        
+        # Check current exposure
+        open_positions = [p for p in existing_positions if p['status'] in ['pending', 'open']]
+        current_exposure = sum(float(p['stake']) for p in open_positions)
+        exposure_pct = (current_exposure / STRATEGY_CONFIG['bankroll'] * 100) if STRATEGY_CONFIG['bankroll'] else 0
+        
+        # Stop if over-leveraged
+        MAX_EXPOSURE_PCT = 30  # Maximum 30% exposure
+        if exposure_pct > MAX_EXPOSURE_PCT:
+            logger.warning(f"⚠️ Exposure at {exposure_pct:.1f}% - skipping new trades (max: {MAX_EXPOSURE_PCT}%)")
+            return {'success': True, 'trades_made': 0, 'reason': 'exposure_limit'}
+        
         # Get market data
         markets, signals, stats, chunks = get_market_data()
         
+        # Track exposure per game to avoid over-concentration
+        game_exposures = {}
+        for pos in open_positions:
+            game_key = pos['match_id']
+            if game_key not in game_exposures:
+                game_exposures[game_key] = 0
+            game_exposures[game_key] += float(pos['stake'])
+        
         # Find trades to execute
         trades_to_execute = []
+        max_per_game = STRATEGY_CONFIG['bankroll'] * STRATEGY_CONFIG['cap_per_game']  # 2% per game
+        
         for i, market in enumerate(markets):
             signal = signals[i]
+            market_id = market.get('market_id', market.get('source_id', ''))
+            
+            # Check current exposure for this game
+            game_exposure = game_exposures.get(market_id, 0)
+            if game_exposure >= max_per_game:
+                continue  # Skip if already at max exposure for this game
+            
             for outcome in ['home', 'draw', 'away']:
+                # Skip if we already have a bet on this market/outcome
+                if (market_id, outcome) in existing_bets:
+                    continue
+                    
                 stake = signal.get(f'{outcome}_stake', 0)
                 if stake > 0:
+                    # Apply per-bet cap
+                    stake = min(stake, STRATEGY_CONFIG['bankroll'] * STRATEGY_CONFIG['cap_per_bet'])
+                    
+                    # Check if adding this trade would exceed per-game limit
+                    if game_exposure + stake > max_per_game:
+                        stake = max_per_game - game_exposure
+                        if stake < STRATEGY_CONFIG['min_bet']:
+                            continue
+                    
+                    # Check if adding this trade would exceed total exposure limit
+                    new_exposure_pct = ((current_exposure + stake) / STRATEGY_CONFIG['bankroll'] * 100)
+                    if new_exposure_pct > MAX_EXPOSURE_PCT:
+                        continue
+                        
                     trades_to_execute.append({
-                        'match_id': market.get('market_id', market.get('source_id', '')),
+                        'match_id': market_id,
                         'sport': market.get('sport', 'Soccer'),
                         'home_team': market.get('home_team', ''),
                         'away_team': market.get('away_team', ''),
@@ -1510,6 +1563,9 @@ def execute_paper_trades():
                         'edge': signal.get(f'{outcome}_edge', 0),
                         'kickoff_time': market.get('maturity_date')
                     })
+                    current_exposure += stake
+                    game_exposure += stake
+                    game_exposures[market_id] = game_exposure
         
         # Record trades
         if trades_to_execute:
