@@ -51,6 +51,10 @@ class RPCManager:
         'optimism_sepolia': [
             'https://sepolia.optimism.io',
             'https://optimism-sepolia.public.blastapi.io',
+        ],
+        'arbitrum_sepolia': [
+            'https://sepolia-rollup.arbitrum.io/rpc',
+            'https://arbitrum-sepolia.public.blastapi.io',
         ]
     }
     
@@ -60,11 +64,13 @@ class RPCManager:
             'optimism': 'https://opt-mainnet.g.alchemy.com/v2/{api_key}',
             'arbitrum': 'https://arb-mainnet.g.alchemy.com/v2/{api_key}',
             'optimism_sepolia': 'https://opt-sepolia.g.alchemy.com/v2/{api_key}',
+            'arbitrum_sepolia': 'https://arb-sepolia.g.alchemy.com/v2/{api_key}',
         },
         'infura': {
             'optimism': 'https://optimism-mainnet.infura.io/v3/{api_key}',
             'arbitrum': 'https://arbitrum-mainnet.infura.io/v3/{api_key}',
             'optimism_sepolia': 'https://optimism-sepolia.infura.io/v3/{api_key}',
+            'arbitrum_sepolia': 'https://arbitrum-sepolia.infura.io/v3/{api_key}',
         },
         'quicknode': {
             'optimism': 'https://opt-mainnet.quicknode.pro/{api_key}',

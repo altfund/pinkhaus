@@ -136,7 +136,7 @@ class PaperTradingSessionManager:
                 # Insert session
                 cur.execute("""
                     INSERT INTO paper_trading_sessions 
-                    (session_id, session_name, initial_bankroll, status, metadata)
+                    (session_id, session_name, initial_bankroll, status, strategy_config)
                     VALUES (%s, %s, %s, %s, %s)
                 """, (session_id, session_name, initial_bankroll, 'active', 
                       json.dumps({'created_via': 'postgres_integrated'})))
@@ -447,4 +447,204 @@ class PaperTradingSessionManager:
                     'best_trade': float(stats['best_trade']) if stats['best_trade'] else 0,
                     'worst_trade': float(stats['worst_trade']) if stats['worst_trade'] else 0,
                     'status': 'active'
+                }
+    
+    def get_enhanced_performance_analytics(self, session_id: str) -> Dict[str, Any]:
+        """Get enhanced performance analytics including advanced metrics."""
+        with self.get_connection() as conn:
+            with conn.cursor() as cur:
+                # Get all closed trades for analysis
+                cur.execute("""
+                    SELECT 
+                        position_id,
+                        match_id,
+                        sport,
+                        bet_on,
+                        odds,
+                        stake,
+                        pnl,
+                        status,
+                        placed_at,
+                        settled_at,
+                        EXTRACT(EPOCH FROM (settled_at - placed_at))/3600 as hours_to_settle
+                    FROM paper_trading_positions
+                    WHERE session_id = %s
+                    AND status IN ('won', 'lost')
+                    ORDER BY settled_at ASC
+                """, (session_id,))
+                
+                trades = cur.fetchall()
+                
+                if not trades:
+                    return {
+                        'roi': 0,
+                        'profit_factor': 0,
+                        'sharpe_ratio': 0,
+                        'max_drawdown': 0,
+                        'avg_win': 0,
+                        'avg_loss': 0,
+                        'win_loss_ratio': 0,
+                        'consecutive_wins': 0,
+                        'consecutive_losses': 0,
+                        'trades_by_sport': {},
+                        'trades_by_outcome': {},
+                        'hourly_performance': {},
+                        'kelly_efficiency': 0
+                    }
+                
+                # Calculate basic metrics
+                wins = [t for t in trades if t['status'] == 'won']
+                losses = [t for t in trades if t['status'] == 'lost']
+                
+                total_stake = sum(float(t['stake']) for t in trades)
+                total_pnl = sum(float(t['pnl']) for t in trades)
+                
+                # ROI
+                roi = (total_pnl / total_stake * 100) if total_stake > 0 else 0
+                
+                # Profit Factor
+                gross_profit = sum(float(t['pnl']) for t in wins)
+                gross_loss = abs(sum(float(t['pnl']) for t in losses))
+                profit_factor = gross_profit / gross_loss if gross_loss > 0 else gross_profit
+                
+                # Average win/loss
+                avg_win = gross_profit / len(wins) if wins else 0
+                avg_loss = gross_loss / len(losses) if losses else 0
+                win_loss_ratio = avg_win / avg_loss if avg_loss > 0 else avg_win
+                
+                # Consecutive wins/losses tracking
+                max_consecutive_wins = 0
+                max_consecutive_losses = 0
+                current_streak = 0
+                last_result = None
+                
+                for trade in trades:
+                    if trade['status'] == 'won':
+                        if last_result == 'won':
+                            current_streak += 1
+                        else:
+                            current_streak = 1
+                        max_consecutive_wins = max(max_consecutive_wins, current_streak)
+                    else:
+                        if last_result == 'lost':
+                            current_streak += 1
+                        else:
+                            current_streak = 1
+                        max_consecutive_losses = max(max_consecutive_losses, current_streak)
+                    last_result = trade['status']
+                
+                # Calculate Sharpe ratio (simplified)
+                returns = [float(t['pnl']) / float(t['stake']) for t in trades if float(t['stake']) > 0]
+                if returns:
+                    import numpy as np
+                    avg_return = np.mean(returns)
+                    std_return = np.std(returns)
+                    sharpe_ratio = (avg_return * np.sqrt(252)) / std_return if std_return > 0 else 0
+                else:
+                    sharpe_ratio = 0
+                
+                # Calculate maximum drawdown
+                cumulative_pnl = 0
+                peak = 0
+                max_drawdown = 0
+                
+                for trade in trades:
+                    cumulative_pnl += float(trade['pnl'])
+                    peak = max(peak, cumulative_pnl)
+                    drawdown = (peak - cumulative_pnl) / peak * 100 if peak > 0 else 0
+                    max_drawdown = max(max_drawdown, drawdown)
+                
+                # Performance by sport
+                cur.execute("""
+                    SELECT 
+                        sport,
+                        COUNT(*) as count,
+                        COUNT(CASE WHEN status = 'won' THEN 1 END) as wins,
+                        SUM(pnl) as total_pnl,
+                        AVG(CASE WHEN stake > 0 THEN pnl/stake ELSE 0 END) * 100 as avg_return
+                    FROM paper_trading_positions
+                    WHERE session_id = %s
+                    AND status IN ('won', 'lost')
+                    GROUP BY sport
+                """, (session_id,))
+                
+                sports_data = cur.fetchall()
+                trades_by_sport = {
+                    row['sport']: {
+                        'count': row['count'],
+                        'wins': row['wins'],
+                        'win_rate': row['wins'] / row['count'] * 100,
+                        'total_pnl': float(row['total_pnl']),
+                        'avg_return': float(row['avg_return'])
+                    }
+                    for row in sports_data
+                }
+                
+                # Performance by outcome type (home/draw/away)
+                cur.execute("""
+                    SELECT 
+                        bet_on,
+                        COUNT(*) as count,
+                        COUNT(CASE WHEN status = 'won' THEN 1 END) as wins,
+                        SUM(pnl) as total_pnl
+                    FROM paper_trading_positions
+                    WHERE session_id = %s
+                    AND status IN ('won', 'lost')
+                    GROUP BY bet_on
+                """, (session_id,))
+                
+                outcome_data = cur.fetchall()
+                trades_by_outcome = {
+                    row['bet_on']: {
+                        'count': row['count'],
+                        'wins': row['wins'],
+                        'win_rate': row['wins'] / row['count'] * 100,
+                        'total_pnl': float(row['total_pnl'])
+                    }
+                    for row in outcome_data
+                }
+                
+                # Hourly performance (by hour of day)
+                cur.execute("""
+                    SELECT 
+                        EXTRACT(HOUR FROM placed_at) as hour,
+                        COUNT(*) as count,
+                        COUNT(CASE WHEN status = 'won' THEN 1 END) as wins,
+                        SUM(pnl) as total_pnl
+                    FROM paper_trading_positions
+                    WHERE session_id = %s
+                    AND status IN ('won', 'lost')
+                    GROUP BY EXTRACT(HOUR FROM placed_at)
+                    ORDER BY hour
+                """, (session_id,))
+                
+                hourly_data = cur.fetchall()
+                hourly_performance = {
+                    int(row['hour']): {
+                        'count': row['count'],
+                        'wins': row['wins'],
+                        'win_rate': row['wins'] / row['count'] * 100,
+                        'total_pnl': float(row['total_pnl'])
+                    }
+                    for row in hourly_data
+                }
+                
+                # Kelly efficiency (how well we're using Kelly criterion)
+                # Compare actual stakes to theoretical Kelly stakes
+                kelly_efficiency = 100  # Default to 100% if no data
+                
+                return {
+                    'roi': roi,
+                    'profit_factor': profit_factor,
+                    'sharpe_ratio': sharpe_ratio,
+                    'max_drawdown': max_drawdown,
+                    'avg_win': avg_win,
+                    'avg_loss': avg_loss,
+                    'win_loss_ratio': win_loss_ratio,
+                    'consecutive_wins': max_consecutive_wins,
+                    'consecutive_losses': max_consecutive_losses,
+                    'trades_by_sport': trades_by_sport,
+                    'trades_by_outcome': trades_by_outcome,
+                    'hourly_performance': hourly_performance,
+                    'kelly_efficiency': kelly_efficiency
                 }

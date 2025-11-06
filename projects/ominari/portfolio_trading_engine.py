@@ -122,8 +122,12 @@ class PortfolioTradingEngine:
                         'sport': market.get('sport', 'Soccer'),
                         'home_team': market.get('home_team', ''),
                         'away_team': market.get('away_team', ''),
+                        'market_name': f"{market.get('home_team', '')} vs {market.get('away_team', '')}",
+                        'league_name': market.get('league_name', market.get('sport', 'Unknown')),
+                        'bookmaker': market.get('source', 'api'),
                         'unified_market_type': 'winner',
                         'normalized_line': 0,
+                        'normalized_outcome': outcome,  # Add this field
                         'bet_name': f"{market.get('home_team', '')} vs {market.get('away_team', '')} - {outcome}",
                         'outcome': outcome,
                         'odds': odds,
@@ -161,12 +165,16 @@ class PortfolioTradingEngine:
             cap_per_bet=self.strategy_config['cap_per_bet'],
             cap_per_game_market=self.strategy_config.get('cap_per_game_market', 0.005),
             min_bet_abs=self.strategy_config['min_bet'],
-            min_bet_pct=self.strategy_config.get('min_bet_pct', 0.001),
-            min_break_minutes=self.strategy_config.get('min_break_minutes', 240)
+            min_bet_pct=self.strategy_config.get('min_bet_pct', 0.001)
         )
         
         # Only keep positions with stake > 0
         trimmed = trimmed[trimmed['stake'] > 0].copy()
+        
+        # Add position_key for tracking (using source_id which is the match identifier)
+        if 'source_id' in trimmed.columns:
+            trimmed['position_key'] = trimmed['source_id'] + '_' + trimmed['normalized_outcome']
+            trimmed['match_id'] = trimmed['source_id']  # Add match_id for compatibility
         
         return trimmed
     
@@ -193,7 +201,7 @@ class PortfolioTradingEngine:
                 'home_team': target_row.get('home_team', ''),
                 'away_team': target_row.get('away_team', ''),
                 'bet_type': 'moneyline',
-                'bet_on': target_row['outcome'],
+                'bet_on': target_row.get('normalized_outcome', target_row.get('outcome', '')),
                 'odds': target_row['odds'],
                 'stake': target_row['stake'],
                 'signal_name': 'portfolio_optimizer',
@@ -251,8 +259,10 @@ class PortfolioTradingEngine:
             # Check current exposure
             current_exposure = current_portfolio['stake'].sum() if not current_portfolio.empty else 0
             exposure_pct = (current_exposure / current_bankroll * 100) if current_bankroll > 0 else 0
+            current_position_count = len(current_portfolio)
+            max_positions = self.strategy_config.get('max_positions', 10)
             
-            logger.info(f"Current portfolio: {len(current_portfolio)} positions, ${current_exposure:.2f} exposure ({exposure_pct:.1f}%)")
+            logger.info(f"Current portfolio: {current_position_count} positions (max: {max_positions}), ${current_exposure:.2f} exposure ({exposure_pct:.1f}%)")
             
             # Prepare markets for Kelly optimization
             markets_df = self.prepare_markets_for_kelly(markets, signals)
@@ -269,12 +279,19 @@ class PortfolioTradingEngine:
                        f"{len(portfolio_diff['positions_to_close'])} close, "
                        f"{len(portfolio_diff['positions_to_adjust'])} adjust")
             
-            # Apply exposure limits before executing
+            # Apply exposure and position limits before executing
             new_trades = portfolio_diff['trades_to_execute']
             total_new_exposure = sum(t['stake'] for t in new_trades)
             
+            # Check position limit
+            positions_available = max(0, max_positions - current_position_count)
+            if len(new_trades) > positions_available:
+                logger.info(f"Position limit reached. Available slots: {positions_available}, new trades: {len(new_trades)}")
+                # Sort by edge and take only available positions
+                new_trades = sorted(new_trades, key=lambda x: x.get('edge', 0), reverse=True)[:positions_available]
+            
             MAX_EXPOSURE_PCT = 30  # Maximum 30% exposure
-            new_exposure_pct = ((current_exposure + total_new_exposure) / current_bankroll * 100)
+            new_exposure_pct = ((current_exposure + sum(t['stake'] for t in new_trades)) / current_bankroll * 100)
             
             if new_exposure_pct > MAX_EXPOSURE_PCT:
                 # Scale down new trades proportionally

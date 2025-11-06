@@ -159,3 +159,14 @@ venv.bak/
 .mypy_cache/
 
 .pdf
+
+# Flox postgres data
+.flox/postgres/data/
+*.out
+
+# Temporary venv
+venv_temp/
+
+# Trading process files
+trading_pid.txt
+trading_log.txt

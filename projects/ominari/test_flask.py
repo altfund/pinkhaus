@@ -1,11 +1,15 @@
-#!/usr/bin/env python3
-from flask import Flask
-app = Flask(__name__)
+#\!/usr/bin/env python3
+"""Test if Flask is available"""
+try:
+    import flask
+    print(f"Flask version: {flask.__version__}")
+    print("Flask is available\!")
+except ImportError as e:
+    print(f"Flask not available: {e}")
 
-@app.route('/')
-def hello():
-    return '<h1>Test Flask App Working!</h1>'
-
-if __name__ == '__main__':
-    print("Starting test Flask app on port 5555...")
-    app.run(host='127.0.0.1', port=5555, debug=True)
+try:
+    import flask_socketio
+    print("Flask-SocketIO is available\!")
+except ImportError as e:
+    print(f"Flask-SocketIO not available: {e}")
+EOF < /dev/null

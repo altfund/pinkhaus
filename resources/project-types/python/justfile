@@ -22,9 +22,33 @@ check:
     uv run ruff check .
     uv run ruff format --check .
 
-# test
+# Run all tests (requires flox environment)
 test:
     flox activate -- uv run pytest
+
+# Run deployment validation tests (quick)
+test-deployment:
+    uv run python run_deployment_tests.py
+
+# Run comprehensive test suite (full validation) 
+test-comprehensive:
+    uv run python comprehensive_test_suite.py
+
+# Run unit tests only
+test-unit:
+    uv run pytest -m "unit" tests/
+
+# Run integration tests only  
+test-integration:
+    uv run pytest -m "integration" tests/
+
+# Run tests with coverage
+test-coverage:
+    uv run pytest --cov=. tests/
+
+# Validate system is ready for deployment
+validate-deployment: test-deployment
+    @echo "✅ System validation complete"
 
 # Generate Python code from proto files
 proto-generate:
