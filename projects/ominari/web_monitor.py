@@ -27,6 +27,10 @@ import time
 import numpy as np
 import pandas as pd
 
+# Import database and models
+from database_v2 import db_manager
+from models import Market
+
 # Import paper trading
 from paper_trading_engine import PaperTradingEngine
 from paper_trading_postgres_integrated import PaperTradingSessionManager
@@ -36,6 +40,7 @@ from edge_calculator import EdgeCalculator
 
 # Import portfolio trading engine
 from portfolio_trading_engine import PortfolioTradingEngine
+from stop_loss_manager import StopLossManager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -57,30 +62,6 @@ app.config['SECRET_KEY'] = 'ominari-trading-system-2024'
 app.json_encoder = CustomJSONEncoder
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', json=json)
 
-# Initialize paper trading and edge calculator
-session_manager = PaperTradingSessionManager()
-paper_engine = PaperTradingEngine()
-edge_calculator = EdgeCalculator()
-
-# Initialize portfolio trading engine
-portfolio_engine = PortfolioTradingEngine(session_manager, edge_calculator, STRATEGY_CONFIG)
-
-# Database connection
-@contextmanager
-def get_db():
-    conn = psycopg2.connect(
-        host=os.environ['PG_HOST'],
-        port=os.environ['PG_PORT'],
-        user=os.environ['PG_USER'],
-        password=os.environ['PG_PASSWORD'],
-        database=os.environ['PG_DB']
-    )
-    conn.set_session(autocommit=True)
-    try:
-        yield conn
-    finally:
-        conn.close()
-
 # Strategy configuration
 STRATEGY_CONFIG = {
     'kelly_fraction': 0.25,
@@ -101,7 +82,41 @@ STRATEGY_CONFIG = {
     }
 }
 
-def get_market_data(sport_filter='Soccer'):
+# Initialize paper trading and edge calculator
+session_manager = PaperTradingSessionManager()
+paper_engine = PaperTradingEngine()
+edge_calculator = EdgeCalculator()
+
+# Initialize portfolio trading engine
+portfolio_engine = PortfolioTradingEngine(session_manager, edge_calculator, STRATEGY_CONFIG)
+
+# Initialize stop loss manager
+stop_loss_manager = StopLossManager(session_manager)
+# Configure stop loss parameters
+stop_loss_manager.set_stop_loss_config({
+    'drawdown_pct': 10,  # Stop at 10% drawdown
+    'time_window_minutes': 30,  # Monitor 30 min windows
+    'max_daily_loss_pct': 15,  # Max 15% daily loss
+    'consecutive_losses': 5,  # Stop after 5 losses
+})
+
+# Database connection
+@contextmanager
+def get_db():
+    conn = psycopg2.connect(
+        host=os.environ['PG_HOST'],
+        port=os.environ['PG_PORT'],
+        user=os.environ['PG_USER'],
+        password=os.environ['PG_PASSWORD'],
+        database=os.environ['PG_DB']
+    )
+    conn.set_session(autocommit=True)
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+def get_market_data(sport_filter='All'):
     """Get market data directly from PostgreSQL with gap-based batching"""
     markets = []
     signals = []
@@ -110,7 +125,7 @@ def get_market_data(sport_filter='Soccer'):
     try:
         with get_db() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                # Get upcoming markets with odds
+                # Get upcoming markets with odds from diverse sources (prioritize blockchain and overtime)
                 query = """
                 SELECT 
                     m.source_id as market_id,
@@ -124,14 +139,20 @@ def get_market_data(sport_filter='Soccer'):
                     m.source,
                     MAX(CASE WHEN o.outcome = 'home' THEN o.decimal_odds END) as home_odds,
                     MAX(CASE WHEN o.outcome = 'draw' THEN o.decimal_odds END) as draw_odds,
-                    MAX(CASE WHEN o.outcome = 'away' THEN o.decimal_odds END) as away_odds
+                    MAX(CASE WHEN o.outcome = 'away' THEN o.decimal_odds END) as away_odds,
+                    -- Priority scoring: blockchain > overtime > api
+                    CASE 
+                        WHEN m.source LIKE '%blockchain%' THEN 1
+                        WHEN m.source LIKE '%overtime%' THEN 2
+                        ELSE 3
+                    END as source_priority
                 FROM market m
                 LEFT JOIN odd o ON o.source_id = m.source_id
                 WHERE 
-                    m.source = 'api_live_real'
+                    m.source IN ('overtime_v2', 'blockchain_live', 'overtime_soccer', 'api_live', 'overtime_v2_public')
                     AND m.is_finished = FALSE
                     AND m.maturity_date > NOW()
-                    AND m.sport = %s
+                    -- Show all sports
                 GROUP BY 
                     m.source_id,
                     m.home_team,
@@ -145,24 +166,43 @@ def get_market_data(sport_filter='Soccer'):
                     MAX(CASE WHEN o.outcome = 'home' THEN o.decimal_odds END) IS NOT NULL
                     OR MAX(CASE WHEN o.outcome = 'draw' THEN o.decimal_odds END) IS NOT NULL
                     OR MAX(CASE WHEN o.outcome = 'away' THEN o.decimal_odds END) IS NOT NULL
-                ORDER BY m.maturity_date ASC
+                ORDER BY source_priority ASC, m.maturity_date ASC
                 LIMIT 100
                 """
                 
-                cur.execute(query, (sport_filter,))
+                cur.execute(query)
                 rows = cur.fetchall()
                 logger.info(f"Query returned {len(rows)} rows for sport {sport_filter}")
                 
-                # Debug: Check odds distribution
+                # Debug: Analyze data diversity and sources
                 home_odds_count = sum(1 for row in rows if row['home_odds'] is not None and row['home_odds'] > 0)
                 draw_odds_count = sum(1 for row in rows if row['draw_odds'] is not None and row['draw_odds'] > 0)
                 away_odds_count = sum(1 for row in rows if row['away_odds'] is not None and row['away_odds'] > 0)
+                
+                # Check data source diversity
+                sources_used = set(row['source'] for row in rows)
+                sports_used = set(row['sport'] for row in rows)
+                
+                # Check odds diversity
+                all_odds = []
+                for row in rows:
+                    if row['home_odds']: all_odds.append(row['home_odds'])
+                    if row['draw_odds']: all_odds.append(row['draw_odds'])
+                    if row['away_odds']: all_odds.append(row['away_odds'])
+                unique_odds = len(set(all_odds))
+                
+                logger.info(f"Data Quality: {len(rows)} markets from {len(sources_used)} sources ({', '.join(sources_used)})")
+                logger.info(f"Sports: {len(sports_used)} types ({', '.join(sports_used)})")
+                if len(all_odds) > 0:
+                    logger.info(f"Odds diversity: {unique_odds} unique odds from {len(all_odds)} total ({unique_odds/len(all_odds)*100:.1f}% diverse)")
+                else:
+                    logger.info("No odds found to calculate diversity")
                 logger.info(f"Odds distribution - Home: {home_odds_count}, Draw: {draw_odds_count}, Away: {away_odds_count}")
                 
-                # Debug: Show sample odds
+                # Show first few odds for transparency
                 if rows:
-                    sample = rows[0]
-                    logger.info(f"Sample odds - Home: {sample['home_odds']}, Draw: {sample['draw_odds']}, Away: {sample['away_odds']}")
+                    for i, row in enumerate(rows[:3]):
+                        logger.info(f"Sample {i+1}: {row['sport']} | {row['home_team']} vs {row['away_team']} | ({row['home_odds']}, {row['draw_odds']}, {row['away_odds']}) [{row['source']}]")
                 
                 # Process markets with gap-based batching
                 if rows:
@@ -726,9 +766,15 @@ SINGLE_PAGE_DASHBOARD = """
 <body>
     <div class="header">
         <div class="header-title">⚽ Ominari Trading System</div>
+        <div id="stop-indicator" style="display: none; background: #ff0000; color: #fff; padding: 8px 16px; border-radius: 4px; font-weight: bold;">
+            ⛔ TRADING STOPPED
+        </div>
         <div style="display: flex; gap: 15px; align-items: center;">
-            <button onclick="executeTrades()" style="background: #00ff00; color: #000; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9em;">
-                ⚡ Execute Trades
+            <button id="stop-button" onclick="stopTrading()" style="background: #ff0000; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9em;">
+                🛑 STOP
+            </button>
+            <button id="resume-button" onclick="resumeTrading()" style="display: none; background: #00ff00; color: #000; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9em;">
+                ▶️ Resume
             </button>
             <div class="header-time" id="current-time">--:--:--</div>
         </div>
@@ -814,6 +860,23 @@ SINGLE_PAGE_DASHBOARD = """
                         <option value="Boxing">🥊 Boxing</option>
                         <option value="All">📊 All Sports</option>
                     </select>
+                    
+                    <select id="confidence-filter" onchange="updateConfidenceFilter(this.value)" style="background: #222; color: #00ff00; border: 1px solid #333; padding: 5px 10px; border-radius: 4px; font-size: 0.9em;">
+                        <option value="all">🎯 All Confidence</option>
+                        <option value="high">⭐ High (70%+)</option>
+                        <option value="medium">✨ Medium (50-70%)</option>
+                        <option value="low">💫 Low (30-50%)</option>
+                        <option value="positive">➕ Positive Edge Only</option>
+                    </select>
+                    
+                    <select id="edge-filter" onchange="updateEdgeFilter(this.value)" style="background: #222; color: #00ff00; border: 1px solid #333; padding: 5px 10px; border-radius: 4px; font-size: 0.9em;">
+                        <option value="all">📈 All Edges</option>
+                        <option value="5">🔥 Edge > 5%</option>
+                        <option value="3">🎯 Edge > 3%</option>
+                        <option value="2">✅ Edge > 2%</option>
+                        <option value="1">➕ Edge > 1%</option>
+                        <option value="0">📊 Edge > 0%</option>
+                    </select>
                     <div style="font-size: 0.9em;">
                         <span style="color: #888;">Total:</span> <span id="total-matches" style="color: #00ff00;">0</span>
                         <span style="color: #888; margin-left: 15px;">Active:</span> <span id="active-positions" style="color: #00ffff;">0</span>
@@ -835,6 +898,7 @@ SINGLE_PAGE_DASHBOARD = """
                     <thead>
                         <tr style="border-bottom: 2px solid #444;">
                             <th style="padding: 6px; text-align: left;">Match</th>
+                            <th style="padding: 6px; text-align: center;">Source</th>
                             <th style="padding: 6px; text-align: center;">Time</th>
                             <th style="padding: 6px; text-align: center;">Status</th>
                             <th style="padding: 6px; text-align: center;">H Odds</th>
@@ -869,6 +933,7 @@ SINGLE_PAGE_DASHBOARD = """
                 <button class="tab-btn active" onclick="showTab('open')">Open</button>
                 <button class="tab-btn" onclick="showTab('closed')">Closed</button>
                 <button class="tab-btn" onclick="showTab('summary')">Summary</button>
+                <button class="tab-btn" onclick="showTab('analytics')">Analytics</button>
             </div>
             
             <div id="open-positions" class="tab-content active">
@@ -879,6 +944,7 @@ SINGLE_PAGE_DASHBOARD = """
                             <th style="padding: 8px; text-align: center;">Side</th>
                             <th style="padding: 8px; text-align: right;">Stake</th>
                             <th style="padding: 8px; text-align: center;">Odds</th>
+                            <th style="padding: 8px; text-align: center;">Time</th>
                             <th style="padding: 8px; text-align: right;">Current</th>
                             <th style="padding: 8px; text-align: right;">P&L</th>
                         </tr>
@@ -926,6 +992,112 @@ SINGLE_PAGE_DASHBOARD = """
                     </div>
                 </div>
             </div>
+            
+            <div id="analytics-positions" class="tab-content">
+                <div style="padding: 20px;">
+                    <h4 style="color: #00ff00; margin-bottom: 15px;">📈 Advanced Performance Analytics</h4>
+                    
+                    <!-- Key Performance Metrics -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #333;">
+                            <div style="color: #888; font-size: 0.9em;">ROI</div>
+                            <div style="font-size: 1.8em; color: #00ff00;" id="roi-detailed">0%</div>
+                        </div>
+                        <div style="background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #333;">
+                            <div style="color: #888; font-size: 0.9em;">Profit Factor</div>
+                            <div style="font-size: 1.8em; color: #00ffff;" id="profit-factor-detailed">0.0</div>
+                        </div>
+                        <div style="background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #333;">
+                            <div style="color: #888; font-size: 0.9em;">Sharpe Ratio</div>
+                            <div style="font-size: 1.8em; color: #ffff00;" id="sharpe-ratio">0.0</div>
+                        </div>
+                        <div style="background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #333;">
+                            <div style="color: #888; font-size: 0.9em;">Max Drawdown</div>
+                            <div style="font-size: 1.8em; color: #ff6600;" id="max-drawdown">0%</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Win/Loss Analysis -->
+                    <div style="background: #111; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h5 style="color: #00ffff; margin-bottom: 10px;">💰 Win/Loss Analysis</h5>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                            <div>
+                                <div style="color: #888;">Avg Win</div>
+                                <div style="color: #00ff00; font-size: 1.2em;" id="avg-win">$0</div>
+                            </div>
+                            <div>
+                                <div style="color: #888;">Avg Loss</div>
+                                <div style="color: #ff3333; font-size: 1.2em;" id="avg-loss">$0</div>
+                            </div>
+                            <div>
+                                <div style="color: #888;">Win/Loss Ratio</div>
+                                <div style="color: #00ffff; font-size: 1.2em;" id="win-loss-ratio">0.0</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div>
+                                <div style="color: #888;">Max Consecutive Wins</div>
+                                <div style="color: #00ff00;" id="consecutive-wins">0</div>
+                            </div>
+                            <div>
+                                <div style="color: #888;">Max Consecutive Losses</div>
+                                <div style="color: #ff3333;" id="consecutive-losses">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Performance by Sport -->
+                    <div style="background: #111; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h5 style="color: #00ffff; margin-bottom: 10px;">⚽ Performance by Sport</h5>
+                        <div id="sport-performance" style="max-height: 200px; overflow-y: auto;">
+                            <table style="width: 100%; font-size: 0.9em;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid #333;">
+                                        <th style="padding: 8px; text-align: left;">Sport</th>
+                                        <th style="padding: 8px; text-align: center;">Trades</th>
+                                        <th style="padding: 8px; text-align: center;">Win Rate</th>
+                                        <th style="padding: 8px; text-align: center;">P&L</th>
+                                        <th style="padding: 8px; text-align: center;">Avg Return</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sport-performance-tbody">
+                                    <!-- Will be populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Performance by Outcome -->
+                    <div style="background: #111; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h5 style="color: #00ffff; margin-bottom: 10px;">🎯 Performance by Outcome</h5>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                            <div id="home-performance" style="text-align: center;">
+                                <div style="color: #888;">Home</div>
+                                <div style="font-size: 1.2em; color: #00ff00;">Win Rate: <span id="home-win-rate">0%</span></div>
+                                <div style="color: #888;">P&L: <span id="home-pnl">$0</span></div>
+                            </div>
+                            <div id="draw-performance" style="text-align: center;">
+                                <div style="color: #888;">Draw</div>
+                                <div style="font-size: 1.2em; color: #ffff00;">Win Rate: <span id="draw-win-rate">0%</span></div>
+                                <div style="color: #888;">P&L: <span id="draw-pnl">$0</span></div>
+                            </div>
+                            <div id="away-performance" style="text-align: center;">
+                                <div style="color: #888;">Away</div>
+                                <div style="font-size: 1.2em; color: #00ffff;">Win Rate: <span id="away-win-rate">0%</span></div>
+                                <div style="color: #888;">P&L: <span id="away-pnl">$0</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hourly Performance -->
+                    <div style="background: #111; padding: 15px; border-radius: 8px;">
+                        <h5 style="color: #00ffff; margin-bottom: 10px;">⏰ Performance by Hour</h5>
+                        <div id="hourly-performance" style="font-size: 0.9em; color: #888;">
+                            <!-- Will be populated with hourly data -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <!-- Activity Feed -->
@@ -968,6 +1140,16 @@ SINGLE_PAGE_DASHBOARD = """
     <script>
         const socket = io();
         
+        // Filter state
+        let currentFilters = {
+            sport: 'Soccer',
+            confidence: 'all',
+            edge: 'all',
+            chunk: 'all'
+        };
+        
+        let globalChunks = [];  // Store chunks for filtering
+        
         // Update time
         function updateTime() {
             const now = new Date();
@@ -993,6 +1175,10 @@ SINGLE_PAGE_DASHBOARD = """
             addActivityItem(item);
         });
         
+        socket.on('stop_status', (status) => {
+            updateStopStatus(status);
+        });
+        
         // Update dashboard
         function updateDashboard(data) {
             // Update metrics
@@ -1016,6 +1202,11 @@ SINGLE_PAGE_DASHBOARD = """
             // Update timestamp
             document.getElementById('markets-update-time').textContent = 
                 new Date().toLocaleTimeString();
+            
+            // Apply filters after updating markets
+            if (data.markets) {
+                applyFilters();
+            }
         }
         
         function updateMetrics(data) {
@@ -1046,6 +1237,9 @@ SINGLE_PAGE_DASHBOARD = """
                 performance.total_trades || 0;
             document.getElementById('profit-factor').textContent = 
                 (performance.profit_factor || 0).toFixed(2);
+            
+            // Update Analytics Tab
+            updateAnalytics(performance);
             
             // System
             document.getElementById('system-status').textContent = 
@@ -1082,6 +1276,9 @@ SINGLE_PAGE_DASHBOARD = """
             const chunksList = document.getElementById('chunks-list');
             chunksList.innerHTML = '';
             
+            // Store chunks globally for filtering
+            globalChunks = chunks || [];
+            
             if (!chunks || chunks.length === 0) {
                 chunksList.innerHTML = '<span style="color: #666;">No chunks available</span>';
                 return;
@@ -1098,7 +1295,28 @@ SINGLE_PAGE_DASHBOARD = """
                     font-size: 0.8em;
                     min-width: 120px;
                     text-align: center;
+                    cursor: pointer;
+                    transition: all 0.2s;
                 `;
+                
+                // Make chunk clickable
+                chunkDiv.onclick = function() {
+                    filterByChunk(index);
+                };
+                
+                chunkDiv.onmouseenter = function() {
+                    if (!isActive) {
+                        this.style.background = '#003300';
+                        this.style.borderColor = '#00ff00';
+                    }
+                };
+                
+                chunkDiv.onmouseleave = function() {
+                    if (!isActive) {
+                        this.style.background = '#1a1a1a';
+                        this.style.borderColor = '#333';
+                    }
+                };
                 
                 const startTime = new Date(chunk.start_time);
                 const hoursAway = parseFloat(chunk.hours_away) || 0;
@@ -1131,8 +1349,63 @@ SINGLE_PAGE_DASHBOARD = """
                 const signal = signals ? signals[i] : {};
                 const row = document.createElement('tr');
                 
-                // Match info
-                let matchCell = '<td style="padding: 6px;">' + market.home_team + ' vs ' + market.away_team + '</td>';
+                // Match info with external links
+                let matchContent = market.home_team + ' vs ' + market.away_team;
+                let marketLink = '';
+                
+                // Generate appropriate link based on market source and ID format
+                if (market.source && market.market_id) {
+                    if (market.source.includes('overtime')) {
+                        // Overtime markets - extract game ID from source_id if needed
+                        if (market.market_id.startsWith('live_0x') || market.market_id.startsWith('v2_0x')) {
+                            // Extract the hex part for Overtime V2 markets
+                            const hexPart = market.market_id.split('_')[1];
+                            marketLink = `https://overtimemarkets.xyz/markets/optimism/market/${hexPart}`;
+                        }
+                    } else if (market.source.includes('blockchain')) {
+                        // Blockchain markets - check if it's a transaction hash
+                        if (market.market_id.startsWith('0x') && market.market_id.length >= 42) {
+                            // Ethereum address format - likely on Optimism
+                            if (market.source.includes('optimism')) {
+                                marketLink = `https://optimistic.etherscan.io/address/${market.market_id}`;
+                            } else if (market.source.includes('arbitrum')) {
+                                marketLink = `https://arbiscan.io/address/${market.market_id}`;
+                            } else {
+                                // Default to Optimism for Overtime markets
+                                marketLink = `https://optimistic.etherscan.io/address/${market.market_id}`;
+                            }
+                        }
+                    }
+                    
+                    // Add a small icon to indicate external link
+                    if (marketLink) {
+                        matchContent += ` <a href="${marketLink}" target="_blank" style="color: #00ffff; text-decoration: none; font-size: 0.8em;" title="View on ${market.source}">🔗</a>`;
+                    }
+                }
+                
+                let matchCell = '<td style="padding: 6px;">' + matchContent + '</td>';
+                
+                // Source info
+                let sourceDisplay = '';
+                if (market.source) {
+                    // Simplify source display
+                    if (market.source.includes('overtime')) {
+                        sourceDisplay = 'Overtime';
+                    } else if (market.source.includes('blockchain')) {
+                        if (market.source.includes('optimism')) {
+                            sourceDisplay = 'OP Chain';
+                        } else if (market.source.includes('arbitrum')) {
+                            sourceDisplay = 'Arb Chain';
+                        } else {
+                            sourceDisplay = 'Blockchain';
+                        }
+                    } else if (market.source === 'api_live_real') {
+                        sourceDisplay = 'API';
+                    } else {
+                        sourceDisplay = market.source;
+                    }
+                }
+                let sourceCell = '<td style="padding: 6px; text-align: center; color: #888; font-size: 0.85em;">' + sourceDisplay + '</td>';
                 
                 // Time
                 const kickoff = new Date(market.maturity_date);
@@ -1197,7 +1470,21 @@ SINGLE_PAGE_DASHBOARD = """
                 }
                 bestCell += '</td>';
                 
-                row.innerHTML = matchCell + timeCell + statusCell + cells + bestCell;
+                row.innerHTML = matchCell + sourceCell + timeCell + statusCell + cells + bestCell;
+                
+                // Store market data for filtering
+                row.marketData = {
+                    sport: market.sport || 'Soccer',
+                    home_edge: signal.home_edge || 0,
+                    draw_edge: signal.draw_edge || 0,
+                    away_edge: signal.away_edge || 0,
+                    home_confidence: signal.home_confidence || 0,
+                    maturity_date: market.maturity_date,
+                    draw_confidence: signal.draw_confidence || 0,
+                    away_confidence: signal.away_confidence || 0,
+                    best_edge: bestEdge
+                };
+                
                 tbody.appendChild(row);
             });
             
@@ -1235,22 +1522,39 @@ SINGLE_PAGE_DASHBOARD = """
             let losses = 0;
             
             // Open positions
-            Object.values(positions).forEach(pos => {
-                if (pos.status === 'open') {
+            if (positions.open) {
+                Object.values(positions.open).forEach(pos => {
+                    // Calculate time until match
+                    let timeStr = '';
+                    if (pos.maturity_date) {
+                        const kickoff = new Date(pos.maturity_date);
+                        const now = new Date();
+                        const hoursToKickoff = (kickoff - now) / (1000 * 60 * 60);
+                        if (hoursToKickoff > 0) {
+                            timeStr = hoursToKickoff > 24 ? 
+                                (hoursToKickoff / 24).toFixed(1) + 'd' : 
+                                hoursToKickoff.toFixed(1) + 'h';
+                        } else {
+                            timeStr = 'Live';
+                        }
+                    }
+                    
                     const row = document.createElement('tr');
                     row.innerHTML = '<td style="padding: 8px;">' + pos.market_name + '</td>' +
                         '<td style="padding: 8px; text-align: center;">' + pos.outcome.toUpperCase() + '</td>' +
                         '<td style="padding: 8px; text-align: right;">$' + pos.total_stake.toFixed(2) + '</td>' +
                         '<td style="padding: 8px; text-align: center;">' + pos.avg_odds.toFixed(2) + '</td>' +
+                        '<td style="padding: 8px; text-align: center; color: ' + (timeStr === 'Live' ? '#ff3333' : '#888') + ';">' + timeStr + '</td>' +
                         '<td style="padding: 8px; text-align: right;">$' + pos.current_value.toFixed(2) + '</td>' +
                         '<td style="padding: 8px; text-align: right;" class="' + (pos.pnl >= 0 ? 'positive' : 'negative') + '">' +
                             (pos.pnl >= 0 ? '+' : '') + '$' + Math.abs(pos.pnl).toFixed(2) + '</td>';
                     openTbody.appendChild(row);
-                }
-            });
+                });
+            }
             
             // Closed positions
-            positions.closed?.forEach(pos => {
+            if (positions.closed) {
+                positions.closed.forEach(pos => {
                 const row = document.createElement('tr');
                 const resultStr = pos.result === 'won' ? 'Won' : 'Lost';
                 const resultClass = pos.result === 'won' ? 'positive' : 'negative';
@@ -1267,7 +1571,8 @@ SINGLE_PAGE_DASHBOARD = """
                 totalPnl += pos.pnl;
                 if (pos.result === 'won') wins++;
                 else losses++;
-            });
+                });
+            }
             
             // Update summary
             const winRate = (wins + losses) > 0 ? (wins / (wins + losses) * 100) : 0;
@@ -1309,9 +1614,231 @@ SINGLE_PAGE_DASHBOARD = """
             document.getElementById(tabName + '-positions').classList.add('active');
         }
         
-        // Execute trades
-        function executeTrades() {
-            socket.emit('execute_trades');
+        // Update analytics display
+        function updateAnalytics(performance) {
+            // Key metrics
+            document.getElementById('roi-detailed').textContent = 
+                (performance.roi || 0).toFixed(2) + '%';
+            document.getElementById('roi-detailed').style.color = 
+                performance.roi >= 0 ? '#00ff00' : '#ff3333';
+            
+            document.getElementById('profit-factor-detailed').textContent = 
+                (performance.profit_factor || 0).toFixed(2);
+            document.getElementById('sharpe-ratio').textContent = 
+                (performance.sharpe_ratio || 0).toFixed(2);
+            document.getElementById('max-drawdown').textContent = 
+                (performance.max_drawdown || 0).toFixed(1) + '%';
+            
+            // Win/Loss analysis
+            document.getElementById('avg-win').textContent = 
+                '$' + (performance.avg_win || 0).toFixed(2);
+            document.getElementById('avg-loss').textContent = 
+                '$' + (performance.avg_loss || 0).toFixed(2);
+            document.getElementById('win-loss-ratio').textContent = 
+                (performance.win_loss_ratio || 0).toFixed(2);
+            document.getElementById('consecutive-wins').textContent = 
+                performance.consecutive_wins || 0;
+            document.getElementById('consecutive-losses').textContent = 
+                performance.consecutive_losses || 0;
+            
+            // Performance by sport
+            const sportTbody = document.getElementById('sport-performance-tbody');
+            sportTbody.innerHTML = '';
+            const sportData = performance.trades_by_sport || {};
+            for (const sport in sportData) {
+                const data = sportData[sport];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="padding: 8px;">${sport}</td>
+                    <td style="padding: 8px; text-align: center;">${data.count}</td>
+                    <td style="padding: 8px; text-align: center; color: ${data.win_rate > 50 ? '#00ff00' : '#ff3333'};">
+                        ${data.win_rate.toFixed(1)}%
+                    </td>
+                    <td style="padding: 8px; text-align: center; color: ${data.total_pnl >= 0 ? '#00ff00' : '#ff3333'};">
+                        $${data.total_pnl.toFixed(2)}
+                    </td>
+                    <td style="padding: 8px; text-align: center; color: ${data.avg_return >= 0 ? '#00ff00' : '#ff3333'};">
+                        ${data.avg_return.toFixed(1)}%
+                    </td>
+                `;
+                sportTbody.appendChild(row);
+            }
+            
+            // Performance by outcome
+            const outcomeData = performance.trades_by_outcome || {};
+            ['home', 'draw', 'away'].forEach(outcome => {
+                const data = outcomeData[outcome] || {win_rate: 0, total_pnl: 0};
+                document.getElementById(outcome + '-win-rate').textContent = 
+                    data.win_rate.toFixed(1) + '%';
+                document.getElementById(outcome + '-win-rate').parentElement.style.color = 
+                    data.win_rate > 50 ? '#00ff00' : (data.win_rate < 40 ? '#ff3333' : '#ffff00');
+                document.getElementById(outcome + '-pnl').textContent = 
+                    '$' + data.total_pnl.toFixed(2);
+                document.getElementById(outcome + '-pnl').style.color = 
+                    data.total_pnl >= 0 ? '#00ff00' : '#ff3333';
+            });
+            
+            // Hourly performance
+            const hourlyDiv = document.getElementById('hourly-performance');
+            const hourlyData = performance.hourly_performance || {};
+            let hourlyHtml = '<div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;">';
+            
+            for (let hour = 0; hour < 24; hour++) {
+                const data = hourlyData[hour] || {count: 0, win_rate: 0, total_pnl: 0};
+                const hasData = data.count > 0;
+                hourlyHtml += `
+                    <div style="text-align: center; padding: 5px; background: ${hasData ? '#1a1a1a' : '#0a0a0a'}; border-radius: 4px;">
+                        <div style="font-size: 0.8em;">${hour}:00</div>
+                        <div style="color: ${data.total_pnl >= 0 ? '#00ff00' : '#ff3333'}; font-size: 0.9em;">
+                            ${hasData ? data.count + ' trades' : '-'}
+                        </div>
+                    </div>
+                `;
+            }
+            hourlyHtml += '</div>';
+            hourlyDiv.innerHTML = hourlyHtml;
+        }
+        
+        // Stop trading
+        function stopTrading() {
+            if(confirm('Are you sure you want to STOP all trading and close all positions?')) {
+                socket.emit('stop_trading');
+            }
+        }
+        
+        // Filter functions
+        function updateSportFilter(value) {
+            currentFilters.sport = value;
+            applyFilters();
+        }
+        
+        function updateConfidenceFilter(value) {
+            currentFilters.confidence = value;
+            applyFilters();
+        }
+        
+        function updateEdgeFilter(value) {
+            currentFilters.edge = value;
+            applyFilters();
+        }
+        
+        function filterByChunk(chunkIndex) {
+            currentFilters.chunk = chunkIndex;
+            applyFilters();
+            
+            // Update visual state of chunks
+            const chunkDivs = document.querySelectorAll('#chunks-list > div');
+            chunkDivs.forEach((div, index) => {
+                const isActive = index === chunkIndex;
+                div.style.background = isActive ? '#003300' : '#1a1a1a';
+                div.style.borderColor = isActive ? '#00ff00' : '#333';
+            });
+        }
+        
+        // Apply filters to markets display
+        function applyFilters() {
+            const rows = document.querySelectorAll('#matches-tbody tr');
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const marketData = row.marketData;
+                if (!marketData) return;
+                
+                let show = true;
+                
+                // Sport filter
+                if (currentFilters.sport !== 'All' && marketData.sport !== currentFilters.sport) {
+                    show = false;
+                }
+                
+                // Confidence filter
+                if (show && currentFilters.confidence !== 'all') {
+                    const maxConfidence = Math.max(
+                        marketData.home_confidence || 0,
+                        marketData.draw_confidence || 0,
+                        marketData.away_confidence || 0
+                    );
+                    
+                    switch(currentFilters.confidence) {
+                        case 'high':
+                            show = maxConfidence >= 0.7;
+                            break;
+                        case 'medium':
+                            show = maxConfidence >= 0.5 && maxConfidence < 0.7;
+                            break;
+                        case 'low':
+                            show = maxConfidence >= 0.3 && maxConfidence < 0.5;
+                            break;
+                        case 'positive':
+                            show = Math.max(
+                                marketData.home_edge || -100,
+                                marketData.draw_edge || -100,
+                                marketData.away_edge || -100
+                            ) > 0;
+                            break;
+                    }
+                }
+                
+                // Edge filter
+                if (show && currentFilters.edge !== 'all') {
+                    const maxEdge = Math.max(
+                        marketData.home_edge || -100,
+                        marketData.draw_edge || -100,
+                        marketData.away_edge || -100
+                    );
+                    const threshold = parseFloat(currentFilters.edge);
+                    show = maxEdge > threshold;
+                }
+                
+                // Chunk filter
+                if (show && currentFilters.chunk !== 'all' && globalChunks.length > 0) {
+                    const chunkIndex = currentFilters.chunk;
+                    if (chunkIndex >= 0 && chunkIndex < globalChunks.length) {
+                        const chunk = globalChunks[chunkIndex];
+                        const marketTime = new Date(marketData.maturity_date);
+                        const chunkStart = new Date(chunk.start_time);
+                        const chunkEnd = chunk.end_time ? new Date(chunk.end_time) : 
+                            new Date(chunkStart.getTime() + 24 * 60 * 60 * 1000); // Default 24h chunk
+                        
+                        show = marketTime >= chunkStart && marketTime <= chunkEnd;
+                    }
+                }
+                
+                row.style.display = show ? 'table-row' : 'none';
+                if (show) visibleCount++;
+            });
+            
+            // Update visible count
+            document.getElementById('total-matches').textContent = visibleCount;
+        }
+        
+        // Resume trading
+        function resumeTrading() {
+            socket.emit('resume_trading');
+        }
+        
+        // Update stop status
+        function updateStopStatus(status) {
+            const stopIndicator = document.getElementById('stop-indicator');
+            const stopButton = document.getElementById('stop-button');
+            const resumeButton = document.getElementById('resume-button');
+            
+            if (status.is_stopped) {
+                stopIndicator.style.display = 'block';
+                stopButton.style.display = 'none';
+                resumeButton.style.display = status.can_resume ? 'block' : 'none';
+                
+                // Add stop alert
+                const alertDiv = document.getElementById('risk-alert');
+                const messageSpan = document.getElementById('risk-message');
+                alertDiv.style.display = 'block';
+                alertDiv.style.background = '#ff0000';
+                messageSpan.textContent = `STOPPED: ${status.reason || 'Manual stop'} - ${status.positions_closed || 0} positions closed`;
+            } else {
+                stopIndicator.style.display = 'none';
+                stopButton.style.display = 'block';
+                resumeButton.style.display = 'none';
+            }
         }
         
         // Risk Management Alert System
@@ -1410,19 +1937,47 @@ def handle_request_dashboard_data():
     """Send dashboard data to client"""
     emit('dashboard_update', get_dashboard_data())
 
-@socketio.on('execute_trades')
-def handle_execute_trades():
-    """Execute paper trades"""
-    # Use portfolio-based trading
-    result = execute_portfolio_trades()
-    emit('activity', {
-        'type': 'trade',
-        'message': f"Portfolio rebalanced: {result.get('trades_made', 0)} trades",
-        'timestamp': datetime.now(timezone.utc).isoformat()
-    })
+@socketio.on('stop_trading')
+def handle_stop_trading():
+    """Handle manual stop request"""
+    session_id = session_manager.get_current_session()
+    if session_id:
+        result = stop_loss_manager.manual_stop(session_id, "Manual stop button pressed")
+        emit('activity', {
+            'type': 'stop',
+            'message': f"STOPPED: {result.get('positions_closed', 0)} positions closed. Total P&L: ${result.get('total_pnl', 0):.2f}",
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'severity': 'critical'
+        })
+        emit('stop_status', {
+            'is_stopped': True,
+            'can_resume': False,
+            'reason': result.get('reason'),
+            'positions_closed': result.get('positions_closed', 0)
+        })
     emit('dashboard_update', get_dashboard_data())
 
-def get_dashboard_data(sport_filter='Soccer'):
+@socketio.on('resume_trading')
+def handle_resume_trading():
+    """Handle resume trading request"""
+    can_resume, reason = stop_loss_manager.can_resume_trading()
+    if can_resume:
+        stop_loss_manager.resume_trading()
+        emit('activity', {
+            'type': 'resume',
+            'message': "Trading resumed",
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        })
+        emit('stop_status', {'is_stopped': False})
+    else:
+        emit('activity', {
+            'type': 'warning',
+            'message': f"Cannot resume: {reason}",
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        })
+    emit('dashboard_update', get_dashboard_data())
+
+def get_dashboard_data(sport_filter='All'):
     """Get all dashboard data"""
     try:
         # Get current session
@@ -1440,13 +1995,83 @@ def get_dashboard_data(sport_filter='Soccer'):
         markets, signals, stats, chunks = get_market_data(sport_filter)
         logger.info(f"Found {len(markets)} markets for {sport_filter}")
         
-        # Get performance
+        # Get performance with enhanced analytics
         performance = session_manager.get_session_performance(session['session_id'])
+        enhanced_analytics = session_manager.get_enhanced_performance_analytics(session['session_id'])
+        
+        # Merge enhanced analytics into performance
+        performance.update(enhanced_analytics)
         
         # Get positions separately
         positions = session_manager.get_positions(session['session_id'])
         open_positions = [p for p in positions if p['status'] in ['pending', 'open']]
         closed_positions = [p for p in positions if p['status'] in ['won', 'lost', 'settled']]
+        
+        # Format positions for frontend
+        formatted_open = {}
+        for i, pos in enumerate(open_positions):
+            # Get market info if team names are empty
+            market_name = f"{pos.get('home_team', '')} vs {pos.get('away_team', '')}"
+            
+            if market_name == " vs " or market_name.strip() == "vs":  # Empty names, look up from database
+                with db_manager.get_db_session() as db:
+                    market = db.query(Market).filter(
+                        Market.source_id == pos['match_id']
+                    ).first()
+                    if market:
+                        market_name = f"{market.home_team} vs {market.away_team}"
+            
+            # Get maturity date from market
+            maturity_date = None
+            if market_name == " vs " or market_name.strip() == "vs":
+                # Already looked up market above
+                if market:
+                    maturity_date = market.maturity_date.isoformat() if market.maturity_date else None
+            else:
+                # Need to look up market for maturity date
+                with db_manager.get_db_session() as db:
+                    market = db.query(Market).filter(
+                        Market.source_id == pos['match_id']
+                    ).first()
+                    if market:
+                        maturity_date = market.maturity_date.isoformat() if market.maturity_date else None
+            
+            formatted_open[str(i)] = {
+                'market_name': market_name,
+                'outcome': pos.get('bet_on', ''),
+                'total_stake': float(pos.get('stake', 0)),
+                'avg_odds': float(pos.get('odds', 0)),
+                'current_value': float(pos.get('stake', 0)),  # For pending, same as stake
+                'pnl': 0,  # No P&L until settled
+                'status': 'open',
+                'maturity_date': maturity_date
+            }
+        
+        formatted_closed = []
+        for pos in closed_positions[-20:]:  # Last 20 closed
+            market_name = f"{pos.get('home_team', '')} vs {pos.get('away_team', '')}"
+            
+            if market_name == " vs " or market_name.strip() == "vs":
+                with db_manager.get_db_session() as db:
+                    market = db.query(Market).filter(
+                        Market.source_id == pos['match_id']
+                    ).first()
+                    if market:
+                        market_name = f"{market.home_team} vs {market.away_team}"
+            
+            payout = float(pos.get('payout', 0))
+            stake = float(pos.get('stake', 0))
+            
+            formatted_closed.append({
+                'market_name': market_name,
+                'outcome': pos.get('bet_on', ''),
+                'total_stake': stake,
+                'avg_odds': float(pos.get('odds', 0)),
+                'payout': payout,
+                'pnl': payout - stake,
+                'result': 'won' if payout > stake else 'lost',
+                'settled_at': pos.get('resolved_at', pos.get('placed_at', ''))
+            })
         
         # Calculate exposure
         total_exposure = sum(float(p['stake']) for p in open_positions)
@@ -1470,8 +2095,8 @@ def get_dashboard_data(sport_filter='Soccer'):
             'signals': signals,
             'chunks': chunks,
             'positions': {
-                'open': {str(i): p for i, p in enumerate(open_positions)},
-                'closed': closed_positions[-20:]  # Last 20 closed
+                'open': formatted_open,
+                'closed': formatted_closed
             },
             'strategy': STRATEGY_CONFIG
         }
@@ -1485,6 +2110,11 @@ def get_dashboard_data(sport_filter='Soccer'):
 def execute_portfolio_trades():
     """Execute portfolio-based trades using optimal allocation"""
     try:
+        # Check stop status first
+        stop_status = stop_loss_manager.get_stop_status()
+        if stop_status['is_stopped']:
+            return {'success': False, 'error': f"Trading stopped: {stop_status['stop_reason']}"}
+            
         session_id = session_manager.get_current_session()
         if not session_id:
             return {'success': False, 'error': 'No active session'}
@@ -1658,6 +2288,13 @@ def paper_trading_background_loop():
     
     while True:
         try:
+            # Check if stop loss is active
+            stop_status = stop_loss_manager.get_stop_status()
+            if stop_status['is_stopped']:
+                logger.info(f"⛔ Trading stopped: {stop_status['stop_reason']}")
+                time.sleep(60)  # Check every minute when stopped
+                continue
+                
             logger.info("⚡ Portfolio optimization cycle starting...")
             result = execute_portfolio_trades()
             
@@ -1689,6 +2326,14 @@ def background_updates():
         time.sleep(30)
 
 if __name__ == '__main__':
+    # Get current session
+    session_id = session_manager.get_current_session()
+    if session_id:
+        # Start stop loss monitoring
+        stop_loss_manager.start_monitoring(session_id)
+        stop_loss_manager.reset_daily_tracking(session_id)
+        logger.info("Started stop loss monitoring")
+        
     # Start background threads
     bg_thread = threading.Thread(target=background_updates, daemon=True)
     bg_thread.start()

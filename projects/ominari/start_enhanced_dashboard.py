@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """
-Start the enhanced Ominari dashboard on port 8888
+Minimal startup script for the enhanced dashboard
+Avoids complex imports to get the server running
 """
 
 import os
-import subprocess
-import time
-import socket
 import sys
+import logging
+from flask import Flask, render_template_string, jsonify
+from flask_socketio import SocketIO, emit
+import json
+from datetime import datetime, timezone
 
 def check_port(port):
     """Check if port is available"""

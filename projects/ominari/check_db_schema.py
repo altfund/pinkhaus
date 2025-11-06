@@ -1,19 +1,35 @@
-#!/usr/bin/env python3
-"""Check database schema"""
-import sqlite3
+#\!/usr/bin/env python3
+import os
+os.environ.update({
+    'PG_HOST': 'localhost',
+    'PG_PORT': '5999', 
+    'PG_USER': 'ominari_user',
+    'PG_PASSWORD': 'ominari_2025_secure',
+    'PG_DB': 'ominari_production'
+})
 
-conn = sqlite3.connect("sport_odds.db")
-cursor = conn.cursor()
+import psycopg2
 
-# Get market table schema
-cursor.execute("PRAGMA table_info(market)")
-print("Market table columns:")
-for col in cursor.fetchall():
-    print(f"  {col[1]} ({col[2]})")
+conn = psycopg2.connect(
+    host=os.environ['PG_HOST'],
+    port=os.environ['PG_PORT'],
+    user=os.environ['PG_USER'],
+    password=os.environ['PG_PASSWORD'],
+    database=os.environ['PG_DB']
+)
 
-print("\nOdd table columns:")
-cursor.execute("PRAGMA table_info(odd)")
-for col in cursor.fetchall():
-    print(f"  {col[1]} ({col[2]})")
+cur = conn.cursor()
+
+# Check paper_trading_sessions columns
+cur.execute("""
+    SELECT column_name, data_type 
+    FROM information_schema.columns 
+    WHERE table_name = 'paper_trading_sessions'
+    ORDER BY ordinal_position
+""")
+
+print("paper_trading_sessions columns:")
+for row in cur.fetchall():
+    print(f"  {row[0]}: {row[1]}")
 
 conn.close()
