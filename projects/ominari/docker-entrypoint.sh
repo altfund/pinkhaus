@@ -31,6 +31,10 @@ case $SERVICE in
         echo "🏪 Starting trading system..."
         exec python ominari_unified.py
         ;;
+    "dashboard")
+        echo "📊 Starting Real Odds Dashboard with rate limiting and caching..."
+        exec python web_dashboard_real_odds.py
+        ;;
     "blockchain-sync")
         echo "⛓️ Starting blockchain sync daemon..."
         exec python blockchain_reader.py --daemon
@@ -53,7 +57,7 @@ case $SERVICE in
         ;;
     *)
         echo "❌ Unknown service: $SERVICE"
-        echo "Available services: trading, blockchain-sync, paper-trading, web-monitor, backtest, api"
+        echo "Available services: trading, dashboard, blockchain-sync, paper-trading, web-monitor, backtest, api"
         exit 1
         ;;
 esac

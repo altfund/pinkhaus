@@ -9,6 +9,8 @@ import logging
 from datetime import datetime, timezone
 from flask import Flask, render_template_string, jsonify
 from flask_socketio import SocketIO, emit
+from rate_limiter import setup_rate_limiting, rate_limit, ws_rate_limit, api_limiter
+from cache_manager import cache, market_cache
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -22,10 +24,16 @@ os.environ['PG_PASSWORD'] = 'ominari_2025_secure'
 os.environ['PG_DB'] = 'ominari_production'
 os.environ['USE_POSTGRESQL'] = '1'
 
+# Import dashboard configuration
+from dashboard_config import ALLOWED_SPORTS, ALLOWED_LEAGUES, ALLOWED_NATIONS, DASHBOARD_SETTINGS, get_display_league
+
 # Flask app setup
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ominari-blockchain-trading-2024'
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
+# Apply rate limiting middleware
+app = setup_rate_limiting(app)
 
 # Dashboard HTML
 DASHBOARD_HTML = """
@@ -81,98 +89,67 @@ DASHBOARD_HTML = """
             overflow-y: auto;
         }
         
-        .market-card {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 10px;
-            transition: all 0.3s;
-            position: relative;
+        .markets-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 2px;
         }
         
-        .market-card.blockchain-connected {
-            border-left: 3px solid #00ff00;
+        .markets-table thead {
+            position: sticky;
+            top: -15px;
+            background: #111;
+            z-index: 10;
         }
         
-        .market-card.has-edge {
-            background: #1a2a1a;
-            border-color: #00ff00;
-        }
-        
-        .market-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-        }
-        
-        .match-teams {
-            font-size: 16px;
-        }
-        
-        .match-info {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        
-        .sport-badge {
-            background: #333;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 11px;
-        }
-        
-        .blockchain-badge {
-            background: #003300;
-            color: #00ff00;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 11px;
-        }
-        
-        .match-details {
-            display: flex;
-            justify-content: space-between;
+        .markets-table th {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 2px solid #00ff00;
             font-size: 12px;
-            color: #888;
-            margin-bottom: 10px;
+            text-transform: uppercase;
+            color: #00ff00;
         }
         
-        .market-rows {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
+        .markets-table tbody tr {
+            background: #1a1a1a;
+            transition: background 0.2s;
         }
         
-        .market-row {
-            display: grid;
-            grid-template-columns: 2fr 2fr 1fr auto;
-            align-items: center;
-            gap: 10px;
-            padding: 5px 8px;
-            background: #222;
-            border-radius: 4px;
+        .markets-table tbody tr:hover {
+            background: #252525;
+        }
+        
+        .markets-table tbody tr.game-separator {
+            border-top: 3px solid #111;
+        }
+        
+        .markets-table td {
+            padding: 8px;
             font-size: 13px;
+            border-bottom: 1px solid #222;
         }
         
-        .market-position {
+        .team-cell {
             font-weight: bold;
-            text-transform: capitalize;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
-        .market-odds {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .sport-league-cell {
+            font-size: 11px;
+            color: #888;
+        }
+        
+        .odds-cell {
+            text-align: center;
+            font-weight: bold;
         }
         
         .odds-value {
             color: #00ff00;
-            font-weight: bold;
             font-size: 14px;
         }
         
@@ -185,22 +162,48 @@ DASHBOARD_HTML = """
         }
         
         .implied-prob {
-            color: #888;
-            font-size: 11px;
+            color: #666;
+            font-size: 10px;
+            display: block;
         }
         
-        .market-edge {
-            text-align: right;
+        .edge-cell {
+            text-align: center;
             font-weight: bold;
             font-size: 12px;
         }
         
-        .market-edge.positive {
+        .edge-positive {
             color: #00ff00;
         }
         
-        .market-edge.negative {
+        .edge-negative {
             color: #ff4444;
+        }
+        
+        .position-header {
+            text-align: center;
+            font-size: 11px;
+        }
+        
+        .links-cell {
+            text-align: center;
+        }
+        
+        .market-link {
+            color: #00ff00;
+            text-decoration: none;
+            padding: 2px 6px;
+            border: 1px solid #00ff00;
+            border-radius: 3px;
+            font-size: 11px;
+            transition: all 0.2s;
+            margin: 0 2px;
+        }
+        
+        .market-link:hover {
+            background: #00ff00;
+            color: #000;
         }
         
         .stat-grid {
@@ -281,7 +284,7 @@ DASHBOARD_HTML = """
     
     <div class="main-container">
         <div class="markets-section">
-            <h2>📈 Live Markets - Real Odds</h2>
+            <h2>📈 Live Markets - Real Odds <span style=\"font-size: 14px; color: #888;\">(${allowed_sports})</span></h2>
             <div id="markets-container">Loading markets...</div>
         </div>
         
@@ -328,17 +331,35 @@ DASHBOARD_HTML = """
     </div>
     
     <script>
-        const socket = io();
+        const socket = io({
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 10,
+            timeout: 20000
+        });
+        
+        let reconnectAttempts = 0;
         
         socket.on('connect', function() {
             document.getElementById('connection-status').textContent = '✅ Connected';
             addLog('Connected - requesting real odds data');
             socket.emit('request_dashboard_data');
+            reconnectAttempts = 0;
         });
         
         socket.on('disconnect', function() {
             document.getElementById('connection-status').textContent = '❌ Disconnected';
             addLog('Disconnected from server');
+        });
+        
+        socket.on('reconnect_attempt', function(attemptNumber) {
+            document.getElementById('connection-status').textContent = `🔄 Reconnecting... (${attemptNumber})`;
+            reconnectAttempts = attemptNumber;
+        });
+        
+        socket.on('reconnect_failed', function() {
+            document.getElementById('connection-status').textContent = '❌ Connection Failed';
+            addLog('Failed to reconnect after ' + reconnectAttempts + ' attempts');
         });
         
         socket.on('dashboard_update', function(data) {
@@ -385,78 +406,145 @@ DASHBOARD_HTML = """
             // Group markets by game
             const marketsByGame = {};
             markets.forEach(market => {
-                const gameKey = `${market.home_team}-${market.away_team}-${market.sport}`;
+                const gameKey = `${market.home_team}-${market.away_team}-${market.sport}-${market.maturity_date}`;
                 if (!marketsByGame[gameKey]) {
                     marketsByGame[gameKey] = {
                         home_team: market.home_team,
                         away_team: market.away_team,
                         sport: market.sport,
                         league: market.league,
+                        nation: market.nation,
                         maturity_date: market.maturity_date,
-                        markets: []
+                        markets: {},
+                        hasLinks: market.overtime_link || market.blockchain_link
                     };
                 }
-                marketsByGame[gameKey].markets.push(market);
+                // Store by position for easy access
+                marketsByGame[gameKey].markets[market.position.toLowerCase()] = market;
             });
             
-            // Display grouped markets
-            container.innerHTML = Object.values(marketsByGame).slice(0, 15).map(game => {
-                const hasBlockchain = game.markets.some(m => m.blockchain_connected);
+            // Create table HTML
+            let tableHTML = `
+                <table class="markets-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Match</th>
+                            <th>League</th>
+                            <th class="position-header">Home<br><small>1</small></th>
+                            <th class="position-header">Draw<br><small>X</small></th>
+                            <th class="position-header">Away<br><small>2</small></th>
+                            <th class="position-header">Edge<br><small>%</small></th>
+                            <th>📎</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            // Add rows for each game
+            Object.values(marketsByGame).slice(0, 25).forEach((game, index) => {
+                const homeOdds = game.markets['home'];
+                const drawOdds = game.markets['draw'];
+                const awayOdds = game.markets['away'];
                 
-                // Sort markets by position
-                const sortedMarkets = game.markets.sort((a, b) => {
-                    const order = ['home', 'draw', 'away'];
-                    return order.indexOf(a.position.toLowerCase()) - order.indexOf(b.position.toLowerCase());
-                });
+                // Calculate edge if we have a signal system (placeholder for now)
+                const edge = ''; // Would calculate from signal vs odds
                 
-                const marketRows = sortedMarkets.map(market => {
-                    const odds = market.odds || 0;
-                    const oddsDisplay = odds > 0 ? odds.toFixed(3) : 'N/A';
-                    const impliedProb = odds > 0 ? (1 / odds * 100).toFixed(1) : 'N/A';
-                    
-                    // Color code odds
-                    let oddsClass = '';
-                    if (odds > 5) oddsClass = 'high';
-                    else if (odds < 2) oddsClass = 'low';
-                    
-                    // Check if it's a default odd
-                    const isDefault = odds === 2.5 || odds === 2.8 || odds === 3.0;
-                    
-                    return `
-                        <div class="market-row">
-                            <div class="market-position">${market.position}</div>
-                            <div class="market-odds">
-                                <span class="odds-value ${oddsClass}" style="${isDefault ? 'opacity: 0.5;' : ''}">${oddsDisplay}</span>
-                                <span class="implied-prob">${impliedProb}%</span>
-                            </div>
-                            <div class="market-edge">
-                                ${market.source || ''}
-                            </div>
-                            ${market.blockchain_connected ? '🔗' : ''}
-                        </div>
-                    `;
-                }).join('');
+                // Format match time
+                const matchDate = new Date(game.maturity_date);
+                const timeStr = formatMatchTime(matchDate);
                 
-                return `
-                    <div class="market-card ${hasBlockchain ? 'blockchain-connected' : ''}">
-                        <div class="market-header">
-                            <div class="match-teams">
-                                <strong>${game.home_team}</strong> vs <strong>${game.away_team}</strong>
-                            </div>
-                            <div class="match-info">
-                                <span class="sport-badge">${game.sport}</span>
-                                ${hasBlockchain ? '<span class="blockchain-badge">🔗 Blockchain</span>' : ''}
-                            </div>
-                        </div>
-                        <div class="match-details">
-                            <div class="league-info">${game.league || 'Unknown League'}</div>
-                        </div>
-                        <div class="market-rows">
-                            ${marketRows}
-                        </div>
-                    </div>
+                // Calculate edges for each position
+                const homeEdge = homeOdds?.edge || 0;
+                const drawEdge = drawOdds?.edge || 0;
+                const awayEdge = awayOdds?.edge || 0;
+                const maxEdge = Math.max(homeEdge, drawEdge, awayEdge);
+                
+                tableHTML += `
+                    <tr class="${index > 0 ? 'game-separator' : ''}">
+                        <td class="time-cell" style="font-size: 11px; color: #888;">
+                            ${timeStr}
+                        </td>
+                        <td class="team-cell">
+                            <div style="font-size: 12px;">${game.home_team}</div>
+                            <div style="font-size: 12px;">${game.away_team}</div>
+                        </td>
+                        <td class="sport-league-cell">
+                            <div style="font-size: 11px;">${game.league}</div>
+                            <div style="font-size: 10px; color: #666;">${game.nation}</div>
+                        </td>
+                        <td class="odds-cell">
+                            ${formatOdds(homeOdds)}
+                            ${homeEdge ? formatEdge(homeEdge) : ''}
+                        </td>
+                        <td class="odds-cell">
+                            ${formatOdds(drawOdds)}
+                            ${drawEdge ? formatEdge(drawEdge) : ''}
+                        </td>
+                        <td class="odds-cell">
+                            ${formatOdds(awayOdds)}
+                            ${awayEdge ? formatEdge(awayEdge) : ''}
+                        </td>
+                        <td class="edge-cell" style="${maxEdge > 0 ? 'color: #00ff00;' : ''}">
+                            ${maxEdge > 0 ? maxEdge.toFixed(1) : '-'}
+                        </td>
+                        <td class="links-cell">
+                            ${game.hasLinks ? '🔗' : ''}
+                        </td>
+                    </tr>
                 `;
-            }).join('');
+            });
+            
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+        }
+        
+        function formatOdds(market) {
+            if (!market || !market.odds) return '<span style="color:#444">-</span>';
+            
+            const odds = market.odds;
+            const impliedProb = (1 / odds * 100).toFixed(1);
+            
+            let oddsClass = 'odds-value';
+            if (odds > 5) oddsClass += ' high';
+            else if (odds < 2) oddsClass += ' low';
+            
+            const isDefault = odds === 2.5 || odds === 2.8 || odds === 3.0;
+            
+            return `
+                <div>
+                    <span class="${oddsClass}" ${isDefault ? 'style="opacity: 0.5;"' : ''}>
+                        ${odds.toFixed(3)}
+                    </span>
+                </div>
+                <div class="implied-prob" style="font-size: 9px; color: #666;">
+                    ${impliedProb}%
+                </div>
+            `;
+        }
+        
+        function formatEdge(edge) {
+            const edgeClass = edge > 0 ? 'edge-positive' : 'edge-negative';
+            return `<div style="font-size: 10px;" class="${edgeClass}">${edge > 0 ? '+' : ''}${edge.toFixed(1)}%</div>`;
+        }
+        
+        function formatMatchTime(date) {
+            const now = new Date();
+            const diffMs = date - now;
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffHours / 24);
+            
+            // Show relative time for near matches
+            if (diffMs < 0) {
+                return 'LIVE';
+            } else if (diffHours < 24) {
+                return `${diffHours}h`;
+            } else if (diffDays < 7) {
+                return `${diffDays}d`;
+            } else {
+                // Show date for far future
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
         }
         
         function addLog(message) {
@@ -496,6 +584,12 @@ except Exception as e:
 
 async def get_real_odds_data():
     """Get markets with REAL odds from database"""
+    # Try to get from cache first
+    cache_key = "real_odds_data"
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        return cached_data['markets'], cached_data['odds_distribution']
+    
     markets = []
     odds_distribution = []
     
@@ -507,36 +601,96 @@ async def get_real_odds_data():
                 not_(and_(
                     Odd.decimal_odds.in_([2.5, 2.8, 3.0])
                 ))
-            ).order_by(Market.maturity_date.desc()).limit(150)
+            )
+            
+            # Apply sport filter if configured
+            if ALLOWED_SPORTS and ALLOWED_SPORTS != ['']:
+                query = query.filter(Market.sport.in_(ALLOWED_SPORTS))
+                logger.info(f"Filtering markets for sports: {ALLOWED_SPORTS}")
+            
+            # Apply league filter if configured
+            if ALLOWED_LEAGUES and ALLOWED_LEAGUES != ['']:
+                query = query.filter(Market.league_name.in_(ALLOWED_LEAGUES))
+                logger.info(f"Filtering markets for leagues: {ALLOWED_LEAGUES}")
+            
+            # Apply nation filter if configured
+            if ALLOWED_NATIONS and ALLOWED_NATIONS != ['']:
+                query = query.filter(Market.nation.in_(ALLOWED_NATIONS))
+                logger.info(f"Filtering markets for nations: {ALLOWED_NATIONS}")
+            
+            # Exclude "International Football" league as it contains mostly American Football
+            query = query.filter(Market.league_name != 'International Football')
+            
+            query = query.order_by(Market.maturity_date.desc()).limit(DASHBOARD_SETTINGS['markets_limit'])
             
             results = query.all()
             
             # Get odds distribution
-            odds_dist = db.query(
+            odds_dist_query = db.query(
                 Odd.decimal_odds,
                 func.count(Odd.id).label('count')
-            ).filter(
+            ).join(Market, Market.source_id == Odd.source_id).filter(
                 not_(Odd.decimal_odds.in_([2.5, 2.8, 3.0]))
-            ).group_by(Odd.decimal_odds).order_by(func.count(Odd.id).desc()).limit(10).all()
+            )
+            
+            # Apply sport filter to odds distribution too
+            if ALLOWED_SPORTS and ALLOWED_SPORTS != ['']:
+                odds_dist_query = odds_dist_query.filter(Market.sport.in_(ALLOWED_SPORTS))
+            
+            # Apply league filter to odds distribution too
+            if ALLOWED_LEAGUES and ALLOWED_LEAGUES != ['']:
+                odds_dist_query = odds_dist_query.filter(Market.league_name.in_(ALLOWED_LEAGUES))
+            
+            # Apply nation filter to odds distribution too
+            if ALLOWED_NATIONS and ALLOWED_NATIONS != ['']:
+                odds_dist_query = odds_dist_query.filter(Market.nation.in_(ALLOWED_NATIONS))
+                
+            odds_dist = odds_dist_query.group_by(Odd.decimal_odds).order_by(func.count(Odd.id).desc()).limit(10).all()
             
             odds_distribution = [{'odds': float(o[0]), 'count': o[1]} for o in odds_dist]
             
             # Format markets
             for market, odd in results:
+                # Generate links
+                overtime_link = None
+                blockchain_link = None
+                
+                if market.source_id:
+                    # These IDs (like v2_0x323032...) are hex-encoded internal IDs, not blockchain addresses
+                    # They decode to date-based IDs like "2025092094118470"
+                    # So we can't generate valid blockchain explorer links
+                    
+                    # We can try Overtime Markets links, but the URL structure might not support these IDs
+                    overtime_link = f"https://overtimemarkets.xyz/markets/{market.source_id}"
+                    
+                    # No blockchain link since these aren't real blockchain addresses
+                    blockchain_link = None
+                
                 markets.append({
                     'match_id': market.source_id,
                     'home_team': market.home_team,
                     'away_team': market.away_team,
                     'sport': market.sport,
-                    'league': getattr(market, 'league', None) or 'Unknown',
+                    'league': market.league_name or 'Unknown',
+                    'nation': market.nation or 'Unknown',
                     'maturity_date': str(market.maturity_date),
                     'odds': float(odd.decimal_odds),
                     'position': odd.outcome,
                     'source': odd.source or 'db',
-                    'blockchain_connected': bool(getattr(market, 'blockchain_id', None))
+                    'blockchain_connected': bool(getattr(market, 'blockchain_id', None)),
+                    'overtime_link': overtime_link,
+                    'blockchain_link': blockchain_link,
+                    # Add edge placeholder - would be calculated from signal
+                    'edge': 0.0  # This would be: (signal_prob - implied_prob) * 100
                 })
                 
             logger.info(f"Fetched {len(markets)} markets with real odds")
+            
+            # Cache the results
+            cache.set(cache_key, {
+                'markets': markets,
+                'odds_distribution': odds_distribution
+            }, ttl=30)  # Cache for 30 seconds
             
     except Exception as e:
         logger.error(f"Error fetching real odds: {e}")
@@ -589,14 +743,105 @@ async def get_dashboard_data():
 
 @app.route('/')
 def index():
-    return render_template_string(DASHBOARD_HTML)
+    # Pass allowed sports and leagues to template
+    filter_text = ', '.join(ALLOWED_SPORTS)
+    if ALLOWED_LEAGUES:
+        filter_text += f" - {', '.join(ALLOWED_LEAGUES)}"
+    return render_template_string(DASHBOARD_HTML.replace('${allowed_sports}', filter_text))
+
+@app.route('/health')
+@rate_limit(limiter=api_limiter)
+def health():
+    """Health check endpoint"""
+    try:
+        # Check database connection
+        with db_manager.get_db_session() as db:
+            market_count = db.query(Market).count()
+            db_healthy = True
+    except:
+        market_count = 0
+        db_healthy = False
+    
+    # Check session manager
+    try:
+        session_id = session_manager.get_current_session()
+        session_healthy = True
+    except:
+        session_healthy = False
+    
+    health_data = {
+        'status': 'healthy' if db_healthy else 'unhealthy',
+        'timestamp': datetime.now(timezone.utc).isoformat(),
+        'services': {
+            'database': {
+                'status': 'up' if db_healthy else 'down',
+                'markets': market_count
+            },
+            'session_manager': {
+                'status': 'up' if session_healthy else 'down'
+            },
+            'websocket': {
+                'status': 'up',
+                'clients': len(socketio.server.manager.rooms.get('/', {}).get('', set()))
+            }
+        }
+    }
+    
+    return jsonify(health_data), 200 if db_healthy else 503
+
+@app.route('/cache-stats')
+@rate_limit(limiter=api_limiter)
+def cache_stats():
+    """Get cache statistics"""
+    return jsonify(cache.get_stats())
+
+@app.route('/metrics')
+@rate_limit(limiter=api_limiter)
+def metrics():
+    """Prometheus-style metrics endpoint"""
+    try:
+        with db_manager.get_db_session() as db:
+            metrics_data = []
+            
+            # Market metrics
+            total_markets = db.query(Market).count()
+            real_odds = db.query(Odd).filter(
+                ~Odd.decimal_odds.in_([2.5, 2.8, 3.0])
+            ).count()
+            
+            metrics_data.append(f"# HELP ominari_markets_total Total number of markets")
+            metrics_data.append(f"# TYPE ominari_markets_total gauge")
+            metrics_data.append(f"ominari_markets_total {total_markets}")
+            
+            metrics_data.append(f"# HELP ominari_real_odds_total Markets with real odds")
+            metrics_data.append(f"# TYPE ominari_real_odds_total gauge")
+            metrics_data.append(f"ominari_real_odds_total {real_odds}")
+            
+            # Session metrics
+            if session_manager:
+                try:
+                    session_id = session_manager.get_current_session()
+                    if session_id:
+                        session = session_manager.get_session(session_id)
+                        metrics_data.append(f"# HELP ominari_bankroll_current Current bankroll")
+                        metrics_data.append(f"# TYPE ominari_bankroll_current gauge")
+                        metrics_data.append(f"ominari_bankroll_current {float(session.get('current_bankroll', 0))}")
+                except:
+                    pass
+            
+            return '\n'.join(metrics_data), 200, {'Content-Type': 'text/plain'}
+    except Exception as e:
+        logger.error(f"Metrics error: {e}")
+        return "# Error generating metrics", 500
 
 @socketio.on('connect')
+@ws_rate_limit()
 def handle_connect():
     logger.info('Client connected')
     emit('connected', {'status': 'ok'})
 
 @socketio.on('request_dashboard_data')
+@ws_rate_limit()
 def handle_request():
     logger.info('Dashboard data requested - fetching real odds')
     asyncio.run(send_update())
@@ -612,5 +857,20 @@ async def send_update():
 
 if __name__ == '__main__':
     logger.info("Starting Real Odds Dashboard on port 8888...")
+    logger.info("Rate limiting enabled: 60 req/min general, 30 req/min API, 120 req/min WebSocket")
+    logger.info("Caching enabled: 30s TTL for market data")
     logger.info("Fetching markets with actual odds from database...")
+    
+    # Log cache and rate limit stats periodically
+    def log_stats():
+        while True:
+            time.sleep(60)  # Every minute
+            logger.info(f"Cache stats: {cache.get_stats()}")
+            logger.info(f"Rate limiter active IPs: {len(api_limiter.requests)}")
+    
+    import threading
+    import time
+    stats_thread = threading.Thread(target=log_stats, daemon=True)
+    stats_thread.start()
+    
     socketio.run(app, host='0.0.0.0', port=8888, debug=False, allow_unsafe_werkzeug=True)
