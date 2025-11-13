@@ -8,17 +8,14 @@ import logging
 from datetime import datetime, timezone
 
 # Import portfolio optimization functions
-try:
-    from kelly_multimarket import (
-        calculate_kelly_stakes_with_exclusivity, 
-        infer_exclusivity_groups
-    )
-except ImportError:
-    # Fallback if module structure is different
-    from .kelly_multimarket import (
-        calculate_kelly_stakes_with_exclusivity, 
-        infer_exclusivity_groups
-    )
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from kelly_multimarket import (
+    calculate_kelly_stakes_with_exclusivity, 
+    infer_exclusivity_groups
+)
 
 try:
     from evaluate_open_markets import (

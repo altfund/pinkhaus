@@ -10,10 +10,14 @@ market data, performance metrics, and system monitoring.
 ## Table of Contents
 
 - [System](#system)
+- [Health & Monitoring](#health--monitoring)
 - [Trading](#trading)
 - [Markets](#markets)
 - [Performance](#performance)
 - [Dashboard](#dashboard)
+- [WebSocket API](#websocket-api)
+- [Rate Limiting](#rate-limiting)
+- [Caching](#caching)
 
 ## Servers
 
@@ -50,6 +54,120 @@ Returns statistics about the database including table sizes and record counts
 **200**: Database statistics
 
 Returns: [`DatabaseStats`](#databasestats)
+
+---
+
+
+## Health & Monitoring
+
+Health checks and monitoring endpoints with rate limiting
+
+### GET /health
+
+**Get system health status**
+
+Returns comprehensive health status of all system components including database, session manager, and WebSocket connections.
+
+**Rate Limit**: 30 requests/minute (API limit)
+
+#### Responses
+
+**200**: System is healthy
+
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-01T12:00:00.000Z",
+  "services": {
+    "database": {
+      "status": "up",
+      "markets": 1500
+    },
+    "session_manager": {
+      "status": "up"
+    },
+    "websocket": {
+      "status": "up",
+      "clients": 5
+    }
+  }
+}
+```
+
+**503**: System is unhealthy
+
+```json
+{
+  "status": "unhealthy",
+  "timestamp": "2024-01-01T12:00:00.000Z",
+  "services": {
+    "database": {
+      "status": "down"
+    },
+    "session_manager": {
+      "status": "up"
+    },
+    "websocket": {
+      "status": "up",
+      "clients": 0
+    }
+  }
+}
+```
+
+---
+
+### GET /metrics
+
+**Get Prometheus metrics**
+
+Returns system metrics in Prometheus format for monitoring and alerting.
+
+**Rate Limit**: 30 requests/minute (API limit)
+
+#### Responses
+
+**200**: Metrics in Prometheus format
+
+Content-Type: `text/plain`
+
+```
+# HELP ominari_markets_total Total number of markets
+# TYPE ominari_markets_total gauge
+ominari_markets_total 1500
+
+# HELP ominari_real_odds_total Markets with real odds
+# TYPE ominari_real_odds_total gauge
+ominari_real_odds_total 850
+
+# HELP ominari_bankroll_current Current bankroll
+# TYPE ominari_bankroll_current gauge
+ominari_bankroll_current 10000.0
+```
+
+---
+
+### GET /cache-stats
+
+**Get cache statistics**
+
+Returns performance statistics for the caching layer.
+
+**Rate Limit**: 30 requests/minute (API limit)
+
+#### Responses
+
+**200**: Cache statistics
+
+```json
+{
+  "size": 45,
+  "hits": 1250,
+  "misses": 320,
+  "evictions": 15,
+  "hit_rate": "79.6%"
+}
+```
 
 ---
 
@@ -499,3 +617,199 @@ Returns: [`UnifiedDashboard`](#unifieddashboard)
 | performance_metrics | [PerformanceMetrics](#performancemetrics) |  |
 | system_status | [SystemStatus](#systemstatus) |  |
 | current_time | string |  |
+
+
+## WebSocket API
+
+Real-time data streaming via WebSocket connections
+
+### Connection
+
+```javascript
+const socket = io('ws://localhost:8888', {
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionAttempts: 10,
+  timeout: 20000
+});
+```
+
+### Events
+
+#### Client → Server
+
+##### connect
+Establish WebSocket connection
+
+**Rate Limit**: 120 events/minute
+
+**Server Response**: Event `connected`
+```json
+{
+  "status": "ok"
+}
+```
+
+##### request_dashboard_data
+Request latest dashboard data
+
+**Rate Limit**: 120 events/minute
+
+**Server Response**: Event `dashboard_update`
+```json
+{
+  "markets": [...],
+  "trading_status": {...},
+  "stats": {...},
+  "odds_distribution": [...]
+}
+```
+
+#### Server → Client
+
+##### dashboard_update
+Dashboard data update with real-time market information
+
+**Payload**:
+```json
+{
+  "markets": [
+    {
+      "match_id": "abc123",
+      "home_team": "Team A",
+      "away_team": "Team B",
+      "sport": "Soccer",
+      "league": "Premier League",
+      "maturity_date": "2024-01-15T20:00:00Z",
+      "odds": 2.15,
+      "position": "home",
+      "source": "betfair",
+      "blockchain_connected": true
+    }
+  ],
+  "trading_status": {
+    "status": "Active",
+    "bankroll": 10000
+  },
+  "stats": {
+    "total_markets": 150,
+    "real_odds_count": 85,
+    "odds_range": "1.05 - 15.00"
+  },
+  "odds_distribution": [
+    {
+      "odds": 2.0,
+      "count": 25
+    }
+  ]
+}
+```
+
+##### error
+Error notification
+
+**Payload**:
+```json
+{
+  "error": "Database connection failed",
+  "code": "DB_ERROR",
+  "timestamp": "2024-01-01T12:00:00Z"
+}
+```
+
+
+## Rate Limiting
+
+API rate limiting to prevent abuse and ensure fair usage
+
+### Limits
+
+| Endpoint Type | Rate Limit | Window |
+|--------------|------------|--------|
+| General Endpoints | 60 requests | per minute |
+| API Endpoints (/api/*) | 30 requests | per minute |
+| WebSocket Events | 120 events | per minute |
+| Health/Metrics | 30 requests | per minute |
+
+### Headers
+
+Rate limit information is included in response headers:
+
+- `X-RateLimit-Limit`: Maximum requests allowed in window
+- `X-RateLimit-Remaining`: Requests remaining in current window
+- `X-RateLimit-Reset`: Unix timestamp when limit resets
+
+### Rate Limit Response
+
+**429 Too Many Requests**
+```json
+{
+  "error": "Rate limit exceeded",
+  "message": "Maximum 60 requests per minute"
+}
+```
+
+### Adaptive Rate Limiting
+
+The system implements adaptive rate limiting that adjusts based on system load:
+- High load (>80% CPU/memory): Rate reduced to 20% of base rate
+- Low load (<30% CPU/memory): Rate increased to 120% of base rate
+- Normal load: Gradual return to base rate
+
+
+## Caching
+
+Performance optimization through intelligent caching
+
+### Cache Strategy
+
+| Data Type | TTL | Cache Key Pattern |
+|-----------|-----|-------------------|
+| Market Data | 30 seconds | `real_odds_data` |
+| Dashboard Data | 30 seconds | `dashboard:{session_id}` |
+| Statistics | 30 seconds | `stats:{type}` |
+| Health/Metrics | No caching | - |
+
+### Cache Headers
+
+Responses include cache information:
+
+- `X-Cache`: `HIT` or `MISS`
+- `X-Cache-TTL`: Remaining TTL in seconds
+- `Cache-Control`: Standard HTTP caching directives
+
+### Cache Statistics
+
+Monitor cache performance via `/cache-stats` endpoint:
+- Hit rate percentage
+- Total hits/misses
+- Current cache size
+- Eviction count
+
+### Cache Invalidation
+
+Cache is automatically invalidated:
+- On data updates
+- After TTL expiration
+- When cache size limits are reached
+
+### Client-Side Caching
+
+Recommended client-side caching:
+```javascript
+// Cache dashboard data for 30 seconds
+const CACHE_TTL = 30000; // milliseconds
+let cachedData = null;
+let cacheTimestamp = 0;
+
+function getDashboardData() {
+  if (cachedData && Date.now() - cacheTimestamp < CACHE_TTL) {
+    return Promise.resolve(cachedData);
+  }
+  return fetchDashboardData().then(data => {
+    cachedData = data;
+    cacheTimestamp = Date.now();
+    return data;
+  });
+}
+```

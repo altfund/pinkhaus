@@ -168,6 +168,8 @@ class Market(Base):
     source = Column(String)
     sport = Column(String)
     league_name = Column(String)
+    nation = Column(String)
+    governing_body = Column(String)
     market_type = Column(String)
     home_team = Column(String)
     away_team = Column(String)

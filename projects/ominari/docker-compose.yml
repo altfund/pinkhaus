@@ -126,6 +126,35 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # Real Odds Dashboard with rate limiting and caching
+  ominari-dashboard:
+    build: .
+    container_name: ominari-dashboard
+    environment:
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_USER=ominari_user
+      - PG_PASSWORD=ominari_2025_secure
+      - PG_DB=ominari_live
+      - USE_POSTGRESQL=1
+      - REDIS_URL=redis://redis:6379/1
+    ports:
+      - "8888:8888"
+    networks:
+      - ominari-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: python web_dashboard_real_odds.py
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Prometheus monitoring
   prometheus:
     image: prom/prometheus:latest
