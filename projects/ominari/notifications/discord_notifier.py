@@ -133,6 +133,14 @@ class DiscordNotifier:
             }
         }
         
+        # Add liquidity info if available
+        if 'liquidity_info' in trade:
+            embed["fields"].insert(3, {
+                "name": "Liquidity",
+                "value": trade['liquidity_info'],
+                "inline": False
+            })
+        
         # Add PnL field for closed trades
         if trade.get('type') == 'CLOSE':
             embed["fields"].insert(3, {
@@ -313,6 +321,79 @@ class DiscordNotifier:
                 "text": "Ominari Trading System"
             }
         }
+        
+        return self._send_embed(embed)
+        
+    def send_market_alert(self, alert_type: str, details: Dict):
+        """Send market condition alerts"""
+        colors = {
+            'low_liquidity': 0xff9900,  # Orange
+            'high_opportunity': 0x00ff00,  # Green
+            'market_closed': 0x808080,  # Gray
+            'unusual_odds': 0xffff00     # Yellow
+        }
+        
+        titles = {
+            'low_liquidity': '💧 Low Liquidity Alert',
+            'high_opportunity': '🎯 High Edge Opportunity',
+            'market_closed': '🏁 Market Closed',
+            'unusual_odds': '📊 Unusual Odds Movement'
+        }
+        
+        embed = {
+            "title": titles.get(alert_type, "Market Alert"),
+            "color": colors.get(alert_type, 0x0099ff),
+            "timestamp": datetime.utcnow().isoformat(),
+            "fields": [],
+            "footer": {
+                "text": "Ominari Market Monitor"
+            }
+        }
+        
+        # Add fields based on alert type
+        if alert_type == 'low_liquidity':
+            embed["description"] = "Markets with insufficient liquidity detected"
+            embed["fields"] = [
+                {
+                    "name": "Market",
+                    "value": details.get('market', 'Unknown'),
+                    "inline": True
+                },
+                {
+                    "name": "Available Liquidity",
+                    "value": f"${details.get('liquidity', 0):.2f}",
+                    "inline": True
+                },
+                {
+                    "name": "Required",
+                    "value": f"${details.get('required', 0):.2f}",
+                    "inline": True
+                }
+            ]
+        elif alert_type == 'high_opportunity':
+            embed["description"] = "High edge opportunity detected"
+            embed["fields"] = [
+                {
+                    "name": "Market",
+                    "value": details.get('market', 'Unknown'),
+                    "inline": True
+                },
+                {
+                    "name": "Edge",
+                    "value": f"{details.get('edge', 0):.2f}%",
+                    "inline": True
+                },
+                {
+                    "name": "Liquidity",
+                    "value": f"${details.get('liquidity', 0):.2f}",
+                    "inline": True
+                },
+                {
+                    "name": "Max Bet",
+                    "value": f"${details.get('max_bet', 0):.2f}",
+                    "inline": True
+                }
+            ]
         
         return self._send_embed(embed)
 
