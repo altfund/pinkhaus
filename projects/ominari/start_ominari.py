@@ -2,6 +2,7 @@
 """
 Master startup script for Ominari Trading System
 Starts all components in the correct order with proper environment
+This is THE MAIN ENTRY POINT - just run this!
 """
 
 import os
@@ -90,3 +91,7 @@ try:
             cleanup()
 except KeyboardInterrupt:
     cleanup()
+
+if __name__ == "__main__":
+    # This is now the MAIN entry point
+    pass

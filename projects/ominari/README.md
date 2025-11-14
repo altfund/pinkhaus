@@ -27,15 +27,15 @@ Ominari is a comprehensive trading platform that:
 ### Prerequisites
 
 - Python 3.11+
-- Docker and Docker Compose
-- PostgreSQL 15+
+- Docker and Docker Compose (optional)
+- PostgreSQL 15+ (auto-started if needed)
 - Redis (optional, for caching)
 
 ### Installation
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/yourusername/ominari.git
 cd ominari
 ```
 
@@ -44,20 +44,26 @@ cd ominari
 uv sync
 ```
 
-3. Set up environment variables:
+3. Run the complete system:
 ```bash
-cp .env.example .env
-# Edit .env with your configuration
+python main.py
+# or
+python .
+# or
+./main.py
 ```
 
-4. Start PostgreSQL (if not using Docker):
-```bash
-./run_with_postgres.py
-```
+That's it! The system will:
+- ✅ Start PostgreSQL if needed
+- ✅ Run database migrations
+- ✅ Launch the dashboard at http://localhost:8888
+- ✅ Start automated paper trading with $10,000
+- ✅ Begin blockchain data synchronization
+- ✅ Open performance monitor at http://localhost:8889
 
 ### Running with Docker
 
-The easiest way to run the entire system:
+For containerized deployment:
 
 ```bash
 # Start all services
@@ -70,32 +76,23 @@ docker-compose logs -f
 docker-compose down
 ```
 
-This will start:
-- PostgreSQL database (port 5432)
-- Redis cache (port 6379)
-- Ominari trading system (port 8000)
-- Blockchain sync daemon
-- Paper trading engine
-- Web monitor dashboard (port 8888)
-- Prometheus monitoring (port 9091)
-- Grafana dashboards (port 3000)
+### Running Locally (Recommended)
 
-### Running Locally
+Just run the main script - it handles everything:
 
-1. Start the web dashboard:
 ```bash
-python web_monitor_unified.py
+python main.py
 ```
 
-2. Run blockchain sync:
-```bash
-python blockchain_reader.py --daemon
-```
+The system automatically:
+1. Starts PostgreSQL if needed
+2. Runs database migrations
+3. Launches the web dashboard
+4. Starts blockchain synchronization
+5. Begins automated paper trading
+6. Opens performance monitoring
 
-3. Start paper trading:
-```bash
-python paper_trading_engine.py
-```
+No need to run multiple commands!
 
 ## Testing
 
