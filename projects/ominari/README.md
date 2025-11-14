@@ -1,6 +1,6 @@
 # Ominari Blockchain Trading System
 
-A sophisticated sports betting trading system that integrates blockchain data from Optimism and Arbitrum networks with advanced signal generation, paper trading, and real-time monitoring capabilities.
+A sophisticated sports betting trading system that integrates blockchain data from Optimism and Arbitrum networks with advanced signal generation, paper trading, and real-time monitoring capabilities. Now supports real blockchain trading with wallet integration!
 
 ## Overview
 
@@ -8,15 +8,19 @@ Ominari is a comprehensive trading platform that:
 - Collects and analyzes sports betting market data from blockchain sources
 - Generates trading signals using multiple strategies
 - Executes paper trading with realistic market simulation
+- **NEW**: Supports real blockchain trading with wallet integration
 - Provides real-time monitoring and analytics
 - Supports PostgreSQL for data storage and Redis for caching
 
 ## Features
 
-- **Multi-chain Support**: Optimism and Arbitrum blockchain integration
+- **Multi-chain Support**: Optimism, Arbitrum, and Base blockchain integration
+- **Real Trading**: Execute trades directly on blockchain with wallet integration
 - **Signal Generation**: Multiple signal strategies including implied probability, volume-weighted, and blockchain-enhanced signals
 - **Paper Trading**: Realistic simulation with commission, slippage, and risk management
+- **Liquidity-Aware**: Considers actual blockchain liquidity when sizing bets
 - **Web Dashboard**: Real-time monitoring at http://localhost:8888
+- **Discord Notifications**: Get alerts for trades, daily summaries, and market conditions
 - **Docker Support**: Full containerization with docker-compose
 - **Monitoring Stack**: Prometheus and Grafana integration
 - **PostgreSQL Database**: Scalable data storage with connection pooling
@@ -93,6 +97,80 @@ The system automatically:
 6. Opens performance monitoring
 
 No need to run multiple commands!
+
+## Real Trading Setup (Advanced)
+
+To enable real blockchain trading:
+
+### 1. Set up Discord Notifications (Recommended)
+```bash
+./scripts/setup_discord.sh
+```
+
+### 2. Configure Your Wallet
+```bash
+./scripts/setup_wallet.sh
+```
+
+This will:
+- Prompt for your wallet private key (encrypted storage)
+- Let you choose testnet or mainnet mode
+- Check your collateral balances
+- Apply appropriate safety limits
+
+### 3. Safety Features
+
+The real trading system includes multiple safety mechanisms:
+- **Testnet Mode**: Practice with real blockchain but no real money
+- **Max Bet Limits**: $100 per bet (mainnet), $10 (testnet)
+- **Daily Loss Limits**: $500 max daily loss (mainnet), $50 (testnet)
+- **Emergency Stop**: Instantly halt all trading
+- **Minimum Edge**: Only bet when edge > 3% (configurable)
+- **Liquidity Checks**: Won't bet more than 10% of available liquidity
+
+### 4. Managing Real Trading
+
+Switch between modes:
+```bash
+# Switch to testnet (safe practice)
+python -c "from real_trading_config import RealTradingConfig; c=RealTradingConfig(); c.switch_mode('testnet')"
+
+# Switch to mainnet (real money!)
+python -c "from real_trading_config import RealTradingConfig; c=RealTradingConfig(); c.switch_mode('mainnet')"
+```
+
+Emergency stop:
+```bash
+# IMMEDIATELY stop all real trading
+python -c "from real_trading_config import RealTradingConfig; c=RealTradingConfig(); c.set_emergency_stop(True)"
+
+# Resume trading
+python -c "from real_trading_config import RealTradingConfig; c=RealTradingConfig(); c.set_emergency_stop(False)"
+```
+
+Check trading status:
+```bash
+curl http://localhost:8888/api/trading-status
+```
+
+### 5. Funding Your Wallet
+
+The system trades with:
+- **Arbitrum**: USDC (6 decimals)
+- **Optimism**: sUSD (18 decimals)
+- **Base**: USDC (6 decimals)
+
+Make sure to:
+1. Send collateral tokens to your trading wallet
+2. Keep some ETH for gas fees
+3. Start with small amounts until comfortable
+
+### 6. Monitoring Real Trades
+
+- Discord notifications for every trade
+- Dashboard shows wallet balances
+- All trades logged in database
+- Emergency stop available at any time
 
 ## Testing
 

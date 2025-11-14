@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Integrated Trading System with Real Odds
-Combines real odds fetching with paper trading
+Integrated trading system - switches between paper and real trading
+Based on wallet configuration and safety settings
 """
 
 import asyncio
@@ -21,272 +21,158 @@ from database_v2 import db_manager
 from models import Market, Odd, Bet, BettingSession
 from config.bankroll_config import BankrollConfig
 from notifications.discord_notifier import discord_notifier
-from real_odds_fetcher import RealOddsFetcher
-from paper_trading_live import LivePaperTrader
+from real_trading_config import RealTradingConfig
+from real_trading_engine import RealTradingEngine
+from liquidity_aware_trading import LiquidityAwareTradingSystem
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 class IntegratedTradingSystem:
-    """Combines real odds fetching with paper trading"""
+    """Unified system that handles both paper and real trading"""
     
     def __init__(self):
-        self.odds_fetcher = RealOddsFetcher()
-        self.paper_trader = LivePaperTrader()
-        self.bankroll_config = BankrollConfig()
+        self.real_config = RealTradingConfig()
+        self.is_real_trading = False
+        self.real_engine = None
+        self.paper_system = LiquidityAwareTradingSystem()
         self.is_running = False
         
-        # Update paper trader settings for realistic trading
-        self.paper_trader.min_edge = 2.0  # Require 2% minimum edge
-        self.paper_trader.max_exposure_pct = 20.0  # Max 20% exposure
-        self.paper_trader.kelly_fraction = 0.2  # Conservative Kelly
-        
+        # Check if real trading is configured and enabled
+        if self.real_config.is_configured():
+            mode = self.real_config.get_mode()
+            if mode == 'mainnet':
+                logger.warning("🔴 REAL TRADING MODE ENABLED - REAL MONEY AT RISK!")
+                self.is_real_trading = True
+                self.real_engine = RealTradingEngine(self.real_config)
+            else:
+                logger.info("🟡 Testnet mode - simulating real trades without execution")
+                self.real_engine = RealTradingEngine(self.real_config)
+        else:
+            logger.info("🟢 Paper trading mode - no wallet configured")
+            
     async def start(self):
         """Start the integrated trading system"""
-        logger.info("Starting Integrated Trading System...")
         self.is_running = True
         
-        # Send startup notification
-        discord_notifier.send_startup_message()
-        
-        # Create trading session
-        await self._create_session()
-        
-        # Start concurrent tasks
-        await asyncio.gather(
-            self._odds_update_loop(),
-            self._trading_loop(),
-            self._monitoring_loop()
-        )
-        
-    async def _create_session(self):
-        """Create a new trading session"""
-        with db_manager.get_db_session() as db:
-            session = BettingSession(
-                name=f"Integrated Trading {datetime.now().strftime('%Y-%m-%d %H:%M')}",
-                bankroll=self.bankroll_config.get_current_bankroll(),
-                strategy_name="integrated_real_odds",
-                session_type='paper',
-                created_at=datetime.now(timezone.utc)
-            )
-            db.add(session)
-            db.commit()
-            self.paper_trader.session_id = session.id
-            logger.info(f"Created trading session: {session.id}")
+        # Send startup notification with mode info
+        mode_info = "PAPER TRADING"
+        if self.real_config.is_configured():
+            mode_info = f"REAL TRADING ({self.real_config.get_mode().upper()})"
+            wallet = self.real_config.get_wallet_address()
+            mode_info += f" - Wallet: {wallet[:6]}...{wallet[-4:]}"
             
-    async def _odds_update_loop(self):
-        """Continuously update odds from real sources"""
-        logger.info("Starting odds update loop...")
+        discord_notifier.send_startup_message(extra_info=mode_info)
         
-        while self.is_running:
-            try:
-                # Fetch and update real odds
-                logger.info("Fetching real odds...")
-                self.odds_fetcher.update_database_with_real_odds()
+        # Check balances if real trading
+        if self.real_engine:
+            logger.info("Checking collateral balances...")
+            total_balance = 0
+            for network in ['arbitrum', 'optimism', 'base']:
+                balance = self.real_engine.check_collateral_balance(network)
+                logger.info(f"  {network}: ${balance}")
+                total_balance += float(balance)
                 
-                # Report statistics
-                with db_manager.get_db_session() as db:
-                    total_markets = db.query(Market).filter(Market.is_active == True).count()
-                    markets_with_odds = db.query(Market).join(
-                        Odd, Market.source_id == Odd.source_market_id
-                    ).filter(Market.is_active == True).distinct().count()
-                    
-                    logger.info(f"Active markets: {total_markets}, with odds: {markets_with_odds}")
+            if total_balance == 0:
+                logger.warning("⚠️  No collateral found - continuing in paper mode")
+                self.is_real_trading = False
                 
-                # Wait before next update
-                await asyncio.sleep(60)  # Update every minute
-                
-            except Exception as e:
-                logger.error(f"Error in odds update loop: {e}")
-                await asyncio.sleep(30)
-                
+        # Start trading loops
+        await self._trading_loop()
+        
     async def _trading_loop(self):
-        """Main trading loop"""
-        logger.info("Starting trading loop...")
+        """Main trading loop that handles both paper and real trades"""
+        logger.info(f"Starting trading loop (Real: {self.is_real_trading})...")
         
         while self.is_running:
             try:
-                # Find trading opportunities
-                opportunities = await self.paper_trader.find_betting_opportunities()
+                # Find opportunities using paper system
+                opportunities = await self.paper_system.find_tradeable_opportunities()
                 
                 if opportunities:
                     logger.info(f"Found {len(opportunities)} opportunities")
                     
-                    # Place bets on best opportunities
-                    for opp in opportunities[:3]:  # Top 3 opportunities
-                        if opp['edge'] >= self.paper_trader.min_edge:
-                            bet = await self.paper_trader.place_bet(opp)
-                            if bet:
-                                # Send Discord notification
-                                discord_notifier.send_trade_alert({
-                                    'type': 'NEW',
-                                    'market': f"{opp['market'].home_team} vs {opp['market'].away_team}",
-                                    'outcome': opp['outcome'],
-                                    'amount': bet.stake,
-                                    'odds': bet.decimal_odds,
-                                    'edge': opp['edge'],
-                                    'bankroll': self.bankroll_config.get_current_bankroll()
-                                })
-                else:
-                    logger.info("No opportunities found (all edges below threshold)")
-                    
-                # Check for completed bets
-                await self._check_completed_bets()
-                
+                    # Process opportunities
+                    for opp in opportunities[:3]:  # Top 3
+                        if self.is_real_trading and self.real_engine:
+                            # Attempt real trade
+                            await self._place_real_trade(opp)
+                        else:
+                            # Paper trade
+                            await self.paper_system.place_liquidity_aware_bet(opp)
+                            
                 # Wait before next cycle
-                await asyncio.sleep(30)  # Check every 30 seconds
+                await asyncio.sleep(60)
                 
             except Exception as e:
                 logger.error(f"Error in trading loop: {e}")
+                discord_notifier.send_error_alert(str(e), "Trading Loop")
                 await asyncio.sleep(30)
                 
-    async def _check_completed_bets(self):
-        """Check and settle completed bets"""
-        with db_manager.get_db_session() as db:
-            # Get active bets
-            active_bets = db.query(Bet).filter(
-                Bet.session_id == self.paper_trader.session_id,
-                Bet.status == 'pending'
-            ).all()
-            
-            for bet in active_bets:
-                # Check if market is resolved
-                market = db.query(Market).filter(
-                    Market.source_id == bet.source_id
-                ).first()
+    async def _place_real_trade(self, opportunity: Dict):
+        """Place a real trade if all conditions are met"""
+        try:
+            # Double-check emergency stop
+            if self.real_config.is_emergency_stopped():
+                logger.warning("Emergency stop active - skipping real trade")
+                return
                 
-                if market and not market.is_active and market.winning_outcome:
-                    # Settle bet
-                    won = (bet.outcome == market.winning_outcome)
-                    payout = bet.stake * bet.decimal_odds if won else 0
-                    
-                    bet.status = 'won' if won else 'lost'
-                    bet.payout = payout
-                    bet.resolved_at = datetime.now(timezone.utc)
-                    
-                    # Update bankroll
-                    if won:
-                        self.bankroll_config.record_bet_result(True, payout - bet.stake)
-                    else:
-                        self.bankroll_config.record_bet_result(False, -bet.stake)
-                        
-                    # Send notification
-                    discord_notifier.send_trade_alert({
-                        'type': 'CLOSE',
-                        'market': f"{market.home_team} vs {market.away_team}",
-                        'outcome': bet.outcome,
-                        'amount': bet.stake,
-                        'odds': bet.decimal_odds,
-                        'edge': 0,  # We don't store edge in bet
-                        'won': won,
-                        'pnl': payout - bet.stake if won else -bet.stake,
-                        'bankroll': self.bankroll_config.get_current_bankroll()
-                    })
-                    
-                    logger.info(f"Settled bet: {'WON' if won else 'LOST'} ${payout:.2f}")
-                    
-            db.commit()
+            # Place the trade
+            result = await self.real_engine.place_real_bet(
+                opportunity,
+                network=self.real_config.config['default_network']
+            )
             
-    async def _monitoring_loop(self):
-        """Monitor and report system performance"""
-        logger.info("Starting monitoring loop...")
+            if result:
+                logger.info(f"✅ Real trade executed: {result['tx_hash']}")
+                
+                # Also record as paper trade for tracking
+                await self.paper_system.place_liquidity_aware_bet(opportunity)
+            else:
+                # Fall back to paper trade
+                logger.info("Real trade rejected - placing paper trade instead")
+                await self.paper_system.place_liquidity_aware_bet(opportunity)
+                
+        except Exception as e:
+            logger.error(f"Error placing real trade: {e}")
+            discord_notifier.send_error_alert(str(e), "Real Trade Execution")
+            # Fall back to paper trade
+            await self.paper_system.place_liquidity_aware_bet(opportunity)
+            
+    def emergency_stop(self):
+        """Activate emergency stop"""
+        if self.real_config.is_configured():
+            self.real_config.set_emergency_stop(True)
+            self.is_real_trading = False
+            discord_notifier.send_error_alert(
+                "EMERGENCY STOP ACTIVATED - All real trading halted",
+                "Emergency Stop"
+            )
+            logger.critical("🚨 EMERGENCY STOP ACTIVATED")
+            
+    def get_status(self) -> Dict:
+        """Get current system status"""
+        status = {
+            'mode': 'paper',
+            'real_configured': self.real_config.is_configured(),
+            'emergency_stopped': False,
+            'wallet': None,
+            'balances': {}
+        }
         
-        last_summary_date = datetime.now(timezone.utc).date()
-        
-        while self.is_running:
-            try:
-                # Get current stats
-                stats = self._get_trading_stats()
-                
-                # Log performance
-                logger.info(
-                    f"Performance - Bankroll: ${stats['bankroll']:.2f} | "
-                    f"P&L: ${stats['pnl']:.2f} | ROI: {stats['roi']:.2f}% | "
-                    f"Bets: {stats['total_bets']} | Win Rate: {stats['win_rate']:.1f}%"
-                )
-                
-                # Send daily summary at midnight
-                current_date = datetime.now(timezone.utc).date()
-                if current_date > last_summary_date:
-                    discord_notifier.send_daily_summary(stats)
-                    last_summary_date = current_date
+        if self.real_config.is_configured():
+            status['mode'] = self.real_config.get_mode()
+            status['wallet'] = self.real_config.get_wallet_address()
+            status['emergency_stopped'] = self.real_config.is_emergency_stopped()
+            
+            if self.real_engine:
+                for network in ['arbitrum', 'optimism', 'base']:
+                    status['balances'][network] = float(
+                        self.real_engine.check_collateral_balance(network)
+                    )
                     
-                # Wait before next check
-                await asyncio.sleep(300)  # Every 5 minutes
-                
-            except Exception as e:
-                logger.error(f"Error in monitoring loop: {e}")
-                await asyncio.sleep(60)
-                
-    def _get_trading_stats(self) -> Dict:
-        """Get current trading statistics"""
-        with db_manager.get_db_session() as db:
-            # Get all bets from current session
-            all_bets = db.query(Bet).filter(
-                Bet.session_id == self.paper_trader.session_id
-            ).all()
-            
-            total_bets = len(all_bets)
-            pending_bets = sum(1 for b in all_bets if b.status == 'pending')
-            won_bets = sum(1 for b in all_bets if b.status == 'won')
-            lost_bets = sum(1 for b in all_bets if b.status == 'lost')
-            
-            # Calculate P&L
-            total_staked = sum(b.stake for b in all_bets)
-            total_payout = sum(b.payout or 0 for b in all_bets if b.status in ['won', 'lost'])
-            pnl = total_payout - sum(b.stake for b in all_bets if b.status in ['won', 'lost'])
-            
-            # Get current bankroll
-            current_bankroll = self.bankroll_config.get_current_bankroll()
-            initial_bankroll = self.bankroll_config.initial_bankroll
-            
-            # Calculate win rate
-            completed_bets = won_bets + lost_bets
-            win_rate = (won_bets / completed_bets * 100) if completed_bets > 0 else 0
-            
-            # Get top trades
-            top_trades = []
-            for bet in sorted(all_bets, key=lambda x: abs(x.payout - x.stake) if x.payout else 0, reverse=True)[:3]:
-                if bet.status in ['won', 'lost']:
-                    market = db.query(Market).filter(Market.source_id == bet.source_id).first()
-                    if market:
-                        top_trades.append({
-                            'market': f"{market.home_team} vs {market.away_team}",
-                            'outcome': bet.outcome,
-                            'odds': bet.decimal_odds,
-                            'pnl': bet.payout - bet.stake if bet.status == 'won' else -bet.stake
-                        })
-                        
-            return {
-                'date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
-                'bankroll': current_bankroll,
-                'start_bankroll': initial_bankroll,
-                'end_bankroll': current_bankroll,
-                'pnl': current_bankroll - initial_bankroll,
-                'daily_pnl': pnl,  # For today only
-                'roi': ((current_bankroll - initial_bankroll) / initial_bankroll * 100),
-                'total_bets': total_bets,
-                'active_positions': pending_bets,
-                'winning_trades': won_bets,
-                'total_trades': completed_bets,
-                'win_rate': win_rate,
-                'wins': won_bets,
-                'total_exposure': sum(b.stake for b in all_bets if b.status == 'pending'),
-                'total_roi': ((current_bankroll - initial_bankroll) / initial_bankroll * 100),
-                'top_trades': top_trades
-            }
-            
-    async def stop(self):
-        """Stop the trading system"""
-        logger.info("Stopping Integrated Trading System...")
-        self.is_running = False
-        
-        # Send final summary
-        stats = self._get_trading_stats()
-        discord_notifier.send_daily_summary(stats)
-        
-        logger.info("Trading system stopped")
+        return status
 
 
 async def main():
@@ -296,9 +182,13 @@ async def main():
     try:
         await system.start()
     except KeyboardInterrupt:
-        logger.info("Received shutdown signal...")
+        logger.info("Shutdown requested...")
+        system.is_running = False
+    except Exception as e:
+        logger.error(f"Critical error: {e}")
+        system.emergency_stop()
     finally:
-        await system.stop()
+        logger.info("Integrated trading system stopped")
 
 
 if __name__ == "__main__":
