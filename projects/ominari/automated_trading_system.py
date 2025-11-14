@@ -23,6 +23,8 @@ from paper_trading_engine import PaperTradingEngine
 from signals import ImpliedRawSignal, VolumeWeightedSignal, BlockchainEnhancedSignal
 from web_dashboard_real_odds import calculate_edge, get_active_positions
 from trading_strategies import create_trading_strategies
+from config.bankroll_config import BankrollConfig
+from notifications.slack_notifier import slack_notifier
 
 # Configure logging
 logging.basicConfig(
@@ -39,11 +41,13 @@ logger = logging.getLogger(__name__)
 class PortfolioManager:
     """Manages the trading portfolio with real tracking"""
     
-    def __init__(self, initial_bankroll: float = 10000.0):
-        self.initial_bankroll = initial_bankroll
-        self.current_bankroll = initial_bankroll
+    def __init__(self, bankroll_config: Optional[BankrollConfig] = None):
+        self.bankroll_config = bankroll_config or BankrollConfig()
+        self.initial_bankroll = self.bankroll_config.get_current_bankroll()
+        self.current_bankroll = self.initial_bankroll
         self.positions = {}
         self.performance_history = []
+        self.daily_stats = {'date': datetime.now().date(), 'trades': 0, 'pnl': 0.0}
         
     def update_position(self, market_id: str, bet: Dict):
         """Update or create a position"""
@@ -65,11 +69,35 @@ class PortfolioManager:
             position['won'] = won
             position['payout'] = payout
             
+            # Calculate PnL
+            pnl = payout - position['amount'] if won else -position['amount']
+            
             # Update bankroll
             if won:
                 self.current_bankroll += payout - position['amount']
             else:
                 self.current_bankroll -= position['amount']
+                
+            # Update bankroll config with real tracking
+            self.bankroll_config.record_bet_result(won, pnl)
+            
+            # Update daily stats
+            self.daily_stats['trades'] += 1
+            self.daily_stats['pnl'] += pnl
+            
+            # Send Slack notification for significant trades
+            if abs(pnl) > 100 or abs(position['edge']) > 10:
+                slack_notifier.send_trade_alert({
+                    'type': 'CLOSE',
+                    'market': market_id,
+                    'outcome': position['outcome'],
+                    'amount': position['amount'],
+                    'odds': position['odds'],
+                    'edge': position['edge'],
+                    'won': won,
+                    'pnl': pnl,
+                    'bankroll': self.current_bankroll
+                })
                 
             # Track performance
             self.performance_history.append({
@@ -115,10 +143,14 @@ class AutomatedTradingSystem:
     """Main automated trading system"""
     
     def __init__(self):
-        self.portfolio = PortfolioManager(initial_bankroll=10000.0)
+        self.bankroll_config = BankrollConfig()
+        self.portfolio = PortfolioManager(self.bankroll_config)
         self.paper_engine = PaperTradingEngine()
         self.blockchain_reader = BlockchainReader()
         self.is_running = False
+        
+        # Send startup notification
+        slack_notifier.send_startup_message()
         
         # Trading parameters
         self.min_edge_threshold = 2.0  # Minimum 2% edge to place bet

@@ -27,7 +27,7 @@ os.environ['USE_POSTGRESQL'] = '1'
 # Import dashboard configuration
 from dashboard_config import ALLOWED_SPORTS, ALLOWED_LEAGUES, ALLOWED_NATIONS, DASHBOARD_SETTINGS, get_display_league
 from models import Market, Odd, Bet, BettingSession
-from models import Market, Odd, Bet, BettingSession
+from config.bankroll_config import BankrollConfig
 
 # Flask app setup
 app = Flask(__name__)
@@ -988,49 +988,53 @@ async def get_dashboard_data():
                 elif outcome == '2':
                     position_by_outcome['Away'] += stake
     
-    # Get trading status from actual paper trading sessions
-    trading_status = {'status': 'Active', 'bankroll': 10000}
-    
+    # Get trading status from bankroll config
     try:
-        with db_manager.get_db_session() as db:
-            # Get most recent paper trading session
-            from datetime import datetime, timedelta
-            latest_session = db.query(BettingSession).filter(
-                BettingSession.is_paper == True
-            ).order_by(BettingSession.created_at.desc()).first()
-            
-            if latest_session:
-                # Calculate current bankroll based on initial + P&L
-                session_bets = db.query(Bet).filter(
-                    Bet.betting_session_id == latest_session.id
-                ).all()
+        bankroll_config = BankrollConfig()
+        current_bankroll = bankroll_config.get_current_bankroll()
+        perf_stats = bankroll_config.get_performance_stats()
+        
+        trading_status = {
+            'status': 'Active' if bankroll_config.is_trading_enabled() else 'Paused',
+            'bankroll': current_bankroll,
+            'pnl': perf_stats['total_pnl'],
+            'roi': perf_stats['roi'],
+            'win_rate': perf_stats['win_rate']
+        }
+    except Exception as e:
+        logger.error(f"Error loading bankroll config: {e}")
+        # Fallback to database lookup
+        trading_status = {'status': 'Active', 'bankroll': 10000}
+        
+        try:
+            with db_manager.get_db_session() as db:
+                # Get most recent paper trading session
+                from datetime import datetime, timedelta
+                latest_session = db.query(BettingSession).filter(
+                    BettingSession.is_paper == True
+                ).order_by(BettingSession.created_at.desc()).first()
                 
-                total_pnl = 0
-                for bet in session_bets:
-                    if bet.status == 'won':
-                        total_pnl += (bet.payout or 0) - bet.stake
-                    elif bet.status == 'lost':
-                        total_pnl -= bet.stake
-                
-                current_bankroll = float(latest_session.bankroll) + total_pnl
-                trading_status = {
-                    'status': 'Active',
-                    'bankroll': current_bankroll
-                }
-    except:
-        # Fallback to session manager
-        if session_manager:
-            try:
-                session_id = session_manager.get_current_session()
-                if session_id:
-                    session = session_manager.get_session(session_id)
-                    if session:
-                        trading_status = {
-                            'status': 'Active',
-                            'bankroll': float(session.get('current_bankroll', 0))
-                        }
-            except Exception as e:
-                logger.error(f"Error getting session: {e}")
+                if latest_session:
+                    # Calculate current bankroll based on initial + P&L
+                    session_bets = db.query(Bet).filter(
+                        Bet.betting_session_id == latest_session.id
+                    ).all()
+                    
+                    total_pnl = 0
+                    for bet in session_bets:
+                        if bet.status == 'won':
+                            total_pnl += (bet.payout or 0) - bet.stake
+                        elif bet.status == 'lost':
+                            total_pnl -= bet.stake
+                    
+                    current_bankroll = float(latest_session.bankroll) + total_pnl
+                    trading_status = {
+                        'status': 'Active',
+                        'bankroll': current_bankroll
+                    }
+        except:
+            # Final fallback
+            pass
     
     return {
         'markets': markets[:50],  # Limit to 50 for display
