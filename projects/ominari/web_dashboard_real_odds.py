@@ -1190,6 +1190,53 @@ def health():
     
     return jsonify(health_data), 200 if db_healthy else 503
 
+
+@app.route('/api/trading-status')
+@rate_limit(limiter=api_limiter)
+def trading_status():
+    """Get current trading status (paper/real/testnet)"""
+    try:
+        from real_trading_config import RealTradingConfig
+        from real_trading_engine import RealTradingEngine
+        
+        config = RealTradingConfig()
+        
+        status = {
+            'configured': config.is_configured(),
+            'mode': 'paper',
+            'wallet': None,
+            'emergency_stopped': False,
+            'balances': {},
+            'safety_limits': {}
+        }
+        
+        if config.is_configured():
+            status['mode'] = config.get_mode()
+            status['wallet'] = config.get_wallet_address()
+            status['emergency_stopped'] = config.is_emergency_stopped()
+            status['safety_limits'] = config.get_safety_limits()
+            
+            if status['wallet']:
+                status['wallet_display'] = f"{status['wallet'][:6]}...{status['wallet'][-4:]}"
+                
+                # Try to get balances
+                try:
+                    engine = RealTradingEngine(config)
+                    for network in ['arbitrum', 'optimism', 'base']:
+                        balance = engine.check_collateral_balance(network)
+                        status['balances'][network] = float(balance)
+                except:
+                    pass
+                    
+        return jsonify(status)
+    except Exception as e:
+        return jsonify({
+            'configured': False,
+            'mode': 'paper',
+            'error': str(e)
+        })
+
+
 @app.route('/cache-stats')
 @rate_limit(limiter=api_limiter)
 def cache_stats():
@@ -1269,14 +1316,14 @@ def start_automated_trading():
     env['DATABASE_URL'] = os.getenv('DATABASE_URL', 'postgresql://ominari_user:ominari_2025_secure@localhost:5999/ominari_production')
     
     try:
-        # Start liquidity-aware trading system (includes real odds + liquidity + paper trading)
+        # Start integrated trading system (includes real odds + liquidity + paper/real trading)
         trading_proc = subprocess.Popen(
-            [sys.executable, 'liquidity_aware_trading.py'],
+            [sys.executable, 'integrated_trading_system.py'],
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
-        logger.info(f"Started liquidity-aware trading system (PID: {trading_proc.pid})")
+        logger.info(f"Started integrated trading system (PID: {trading_proc.pid})")
         logger.info("✅ System includes: real odds + blockchain liquidity + paper trading + Discord notifications")
         
         # Start performance monitor

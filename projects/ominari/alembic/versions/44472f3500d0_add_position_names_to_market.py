@@ -20,15 +20,24 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Simply tack on the JSON/text column. Existing rows get NULL.
-    op.add_column(
-        "market",
-        sa.Column(
-            "position_names",
-            sa.Text(),  # or sa.String() if you prefer
-            nullable=True,
-        ),
+    # Check if column already exists before adding
+    conn = op.get_bind()
+    result = conn.execute(
+        sa.text(
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_name='market' AND column_name='position_names'"
+        )
     )
+    if not result.fetchone():
+        # Simply tack on the JSON/text column. Existing rows get NULL.
+        op.add_column(
+            "market",
+            sa.Column(
+                "position_names",
+                sa.Text(),  # or sa.String() if you prefer
+                nullable=True,
+            ),
+        )
 
 
 def downgrade() -> None:
