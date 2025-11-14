@@ -465,10 +465,13 @@ DASHBOARD_HTML = """
             // Update stats
             document.getElementById('total-markets').textContent = data.stats?.total_markets || 0;
             document.getElementById('real-odds').textContent = data.stats?.real_odds_count || 0;
-            document.getElementById('bankroll').textContent = '$' + (data.trading_status?.bankroll || 0).toLocaleString();
+            document.getElementById('bankroll').textContent = '$' + (data.trading_status?.bankroll || 10000).toLocaleString();
             document.getElementById('odds-range').textContent = data.stats?.odds_range || '-';
             document.getElementById('total-positions').textContent = '$' + (data.stats?.total_positions || 0).toFixed(0);
             document.getElementById('active-bets').textContent = data.stats?.active_bets || 0;
+            
+            // Store positions globally for table rendering
+            window.activePositions = data.positions || {};
             
             // Update odds distribution
             if (data.odds_distribution) {
@@ -962,34 +965,72 @@ async def get_dashboard_data():
     # Count real odds
     real_odds_count = sum(1 for m in markets if m['odds'] not in [2.5, 2.8, 3.0])
     
+    # Get actual positions from database
+    positions = get_active_positions()
+    
     # Calculate position summary
     total_positions = 0
     active_bets = 0
     position_by_outcome = {'Home': 0, 'Draw': 0, 'Away': 0}
     
-    for market in markets:
-        if market.get('position_size', 0) > 0:
-            total_positions += market['position_size']
-            active_bets += 1
-            # Map position to outcome type
-            position = market.get('position', '')
-            if position in position_by_outcome:
-                position_by_outcome[position] += market['position_size']
+    # Count positions and total exposure
+    for market_id, market_positions in positions.items():
+        for outcome, stake in market_positions.items():
+            if stake > 0:
+                total_positions += stake
+                active_bets += 1
+                
+                # Map outcome to display category
+                if outcome == '1':
+                    position_by_outcome['Home'] += stake
+                elif outcome == 'X':
+                    position_by_outcome['Draw'] += stake
+                elif outcome == '2':
+                    position_by_outcome['Away'] += stake
     
-    # Get trading status
+    # Get trading status from actual paper trading sessions
     trading_status = {'status': 'Active', 'bankroll': 10000}
-    if session_manager:
-        try:
-            session_id = session_manager.get_current_session()
-            if session_id:
-                session = session_manager.get_session(session_id)
-                if session:
-                    trading_status = {
-                        'status': 'Active',
-                        'bankroll': float(session.get('current_bankroll', 0))
-                    }
-        except Exception as e:
-            logger.error(f"Error getting session: {e}")
+    
+    try:
+        with db_manager.get_db_session() as db:
+            # Get most recent paper trading session
+            from datetime import datetime, timedelta
+            latest_session = db.query(BettingSession).filter(
+                BettingSession.is_paper == True
+            ).order_by(BettingSession.created_at.desc()).first()
+            
+            if latest_session:
+                # Calculate current bankroll based on initial + P&L
+                session_bets = db.query(Bet).filter(
+                    Bet.betting_session_id == latest_session.id
+                ).all()
+                
+                total_pnl = 0
+                for bet in session_bets:
+                    if bet.status == 'won':
+                        total_pnl += (bet.payout or 0) - bet.stake
+                    elif bet.status == 'lost':
+                        total_pnl -= bet.stake
+                
+                current_bankroll = float(latest_session.bankroll) + total_pnl
+                trading_status = {
+                    'status': 'Active',
+                    'bankroll': current_bankroll
+                }
+    except:
+        # Fallback to session manager
+        if session_manager:
+            try:
+                session_id = session_manager.get_current_session()
+                if session_id:
+                    session = session_manager.get_session(session_id)
+                    if session:
+                        trading_status = {
+                            'status': 'Active',
+                            'bankroll': float(session.get('current_bankroll', 0))
+                        }
+            except Exception as e:
+                logger.error(f"Error getting session: {e}")
     
     return {
         'markets': markets[:50],  # Limit to 50 for display
@@ -1002,7 +1043,8 @@ async def get_dashboard_data():
             'active_bets': active_bets,
             'positions_by_outcome': position_by_outcome
         },
-        'odds_distribution': odds_distribution
+        'odds_distribution': odds_distribution,
+        'positions': positions  # Include positions data
     }
 
 @app.route('/')
@@ -1119,11 +1161,62 @@ async def send_update():
         logger.error(f"Update error: {e}")
         socketio.emit('dashboard_update', {'error': str(e)})
 
+def start_automated_trading():
+    """Start the automated trading system in background"""
+    import subprocess
+    import os
+    
+    logger.info("Starting automated trading system...")
+    
+    # Start blockchain sync
+    env = os.environ.copy()
+    env['DATABASE_URL'] = os.getenv('DATABASE_URL', f'postgresql://ominari_user:ominari_2025_secure@localhost:{PG_CONFIG["port"]}/{PG_CONFIG["database"]}')
+    
+    try:
+        # Start blockchain reader in daemon mode
+        blockchain_proc = subprocess.Popen(
+            [sys.executable, 'blockchain_reader.py', '--daemon'],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        logger.info(f"Started blockchain sync (PID: {blockchain_proc.pid})")
+        
+        # Start automated trading system
+        trading_proc = subprocess.Popen(
+            [sys.executable, 'automated_trading_system.py'],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        logger.info(f"Started automated trading (PID: {trading_proc.pid})")
+        
+        # Start performance monitor
+        monitor_proc = subprocess.Popen(
+            [sys.executable, 'trading_performance_monitor.py'],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        logger.info(f"Started performance monitor (PID: {monitor_proc.pid})")
+        
+        return True
+    except Exception as e:
+        logger.error(f"Failed to start automated trading: {e}")
+        return False
+
 if __name__ == '__main__':
     logger.info("Starting Real Odds Dashboard on port 8888...")
     logger.info("Rate limiting enabled: 60 req/min general, 30 req/min API, 120 req/min WebSocket")
     logger.info("Caching enabled: 30s TTL for market data")
     logger.info("Fetching markets with actual odds from database...")
+    
+    # Start automated trading system
+    if start_automated_trading():
+        logger.info("✅ Automated trading system started successfully")
+        logger.info("📊 Performance monitor available at http://localhost:8889")
+    else:
+        logger.warning("⚠️ Automated trading system failed to start - continuing without it")
     
     # Log cache and rate limit stats periodically
     def log_stats():
@@ -1134,6 +1227,7 @@ if __name__ == '__main__':
     
     import threading
     import time
+    import sys
     stats_thread = threading.Thread(target=log_stats, daemon=True)
     stats_thread.start()
     

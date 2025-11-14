@@ -1,67 +1,67 @@
 #!/bin/bash
-# Setup script for Ominari auto-start
+# Setup auto-start for Ominari Trading System
 
-set -e
+echo "🔧 Setting up Ominari auto-start"
+echo "==============================="
 
-echo "🚀 Setting up Ominari Trading System for auto-start..."
-
-# Get current user
-CURRENT_USER=$(whoami)
-INSTALL_DIR=$(pwd)
-
-# Create log directory
-echo "Creating log directory..."
-sudo mkdir -p /var/log/ominari
-sudo chown $CURRENT_USER:$CURRENT_USER /var/log/ominari
-
-# Update service file with correct user and paths
-echo "Configuring service file..."
-sed -i "s/%USER%/$CURRENT_USER/g" ominari-trading.service
-sed -i "s|WorkingDirectory=.*|WorkingDirectory=$INSTALL_DIR|g" ominari-trading.service
-
-# Copy service file to systemd
-echo "Installing systemd service..."
-sudo cp ominari-trading.service /etc/systemd/system/
-
-# Create startup helper script
-cat > start_ominari.sh << 'EOF'
-#!/bin/bash
-# Ominari startup helper script
-
-# Load environment variables
-if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | xargs)
+# For development - add to shell profile
+if [[ "$1" == "dev" ]]; then
+    echo "Setting up development auto-start..."
+    
+    # Add to bashrc/zshrc
+    SHELL_RC="$HOME/.bashrc"
+    if [[ "$SHELL" == *"zsh"* ]]; then
+        SHELL_RC="$HOME/.zshrc"
+    fi
+    
+    # Check if already added
+    if ! grep -q "start_ominari" "$SHELL_RC"; then
+        echo "" >> "$SHELL_RC"
+        echo "# Auto-start Ominari Trading System" >> "$SHELL_RC"
+        echo "alias ominari='cd $(pwd) && ./start_ominari.py'" >> "$SHELL_RC"
+        echo "# Uncomment to auto-start on terminal open:" >> "$SHELL_RC"
+        echo "# (cd $(pwd) && ./start_ominari.py > /tmp/ominari.log 2>&1 &)" >> "$SHELL_RC"
+        
+        echo "✅ Added 'ominari' alias to $SHELL_RC"
+        echo "   Run 'ominari' to start the system"
+    else
+        echo "✅ Auto-start already configured"
+    fi
+    
+# For production - install systemd service
+elif [[ "$1" == "prod" ]]; then
+    if [[ $EUID -ne 0 ]]; then
+        echo "❌ Production setup requires root. Run: sudo $0 prod"
+        exit 1
+    fi
+    
+    echo "Setting up production auto-start..."
+    
+    # Create user if doesn't exist
+    if ! id "ominari" &>/dev/null; then
+        useradd -r -s /bin/bash -d /opt/ominari ominari
+        echo "✅ Created ominari user"
+    fi
+    
+    # Create directories
+    mkdir -p /opt/ominari /var/log/ominari
+    
+    # Copy files
+    cp -r . /opt/ominari/
+    chown -R ominari:ominari /opt/ominari /var/log/ominari
+    
+    # Install systemd service
+    cp infrastructure/systemd/ominari.service /etc/systemd/system/
+    systemctl daemon-reload
+    systemctl enable ominari.service
+    
+    echo "✅ Systemd service installed"
+    echo "   Start with: systemctl start ominari"
+    echo "   View logs: journalctl -u ominari -f"
+    echo "   Auto-starts on boot"
+    
+else
+    echo "Usage: $0 [dev|prod]"
+    echo "  dev  - Setup development auto-start (alias)"
+    echo "  prod - Setup production auto-start (systemd)"
 fi
-
-# Ensure Graph Node is running
-echo "Starting Graph Node infrastructure..."
-docker-compose -f docker-compose.graph-node-alt.yml up -d
-
-# Wait for services
-echo "Waiting for services to be ready..."
-sleep 30
-
-# Start the unified system
-echo "Starting Ominari Trading System..."
-exec python ominari_unified.py
-EOF
-
-chmod +x start_ominari.sh
-
-# Enable service
-echo "Enabling service..."
-sudo systemctl daemon-reload
-sudo systemctl enable ominari-trading.service
-
-echo "✅ Setup complete!"
-echo ""
-echo "Available commands:"
-echo "  Start service:   sudo systemctl start ominari-trading"
-echo "  Stop service:    sudo systemctl stop ominari-trading"
-echo "  Check status:    sudo systemctl status ominari-trading"
-echo "  View logs:       sudo journalctl -u ominari-trading -f"
-echo "  View app logs:   tail -f /var/log/ominari/trading.log"
-echo ""
-echo "The service will start automatically on system boot."
-echo ""
-echo "To start immediately, run: sudo systemctl start ominari-trading"
