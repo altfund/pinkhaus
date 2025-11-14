@@ -155,12 +155,24 @@ DASHBOARD_HTML = """
             font-size: 14px;
         }
         
-        .odds-value.high {
-            color: #ffaa00;
+        .odds-value.high {  /* Odds > 5.0 */
+            color: #ff8c00;  /* Dark orange - longshot */
         }
         
-        .odds-value.low {
-            color: #00ccff;
+        .odds-value.medium-high {  /* Odds 3.0 - 5.0 */
+            color: #ffaa00;  /* Orange */
+        }
+        
+        .odds-value.medium {  /* Odds 2.0 - 3.0 */
+            color: #00ff00;  /* Green - balanced */
+        }
+        
+        .odds-value.low {  /* Odds < 2.0 */
+            color: #00ccff;  /* Cyan - favorite */
+        }
+        
+        .odds-value.very-low {  /* Odds < 1.5 */
+            color: #ff00ff;  /* Magenta - heavy favorite */
         }
         
         .implied-prob {
@@ -181,6 +193,47 @@ DASHBOARD_HTML = """
         
         .edge-negative {
             color: #ff4444;
+        }
+        
+        .edge-high {  /* Edge > 5% */
+            color: #00ff00;
+            font-weight: bold;
+            text-shadow: 0 0 5px #00ff00;
+        }
+        
+        .edge-medium {  /* Edge 2-5% */
+            color: #88ff00;
+        }
+        
+        .edge-low {  /* Edge 0-2% */
+            color: #ccff00;
+        }
+        
+        .position-active {  /* Has position */
+            background: #333300;
+            border: 1px solid #ffcc00;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        .position-size {
+            color: #ffcc00;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        
+        .prob-favorite {  /* > 50% probability */
+            color: #00ccff;
+            font-weight: bold;
+        }
+        
+        .prob-normal {  /* 25-50% probability */
+            color: #888;
+        }
+        
+        .prob-longshot {  /* < 25% probability */
+            color: #666;
+            font-style: italic;
         }
         
         .position-header {
@@ -328,10 +381,22 @@ DASHBOARD_HTML = """
             
             <div class="position-summary">
                 <h4>Position Summary</h4>
-                <div id="position-dist">
-                    <div>Home: $<span id="pos-home">0</span></div>
-                    <div>Draw: $<span id="pos-draw">0</span></div>
-                    <div>Away: $<span id="pos-away">0</span></div>
+                <div id="position-dist" style="font-size: 13px;">
+                    <div style="padding: 4px; margin: 2px 0;">Home: $<span id="pos-home" style="color: #ffcc00; font-weight: bold;">0</span></div>
+                    <div style="padding: 4px; margin: 2px 0;">Draw: $<span id="pos-draw" style="color: #ffcc00; font-weight: bold;">0</span></div>
+                    <div style="padding: 4px; margin: 2px 0;">Away: $<span id="pos-away" style="color: #ffcc00; font-weight: bold;">0</span></div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 10px; background: #1a1a1a; border-radius: 8px;">
+                <h4 style="margin-bottom: 10px;">Color Legend</h4>
+                <div style="font-size: 11px; line-height: 1.8;">
+                    <div><span style="color: #00ccff;">●</span> Favorite (odds < 2.0)</div>
+                    <div><span style="color: #00ff00;">●</span> Balanced (odds 2.0-3.0)</div>
+                    <div><span style="color: #ffaa00;">●</span> Underdog (odds 3.0-5.0)</div>
+                    <div><span style="color: #ff8c00;">●</span> Longshot (odds > 5.0)</div>
+                    <div style="margin-top: 5px;"><span style="color: #00ff00; text-shadow: 0 0 5px #00ff00;">●</span> High Edge (> 5%)</div>
+                    <div><span style="color: #ffcc00; font-weight: bold;">$</span> Active Position</div>
                 </div>
             </div>
             
@@ -539,26 +604,43 @@ DASHBOARD_HTML = """
             if (!market || !market.odds) return '<span style="color:#444">-</span>';
             
             const odds = market.odds;
-            const impliedProb = market.implied_prob ? market.implied_prob.toFixed(1) : (1 / odds * 100).toFixed(1);
+            const impliedProb = market.implied_prob ? market.implied_prob : (1 / odds * 100);
             const position = market.position_size || 0;
             const edge = market.edge || 0;
             
+            // Determine odds color class
             let oddsClass = 'odds-value';
-            if (odds > 5) oddsClass += ' high';
+            if (odds < 1.5) oddsClass += ' very-low';
             else if (odds < 2) oddsClass += ' low';
+            else if (odds < 3) oddsClass += ' medium';
+            else if (odds < 5) oddsClass += ' medium-high';
+            else oddsClass += ' high';
+            
+            // Determine edge color class
+            let edgeClass = '';
+            if (edge > 5) edgeClass = 'edge-high';
+            else if (edge > 2) edgeClass = 'edge-medium';
+            else if (edge > 0) edgeClass = 'edge-low';
+            else if (edge < 0) edgeClass = 'edge-negative';
+            
+            // Determine probability color class
+            let probClass = 'prob-normal';
+            if (impliedProb > 50) probClass = 'prob-favorite';
+            else if (impliedProb < 25) probClass = 'prob-longshot';
             
             const isDefault = odds === 2.5 || odds === 2.8 || odds === 3.0;
+            const hasPosition = position > 0;
             
             return `
-                <div>
+                <div ${hasPosition ? 'class="position-active"' : ''}>
                     <span class="${oddsClass}" ${isDefault ? 'style="opacity: 0.5;"' : ''}>
                         ${odds.toFixed(3)}
                     </span>
-                    ${edge !== 0 ? `<span style="font-size: 10px; color: ${edge > 0 ? '#00ff00' : '#ff6666'};">${edge > 0 ? '+' : ''}${edge.toFixed(1)}%</span>` : ''}
+                    ${edge !== 0 ? `<span class="${edgeClass}" style="font-size: 10px; margin-left: 4px;">${edge > 0 ? '+' : ''}${edge.toFixed(1)}%</span>` : ''}
                 </div>
-                <div class="implied-prob" style="font-size: 9px; color: #666;">
-                    ${impliedProb}%
-                    ${position > 0 ? `<span style="color: #ffcc00; font-weight: bold;"> $${position.toFixed(0)}</span>` : ''}
+                <div style="font-size: 9px; margin-top: 2px;">
+                    <span class="${probClass}">${impliedProb.toFixed(1)}%</span>
+                    ${position > 0 ? `<span class="position-size"> $${position.toFixed(0)}</span>` : ''}
                 </div>
             `;
         }
@@ -576,15 +658,39 @@ DASHBOARD_HTML = """
             
             // Show relative time for near matches
             if (diffMs < 0) {
-                return 'LIVE';
+                return '<span style="color: #ff0000; font-weight: bold;">LIVE</span>';
+            } else if (diffHours < 1) {
+                const diffMins = Math.floor(diffMs / (1000 * 60));
+                return `<span style="color: #ffaa00; font-weight: bold;">${diffMins}m</span>`;
             } else if (diffHours < 24) {
-                return `${diffHours}h`;
+                return `<span style="color: #ffcc00;">${diffHours}h</span>`;
             } else if (diffDays < 7) {
                 return `${diffDays}d`;
             } else {
                 // Show date for far future
                 return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             }
+        }
+        
+        function formatEdgeSummary(maxEdge, totalPosition) {
+            let html = '';
+            
+            if (maxEdge > 0) {
+                let edgeClass = '';
+                if (maxEdge > 5) edgeClass = 'edge-high';
+                else if (maxEdge > 2) edgeClass = 'edge-medium';
+                else edgeClass = 'edge-low';
+                
+                html += `<div class="${edgeClass}">+${maxEdge.toFixed(1)}%</div>`;
+            } else {
+                html += '<div style="color: #444;">-</div>';
+            }
+            
+            if (totalPosition > 0) {
+                html += `<div class="position-size" style="font-size: 10px;">$${totalPosition.toFixed(0)}</div>`;
+            }
+            
+            return html;
         }
         
         function addLog(message) {
