@@ -1,4 +1,4 @@
-#\!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Test script to verify paper trading is working end-to-end
 """
@@ -55,12 +55,12 @@ async def test_components():
         with db_manager.get_db_session() as db:
             # Get a market with odds
             market_with_odds = db.query(Market).join(
-                Odd, Market.source_id == Odd.source_market_id
+                Odd, Market.source_id == Odd.source_id
             ).first()
             
             if market_with_odds:
                 odds_count = db.query(Odd).filter(
-                    Odd.source_market_id == market_with_odds.source_id
+                    Odd.source_id == market_with_odds.source_id
                 ).count()
                 print(f"✅ Found market: {market_with_odds.home_team} vs {market_with_odds.away_team}")
                 print(f"   Odds records: {odds_count}")
@@ -127,12 +127,22 @@ async def run_mini_session():
     # Create a test session
     try:
         with db_manager.get_db_session() as db:
+            current_bankroll = trader.bankroll_config.get_current_bankroll()
             session = BettingSession(
-                name=f"Test Session {datetime.now().strftime('%H:%M:%S')}",
-                bankroll=trader.bankroll_config.get_current_bankroll(),
+                as_of=datetime.now(timezone.utc),
+                session_type='paper',
                 strategy_name="Test Strategy",
-                is_paper=True,
-                created_at=datetime.now(timezone.utc)
+                kelly_bankroll=current_bankroll,
+                execution_bankroll=current_bankroll,
+                kelly_fraction=0.25,
+                cap_per_game=current_bankroll * 0.1,
+                cap_per_bet=current_bankroll * 0.05,
+                cap_per_game_market=current_bankroll * 0.05,
+                min_bet_abs=10.0,
+                min_bet_pct=0.001,
+                abs_game_limit=None,
+                min_break_minutes=0.0,
+                avg_game_duration_minutes=120.0
             )
             db.add(session)
             db.commit()
@@ -158,7 +168,7 @@ async def run_mini_session():
                 for opp in opportunities[:1]:  # Just first one
                     bet = await trader.place_bet(opp)
                     if bet:
-                        print(f"✅ Placed test bet\!")
+                        print(f"✅ Placed test bet!")
                         break
             else:
                 print(f"[{datetime.now().strftime('%H:%M:%S')}] No opportunities found")
@@ -172,12 +182,12 @@ async def run_mini_session():
     print("\n📊 Session Summary:")
     with db_manager.get_db_session() as db:
         bets = db.query(Bet).filter(
-            Bet.betting_session_id == trader.session_id
+            Bet.session_id == trader.session_id
         ).all()
         
         print(f"Total bets placed: {len(bets)}")
         for bet in bets:
-            print(f"  - {bet.home_team} vs {bet.away_team}: {bet.outcome} @ {bet.odds} (${bet.stake:.2f})")
+            print(f"  - {bet.bet_name}: @ {bet.odds} (${bet.stake:.2f})")
             
     return True
 
@@ -191,7 +201,7 @@ async def main():
     
     # Run component tests
     if not await test_components():
-        print("\n❌ Component tests failed. Fix these first\!")
+        print("\n❌ Component tests failed. Fix these first!")
         return
         
     # Test trading logic
@@ -208,7 +218,7 @@ async def main():
     
     await run_mini_session()
     
-    print("\n✅ Test complete\!")
+    print("\n✅ Test complete!")
     print("\nNext steps:")
     print("1. Check config/bankroll.json for bankroll tracking")
     print("2. Run the dashboard to see trades: python main.py")
@@ -217,4 +227,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-EOF < /dev/null
