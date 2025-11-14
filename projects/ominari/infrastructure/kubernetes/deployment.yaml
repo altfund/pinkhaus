@@ -1,0 +1,207 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ominari
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ominari-secrets
+  namespace: ominari
+type: Opaque
+stringData:
+  database-url: "postgresql://ominari_user:CHANGE_ME@ominari-rds.region.rds.amazonaws.com:5432/ominari_production"
+  blockchain-rpc-url: "https://YOUR_RPC_ENDPOINT"
+  api-secret-key: "GENERATE_SECURE_KEY"
+  overtime-api-key: "YOUR_API_KEY"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ominari-config
+  namespace: ominari
+data:
+  ENVIRONMENT: "production"
+  DEBUG: "false"
+  LOG_LEVEL: "INFO"
+  ALLOWED_SPORTS: "Soccer"
+  DASHBOARD_PORT: "8888"
+  PAPER_TRADING_ENABLED: "true"
+  MAX_POSITION_SIZE: "5000"
+  MIN_EDGE_PERCENT: "2.0"
+  KELLY_FRACTION: "0.25"
+  PROMETHEUS_ENABLED: "true"
+  METRICS_PORT: "9090"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ominari-dashboard
+  namespace: ominari
+  labels:
+    app: ominari-dashboard
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ominari-dashboard
+  template:
+    metadata:
+      labels:
+        app: ominari-dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: YOUR_ECR_REGISTRY/ominari:latest
+        ports:
+        - containerPort: 8888
+          name: web
+        - containerPort: 9090
+          name: metrics
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ominari-secrets
+              key: database-url
+        - name: BLOCKCHAIN_RPC_URL
+          valueFrom:
+            secretKeyRef:
+              name: ominari-secrets
+              key: blockchain-rpc-url
+        - name: API_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ominari-secrets
+              key: api-secret-key
+        - name: OVERTIME_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ominari-secrets
+              key: overtime-api-key
+        envFrom:
+        - configMapRef:
+            name: ominari-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8888
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8888
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ominari-paper-trading
+  namespace: ominari
+  labels:
+    app: ominari-paper-trading
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ominari-paper-trading
+  template:
+    metadata:
+      labels:
+        app: ominari-paper-trading
+    spec:
+      containers:
+      - name: paper-trading
+        image: YOUR_ECR_REGISTRY/ominari:latest
+        command: ["python", "paper_trading_engine.py"]
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ominari-secrets
+              key: database-url
+        envFrom:
+        - configMapRef:
+            name: ominari-config
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ominari-dashboard-service
+  namespace: ominari
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+spec:
+  selector:
+    app: ominari-dashboard
+  ports:
+    - port: 80
+      targetPort: 8888
+      name: web
+    - port: 9090
+      targetPort: 9090
+      name: metrics
+  type: LoadBalancer
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ominari-dashboard-hpa
+  namespace: ominari
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ominari-dashboard
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: ominari-metrics
+  namespace: ominari
+spec:
+  selector:
+    matchLabels:
+      app: ominari-dashboard
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
