@@ -1,0 +1,29 @@
+[Unit]
+Description=Ominari Trading System
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=ominari
+Group=ominari
+WorkingDirectory=/opt/ominari
+Environment="PATH=/opt/ominari/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PG_PORT=5999"
+Environment="PG_DB=ominari_production"
+Environment="DATABASE_URL=postgresql://ominari_user:ominari_2025_secure@localhost:5999/ominari_production"
+ExecStart=/opt/ominari/.venv/bin/python /opt/ominari/start_ominari.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/ominari/ominari.log
+StandardError=append:/var/log/ominari/ominari-error.log
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/ominari /var/log/ominari
+
+[Install]
+WantedBy=multi-user.target

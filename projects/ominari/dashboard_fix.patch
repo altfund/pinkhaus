@@ -1,0 +1,17 @@
+#!/bin/bash
+# Quick fixes to make dashboard work properly
+
+# Fix 1: Update database connection to use port 5999
+export PG_PORT=5999
+export PG_DB=ominari_production
+
+# Fix 2: Restart dashboard with correct environment
+pkill -f web_dashboard_real_odds 2>/dev/null || true
+sleep 1
+
+echo "Starting dashboard with correct database settings..."
+export DATABASE_URL="postgresql://ominari_user:ominari_2025_secure@localhost:5999/ominari_production"
+nohup .venv/bin/python web_dashboard_real_odds.py > dashboard.log 2>&1 &
+
+echo "Dashboard started. Check http://localhost:8888"
+echo "Logs: tail -f dashboard.log"
