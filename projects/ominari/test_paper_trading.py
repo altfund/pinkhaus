@@ -1,93 +1,220 @@
-#!/usr/bin/env python3
-"""Test paper trading functionality with existing markets"""
+#\!/usr/bin/env python3
+"""
+Test script to verify paper trading is working end-to-end
+"""
 
-import logging
-from datetime import datetime, timezone, timedelta
+import asyncio
+import sys
+import os
+from datetime import datetime, timedelta, timezone
+
+# Add project root to path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# Set up environment
+os.environ['PG_HOST'] = 'localhost'
+os.environ['PG_PORT'] = '5999'
+os.environ['PG_USER'] = 'ominari_user'
+os.environ['PG_PASSWORD'] = 'ominari_2025_secure'
+os.environ['PG_DB'] = 'ominari_production'
+
 from database_v2 import db_manager
-from models import Market
-from sqlalchemy import func, and_
-from simple_paper_trading import execute_simple_paper_trades
-import json
+from models import Market, Odd, Bet, BettingSession
+from config.bankroll_config import BankrollConfig
+from paper_trading_live import LivePaperTrader
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
-logger = logging.getLogger(__name__)
 
-def test_paper_trading():
-    """Test paper trading with existing market data."""
+async def test_components():
+    """Test individual components"""
+    print("🧪 Testing Paper Trading Components")
+    print("=" * 50)
     
-    logger.info("🧪 Testing Paper Trading System")
-    logger.info("=" * 50)
-    
-    # Check for active markets
-    with db_manager.get_db_session() as db:
-        # Get count of non-finished markets
-        active_count = db.query(func.count(Market.source_id)).filter(
-            Market.is_finished == False
-        ).scalar()
-        
-        logger.info(f"📊 Found {active_count:,} active markets in database")
-        
-        # Get some sample active markets
-        sample_markets = db.query(Market).filter(
-            Market.is_finished == False
-        ).limit(5).all()
-        
-        if sample_markets:
-            logger.info("\nSample active markets:")
-            for market in sample_markets:
-                logger.info(f"  • {market.home_team} vs {market.away_team}")
-                logger.info(f"    Sport: {market.sport}, Maturity: {market.maturity_date}")
-        
-        # Check if we have recent odds data
-        from models import Odd
-        recent_odds_count = 0
-        for market in sample_markets[:3]:
-            odds_count = db.query(func.count(Odd.source_id)).filter(
-                Odd.source_id == market.source_id
-            ).scalar()
-            recent_odds_count += odds_count
-            if odds_count > 0:
-                logger.info(f"    {market.home_team} vs {market.away_team}: {odds_count} odds")
-    
-    logger.info("\n🎲 Testing Paper Trading Execution")
-    logger.info("-" * 50)
-    
+    # Test 1: Database connection
+    print("\n1. Testing database connection...")
     try:
-        # Run paper trading without quotes (using stored odds)
-        execute_simple_paper_trades(use_sessions=True, use_execution_quotes=False)
-        logger.info("✅ Paper trading execution completed")
-        
-        # Check if any trades were recorded
-        try:
-            with open('paper_trading_sessions.json', 'r') as f:
-                sessions_data = json.load(f)
-                
-            sessions = sessions_data.get('sessions', {})
-            if sessions:
-                latest_session = max(sessions.keys())
-                session_data = sessions[latest_session]
-                
-                logger.info(f"\n📈 Session {latest_session} Summary:")
-                logger.info(f"  • Total capital: ${session_data.get('total_capital', 0):,.2f}")
-                logger.info(f"  • Available capital: ${session_data.get('available_capital', 0):,.2f}")
-                logger.info(f"  • Positions: {len(session_data.get('positions', {}))}")
-                logger.info(f"  • Total P&L: ${session_data.get('total_pnl', 0):,.2f}")
-                
-                # Show recent positions
-                positions = session_data.get('positions', {})
-                if positions:
-                    logger.info("\n  Recent positions:")
-                    for i, (pos_id, pos) in enumerate(list(positions.items())[-3:]):
-                        logger.info(f"    - {pos.get('bet_name', 'Unknown')}")
-                        logger.info(f"      Size: ${pos.get('size', 0):,.2f}, Status: {pos.get('status', 'unknown')}")
-                
-        except Exception as e:
-            logger.warning(f"Could not read session data: {e}")
-            
+        with db_manager.get_db_session() as db:
+            market_count = db.query(Market).count()
+            print(f"✅ Database connected. Markets: {market_count}")
     except Exception as e:
-        logger.error(f"❌ Paper trading test failed: {e}", exc_info=True)
+        print(f"❌ Database error: {e}")
+        return False
+        
+    # Test 2: Bankroll config
+    print("\n2. Testing bankroll configuration...")
+    try:
+        bankroll = BankrollConfig()
+        current = bankroll.get_current_bankroll()
+        print(f"✅ Bankroll config loaded. Current: ${current:.2f}")
+    except Exception as e:
+        print(f"❌ Bankroll error: {e}")
+        return False
+        
+    # Test 3: Find markets with odds
+    print("\n3. Testing market and odds data...")
+    try:
+        with db_manager.get_db_session() as db:
+            # Get a market with odds
+            market_with_odds = db.query(Market).join(
+                Odd, Market.source_id == Odd.source_market_id
+            ).first()
+            
+            if market_with_odds:
+                odds_count = db.query(Odd).filter(
+                    Odd.source_market_id == market_with_odds.source_id
+                ).count()
+                print(f"✅ Found market: {market_with_odds.home_team} vs {market_with_odds.away_team}")
+                print(f"   Odds records: {odds_count}")
+            else:
+                print("❌ No markets with odds found")
+                return False
+    except Exception as e:
+        print(f"❌ Market query error: {e}")
+        return False
+        
+    return True
+
+
+async def test_trading_logic():
+    """Test the trading logic"""
+    print("\n🎯 Testing Trading Logic")
+    print("=" * 50)
     
-    logger.info("\n✅ Paper Trading Test Complete!")
+    trader = LivePaperTrader()
+    
+    # Test finding opportunities
+    print("\n1. Finding betting opportunities...")
+    opportunities = await trader.find_betting_opportunities()
+    
+    if opportunities:
+        print(f"✅ Found {len(opportunities)} opportunities")
+        for i, opp in enumerate(opportunities[:3]):
+            print(f"\n   Opportunity {i+1}:")
+            print(f"   Match: {opp['market'].home_team} vs {opp['market'].away_team}")
+            print(f"   Outcome: {opp['outcome']}")
+            print(f"   Odds: {opp['odds']:.2f}")
+            print(f"   Edge: {opp['edge']:.2f}%")
+            print(f"   Fair Prob: {opp['fair_prob']:.2%}")
+    else:
+        print("❌ No opportunities found")
+        print("   This might be because:")
+        print("   - No markets in next 24 hours")
+        print("   - No markets with positive edge")
+        print("   - Database has no recent odds")
+        
+    # Test bet calculation
+    print("\n2. Testing bet sizing...")
+    test_prob = 0.55  # 55% win probability
+    test_odds = 2.0   # Even money
+    test_bankroll = 10000
+    
+    bet_size = trader.calculate_kelly_bet(test_prob, test_odds, test_bankroll)
+    print(f"✅ Kelly bet calculation:")
+    print(f"   Probability: {test_prob:.0%}")
+    print(f"   Odds: {test_odds}")
+    print(f"   Bankroll: ${test_bankroll}")
+    print(f"   Bet size: ${bet_size:.2f} ({bet_size/test_bankroll*100:.1f}% of bankroll)")
+    
+    return len(opportunities) > 0
+
+
+async def run_mini_session():
+    """Run a mini trading session"""
+    print("\n🚀 Running Mini Trading Session (30 seconds)")
+    print("=" * 50)
+    
+    trader = LivePaperTrader()
+    
+    # Create a test session
+    try:
+        with db_manager.get_db_session() as db:
+            session = BettingSession(
+                name=f"Test Session {datetime.now().strftime('%H:%M:%S')}",
+                bankroll=trader.bankroll_config.get_current_bankroll(),
+                strategy_name="Test Strategy",
+                is_paper=True,
+                created_at=datetime.now(timezone.utc)
+            )
+            db.add(session)
+            db.commit()
+            trader.session_id = session.id
+            print(f"✅ Created test session: {session.id}")
+    except Exception as e:
+        print(f"❌ Failed to create session: {e}")
+        return False
+        
+    # Run for 30 seconds
+    trader.is_running = True
+    start_time = datetime.now()
+    
+    while (datetime.now() - start_time).seconds < 30:
+        try:
+            # Find opportunities
+            opportunities = await trader.find_betting_opportunities()
+            
+            if opportunities:
+                print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Found {len(opportunities)} opportunities")
+                
+                # Try to place one bet
+                for opp in opportunities[:1]:  # Just first one
+                    bet = await trader.place_bet(opp)
+                    if bet:
+                        print(f"✅ Placed test bet\!")
+                        break
+            else:
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] No opportunities found")
+                
+            await asyncio.sleep(10)
+            
+        except Exception as e:
+            print(f"❌ Error in trading loop: {e}")
+            
+    # Check results
+    print("\n📊 Session Summary:")
+    with db_manager.get_db_session() as db:
+        bets = db.query(Bet).filter(
+            Bet.betting_session_id == trader.session_id
+        ).all()
+        
+        print(f"Total bets placed: {len(bets)}")
+        for bet in bets:
+            print(f"  - {bet.home_team} vs {bet.away_team}: {bet.outcome} @ {bet.odds} (${bet.stake:.2f})")
+            
+    return True
+
+
+async def main():
+    """Run all tests"""
+    print("🏁 PAPER TRADING END-TO-END TEST")
+    print("=" * 50)
+    print(f"Started at: {datetime.now()}")
+    print()
+    
+    # Run component tests
+    if not await test_components():
+        print("\n❌ Component tests failed. Fix these first\!")
+        return
+        
+    # Test trading logic
+    if not await test_trading_logic():
+        print("\n⚠️  No trading opportunities found")
+        print("This is normal if:")
+        print("- Database has old data")
+        print("- No games in next 24 hours")
+        print("- All markets have negative edge")
+        
+    # Run mini session
+    print("\n" + "=" * 50)
+    input("Press Enter to run a 30-second trading session...")
+    
+    await run_mini_session()
+    
+    print("\n✅ Test complete\!")
+    print("\nNext steps:")
+    print("1. Check config/bankroll.json for bankroll tracking")
+    print("2. Run the dashboard to see trades: python main.py")
+    print("3. Check /api/trades endpoint for trade display")
+
 
 if __name__ == "__main__":
-    test_paper_trading()
+    asyncio.run(main())
+EOF < /dev/null

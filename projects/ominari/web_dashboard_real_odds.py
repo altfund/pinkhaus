@@ -406,6 +406,27 @@ DASHBOARD_HTML = """
             </div>
             
             <div>
+                <h3>📊 Recent Paper Trades</h3>
+                <div id="trades-container" style="max-height: 300px; overflow-y: auto; background: #1a1a1a; padding: 10px; border-radius: 8px;">
+                    <table class="trades-table" style="width: 100%; font-size: 11px;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #333;">
+                                <th style="text-align: left; padding: 5px;">Match</th>
+                                <th style="padding: 5px;">Outcome</th>
+                                <th style="padding: 5px;">Stake</th>
+                                <th style="padding: 5px;">Odds</th>
+                                <th style="padding: 5px;">Status</th>
+                                <th style="padding: 5px;">P&L</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trades-tbody">
+                            <tr><td colspan="6" style="text-align: center; padding: 20px; color: #666;">No trades yet...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div>
                 <h3>📝 Activity Log</h3>
                 <div class="log-section" id="activity-log">
                     <div class="log-entry">System initialized - fetching real odds</div>
@@ -704,6 +725,45 @@ DASHBOARD_HTML = """
             log.appendChild(entry);
             log.scrollTop = log.scrollHeight;
         }
+        
+        // Fetch trades periodically
+        function fetchTrades() {
+            fetch('/api/trades')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.trades.length > 0) {
+                        const tbody = document.getElementById('trades-tbody');
+                        tbody.innerHTML = data.trades.map(trade => {
+                            const statusClass = trade.status === 'won' ? 'color: #00ff00;' : 
+                                              trade.status === 'lost' ? 'color: #ff0000;' : 
+                                              'color: #ffcc00;';
+                            const pnlClass = trade.pnl > 0 ? 'color: #00ff00;' : 'color: #ff0000;';
+                            
+                            return `
+                                <tr style="border-bottom: 1px solid #222;">
+                                    <td style="padding: 5px; font-size: 10px;">${trade.match}</td>
+                                    <td style="padding: 5px; text-align: center;">${trade.outcome}</td>
+                                    <td style="padding: 5px; text-align: right;">$${trade.stake.toFixed(2)}</td>
+                                    <td style="padding: 5px; text-align: center;">${trade.odds.toFixed(2)}</td>
+                                    <td style="padding: 5px; text-align: center; ${statusClass}">${trade.status.toUpperCase()}</td>
+                                    <td style="padding: 5px; text-align: right; ${pnlClass}">
+                                        ${trade.pnl > 0 ? '+' : ''}$${trade.pnl.toFixed(2)}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                        
+                        addLog(`Loaded ${data.trades.length} trades`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching trades:', error);
+                });
+        }
+        
+        // Fetch trades every 30 seconds
+        fetchTrades();
+        setInterval(fetchTrades, 30000);
         
         // Request initial data
         setTimeout(() => {
@@ -1059,6 +1119,37 @@ def index():
         filter_text += f" - {', '.join(ALLOWED_LEAGUES)}"
     return render_template_string(DASHBOARD_HTML.replace('${allowed_sports}', filter_text))
 
+@app.route('/api/trades')
+@rate_limit(limiter=api_limiter)
+def get_trades():
+    """Get recent trades"""
+    try:
+        with db_manager.get_db_session() as db:
+            # Get recent bets
+            recent_bets = db.query(Bet).join(BettingSession).filter(
+                BettingSession.session_type == 'paper'
+            ).order_by(Bet.created_at.desc()).limit(20).all()
+            
+            trades = []
+            for bet in recent_bets:
+                # Extract match info from bet_name if possible
+                match_name = bet.bet_name or f"Market {bet.source_id[:8]}..."
+                trades.append({
+                    'id': bet.id,
+                    'match': match_name,
+                    'outcome': bet.normalized_outcome,
+                    'stake': float(bet.stake) if bet.stake else 0,
+                    'odds': float(bet.odds) if bet.odds else 0,
+                    'status': 'pending',  # Since we don't track status in Bet model
+                    'placed_at': bet.created_at.isoformat() if bet.created_at else None,
+                    'pnl': 0  # Would need separate tracking for actual P&L
+                })
+                
+            return jsonify({'trades': trades, 'success': True})
+    except Exception as e:
+        logger.error(f"Error getting trades: {e}")
+        return jsonify({'trades': [], 'error': str(e)})
+
 @app.route('/health')
 @rate_limit(limiter=api_limiter)
 def health():
@@ -1186,14 +1277,14 @@ def start_automated_trading():
         )
         logger.info(f"Started blockchain sync (PID: {blockchain_proc.pid})")
         
-        # Start automated trading system
+        # Start paper trading system
         trading_proc = subprocess.Popen(
-            [sys.executable, 'automated_trading_system.py'],
+            [sys.executable, 'paper_trading_live.py'],
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
-        logger.info(f"Started automated trading (PID: {trading_proc.pid})")
+        logger.info(f"Started paper trading (PID: {trading_proc.pid})")
         
         # Start performance monitor
         monitor_proc = subprocess.Popen(
