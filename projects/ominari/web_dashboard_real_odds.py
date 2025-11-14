@@ -1170,7 +1170,7 @@ def start_automated_trading():
     
     # Start blockchain sync
     env = os.environ.copy()
-    env['DATABASE_URL'] = os.getenv('DATABASE_URL', f'postgresql://ominari_user:ominari_2025_secure@localhost:{PG_CONFIG["port"]}/{PG_CONFIG["database"]}')
+    env['DATABASE_URL'] = os.getenv('DATABASE_URL', 'postgresql://ominari_user:ominari_2025_secure@localhost:5999/ominari_production')
     
     try:
         # Start blockchain reader in daemon mode
