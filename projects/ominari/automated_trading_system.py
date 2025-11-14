@@ -24,7 +24,7 @@ from signals import ImpliedRawSignal, VolumeWeightedSignal, BlockchainEnhancedSi
 from web_dashboard_real_odds import calculate_edge, get_active_positions
 from trading_strategies import create_trading_strategies
 from config.bankroll_config import BankrollConfig
-from notifications.slack_notifier import slack_notifier
+from notifications.discord_notifier import discord_notifier
 
 # Configure logging
 logging.basicConfig(
@@ -85,9 +85,9 @@ class PortfolioManager:
             self.daily_stats['trades'] += 1
             self.daily_stats['pnl'] += pnl
             
-            # Send Slack notification for significant trades
+            # Send Discord notification for significant trades
             if abs(pnl) > 100 or abs(position['edge']) > 10:
-                slack_notifier.send_trade_alert({
+                discord_notifier.send_trade_alert({
                     'type': 'CLOSE',
                     'market': market_id,
                     'outcome': position['outcome'],
@@ -150,7 +150,7 @@ class AutomatedTradingSystem:
         self.is_running = False
         
         # Send startup notification
-        slack_notifier.send_startup_message()
+        discord_notifier.send_startup_message()
         
         # Trading parameters
         self.min_edge_threshold = 2.0  # Minimum 2% edge to place bet
@@ -231,14 +231,18 @@ class AutomatedTradingSystem:
                 logger.info(f"Running backtest from {start_date} to {end_date}")
                 
                 # Run vectorized backtest
-                from vectorized_backtest import run_backtest
-                results = await asyncio.to_thread(
-                    run_backtest,
-                    start_date=start_date.strftime("%Y-%m-%d"),
-                    end_date=end_date.strftime("%Y-%m-%d"),
-                    initial_bankroll=10000,
-                    strategies=['implied_raw', 'volume_weighted', 'blockchain_enhanced']
-                )
+                try:
+                    from vectorized_backtest import run_backtest
+                    results = await asyncio.to_thread(
+                        run_backtest,
+                        start_date=start_date.strftime("%Y-%m-%d"),
+                        end_date=end_date.strftime("%Y-%m-%d"),
+                        initial_bankroll=10000,
+                        strategies=['implied_raw', 'volume_weighted', 'blockchain_enhanced']
+                    )
+                except ImportError:
+                    logger.warning("vectorized_backtest module not found, skipping backtest")
+                    results = {}
                 
                 # Log backtest results
                 for strategy, metrics in results.items():

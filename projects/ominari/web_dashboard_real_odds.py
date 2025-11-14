@@ -1261,30 +1261,22 @@ def start_automated_trading():
     import subprocess
     import os
     
-    logger.info("Starting automated trading system...")
+    logger.info("Starting integrated trading system...")
     
     # Start blockchain sync
     env = os.environ.copy()
     env['DATABASE_URL'] = os.getenv('DATABASE_URL', 'postgresql://ominari_user:ominari_2025_secure@localhost:5999/ominari_production')
     
     try:
-        # Start blockchain reader in daemon mode
-        blockchain_proc = subprocess.Popen(
-            [sys.executable, 'blockchain_reader.py', '--daemon'],
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        logger.info(f"Started blockchain sync (PID: {blockchain_proc.pid})")
-        
-        # Start paper trading system
+        # Start integrated trading system (includes real odds + paper trading)
         trading_proc = subprocess.Popen(
-            [sys.executable, 'paper_trading_live.py'],
+            [sys.executable, 'integrated_trading_system.py'],
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
-        logger.info(f"Started paper trading (PID: {trading_proc.pid})")
+        logger.info(f"Started integrated trading system (PID: {trading_proc.pid})")
+        logger.info("✅ System includes: real odds fetching + paper trading + Discord notifications")
         
         # Start performance monitor
         monitor_proc = subprocess.Popen(
@@ -1297,7 +1289,7 @@ def start_automated_trading():
         
         return True
     except Exception as e:
-        logger.error(f"Failed to start automated trading: {e}")
+        logger.error(f"Failed to start integrated trading: {e}")
         return False
 
 if __name__ == '__main__':
