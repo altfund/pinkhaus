@@ -146,8 +146,8 @@ Test results:
 ### Data Flow
 
 ```
-Blockchain ’ Reader ’ PostgreSQL ’ Signal Generation ’ Paper Trading ’ Dashboard
-                           “
+Blockchain Â’ Reader Â’ PostgreSQL Â’ Signal Generation Â’ Paper Trading Â’ Dashboard
+                           Â“
                          Redis (Cache)
 ```
 
