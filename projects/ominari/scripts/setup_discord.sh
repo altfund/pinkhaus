@@ -20,10 +20,10 @@ if [ -z "$webhook_url" ]; then
     exit 1
 fi
 
-# Validate webhook URL format
-if [[ ! "$webhook_url" =~ ^https://discord\.com/api/webhooks/ ]]; then
+# Validate webhook URL format (accept both discord.com and discordapp.com)
+if [[ ! "$webhook_url" =~ ^https://(discord\.com|discordapp\.com)/api/webhooks/ ]]; then
     echo "❌ Invalid Discord webhook URL format"
-    echo "   URL should start with: https://discord.com/api/webhooks/"
+    echo "   URL should start with: https://discord.com/api/webhooks/ or https://discordapp.com/api/webhooks/"
     exit 1
 fi
 

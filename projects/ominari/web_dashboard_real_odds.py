@@ -1260,6 +1260,7 @@ def start_automated_trading():
     """Start the automated trading system in background"""
     import subprocess
     import os
+    import sys
     
     logger.info("Starting integrated trading system...")
     
@@ -1268,15 +1269,15 @@ def start_automated_trading():
     env['DATABASE_URL'] = os.getenv('DATABASE_URL', 'postgresql://ominari_user:ominari_2025_secure@localhost:5999/ominari_production')
     
     try:
-        # Start integrated trading system (includes real odds + paper trading)
+        # Start liquidity-aware trading system (includes real odds + liquidity + paper trading)
         trading_proc = subprocess.Popen(
-            [sys.executable, 'integrated_trading_system.py'],
+            [sys.executable, 'liquidity_aware_trading.py'],
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
-        logger.info(f"Started integrated trading system (PID: {trading_proc.pid})")
-        logger.info("✅ System includes: real odds fetching + paper trading + Discord notifications")
+        logger.info(f"Started liquidity-aware trading system (PID: {trading_proc.pid})")
+        logger.info("✅ System includes: real odds + blockchain liquidity + paper trading + Discord notifications")
         
         # Start performance monitor
         monitor_proc = subprocess.Popen(
