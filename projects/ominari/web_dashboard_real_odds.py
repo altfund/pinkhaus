@@ -26,6 +26,8 @@ os.environ['USE_POSTGRESQL'] = '1'
 
 # Import dashboard configuration
 from dashboard_config import ALLOWED_SPORTS, ALLOWED_LEAGUES, ALLOWED_NATIONS, DASHBOARD_SETTINGS, get_display_league
+from models import Market, Odd, Bet, BettingSession
+from models import Market, Odd, Bet, BettingSession
 
 # Flask app setup
 app = Flask(__name__)
@@ -308,12 +310,29 @@ DASHBOARD_HTML = """
                         <div class="stat-value" id="odds-range">-</div>
                         <div class="stat-label">Odds Range</div>
                     </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-positions">$0</div>
+                        <div class="stat-label">Total Positions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="active-bets">0</div>
+                        <div class="stat-label">Active Bets</div>
+                    </div>
                 </div>
             </div>
             
             <div class="odds-summary">
                 <h4>Odds Distribution</h4>
                 <div id="odds-dist">Loading...</div>
+            </div>
+            
+            <div class="position-summary">
+                <h4>Position Summary</h4>
+                <div id="position-dist">
+                    <div>Home: $<span id="pos-home">0</span></div>
+                    <div>Draw: $<span id="pos-draw">0</span></div>
+                    <div>Away: $<span id="pos-away">0</span></div>
+                </div>
             </div>
             
             <div>
@@ -383,6 +402,8 @@ DASHBOARD_HTML = """
             document.getElementById('real-odds').textContent = data.stats?.real_odds_count || 0;
             document.getElementById('bankroll').textContent = '$' + (data.trading_status?.bankroll || 0).toLocaleString();
             document.getElementById('odds-range').textContent = data.stats?.odds_range || '-';
+            document.getElementById('total-positions').textContent = '$' + (data.stats?.total_positions || 0).toFixed(0);
+            document.getElementById('active-bets').textContent = data.stats?.active_bets || 0;
             
             // Update odds distribution
             if (data.odds_distribution) {
@@ -391,6 +412,13 @@ DASHBOARD_HTML = """
                     distHtml += `<div>${item.odds.toFixed(2)}: ${item.count} markets</div>`;
                 });
                 document.getElementById('odds-dist').innerHTML = distHtml;
+            }
+            
+            // Update position distribution
+            if (data.stats?.positions_by_outcome) {
+                document.getElementById('pos-home').textContent = data.stats.positions_by_outcome.Home.toFixed(0);
+                document.getElementById('pos-draw').textContent = data.stats.positions_by_outcome.Draw.toFixed(0);
+                document.getElementById('pos-away').textContent = data.stats.positions_by_outcome.Away.toFixed(0);
             }
             
             // Update markets
@@ -419,8 +447,16 @@ DASHBOARD_HTML = """
                         hasLinks: market.overtime_link || market.blockchain_link
                     };
                 }
+                // Map outcome names
+                const positionMap = {
+                    'Home': 'home',
+                    'Draw': 'draw', 
+                    'Away': 'away'
+                };
+                const position = positionMap[market.position] || market.position.toLowerCase();
+                
                 // Store by position for easy access
-                marketsByGame[gameKey].markets[market.position.toLowerCase()] = market;
+                marketsByGame[gameKey].markets[position] = market;
             });
             
             // Create table HTML
@@ -454,11 +490,13 @@ DASHBOARD_HTML = """
                 const matchDate = new Date(game.maturity_date);
                 const timeStr = formatMatchTime(matchDate);
                 
-                // Calculate edges for each position
+                // Calculate max edge and total position
                 const homeEdge = homeOdds?.edge || 0;
                 const drawEdge = drawOdds?.edge || 0;
                 const awayEdge = awayOdds?.edge || 0;
                 const maxEdge = Math.max(homeEdge, drawEdge, awayEdge);
+                
+                const totalPosition = (homeOdds?.position_size || 0) + (drawOdds?.position_size || 0) + (awayOdds?.position_size || 0);
                 
                 tableHTML += `
                     <tr class="${index > 0 ? 'game-separator' : ''}">
@@ -475,18 +513,16 @@ DASHBOARD_HTML = """
                         </td>
                         <td class="odds-cell">
                             ${formatOdds(homeOdds)}
-                            ${homeEdge ? formatEdge(homeEdge) : ''}
                         </td>
                         <td class="odds-cell">
                             ${formatOdds(drawOdds)}
-                            ${drawEdge ? formatEdge(drawEdge) : ''}
                         </td>
                         <td class="odds-cell">
                             ${formatOdds(awayOdds)}
-                            ${awayEdge ? formatEdge(awayEdge) : ''}
                         </td>
                         <td class="edge-cell" style="${maxEdge > 0 ? 'color: #00ff00;' : ''}">
-                            ${maxEdge > 0 ? maxEdge.toFixed(1) : '-'}
+                            ${maxEdge > 0 ? '+' + maxEdge.toFixed(1) + '%' : '-'}
+                            ${totalPosition > 0 ? `<div style="font-size: 10px; color: #ffcc00;">$${totalPosition.toFixed(0)}</div>` : ''}
                         </td>
                         <td class="links-cell">
                             ${game.hasLinks ? '🔗' : ''}
@@ -503,7 +539,9 @@ DASHBOARD_HTML = """
             if (!market || !market.odds) return '<span style="color:#444">-</span>';
             
             const odds = market.odds;
-            const impliedProb = (1 / odds * 100).toFixed(1);
+            const impliedProb = market.implied_prob ? market.implied_prob.toFixed(1) : (1 / odds * 100).toFixed(1);
+            const position = market.position_size || 0;
+            const edge = market.edge || 0;
             
             let oddsClass = 'odds-value';
             if (odds > 5) oddsClass += ' high';
@@ -516,9 +554,11 @@ DASHBOARD_HTML = """
                     <span class="${oddsClass}" ${isDefault ? 'style="opacity: 0.5;"' : ''}>
                         ${odds.toFixed(3)}
                     </span>
+                    ${edge !== 0 ? `<span style="font-size: 10px; color: ${edge > 0 ? '#00ff00' : '#ff6666'};">${edge > 0 ? '+' : ''}${edge.toFixed(1)}%</span>` : ''}
                 </div>
                 <div class="implied-prob" style="font-size: 9px; color: #666;">
                     ${impliedProb}%
+                    ${position > 0 ? `<span style="color: #ffcc00; font-weight: bold;"> $${position.toFixed(0)}</span>` : ''}
                 </div>
             `;
         }
@@ -570,7 +610,7 @@ DASHBOARD_HTML = """
 # Import database components directly
 try:
     from database_v2 import db_manager
-    from models import Market, Odd
+    from models import Market, Odd, Bet, BettingSession
     from paper_trading_postgres_integrated import PaperTradingSessionManager
     from sqlalchemy import and_, or_, not_, func
     
@@ -581,6 +621,82 @@ except Exception as e:
     logger.error(f"Failed to load components: {e}")
     components_loaded = False
     session_manager = None
+
+def calculate_edge(odds_by_outcome):
+    """Calculate edge based on normalized implied probability vs fair odds"""
+    edges = {}
+    
+    # Get implied probabilities
+    total_prob = 0
+    probs = {}
+    for outcome, odd in odds_by_outcome.items():
+        if odd and hasattr(odd, 'normalized_implied') and odd.normalized_implied:
+            probs[outcome] = odd.normalized_implied
+            total_prob += odd.normalized_implied
+        else:
+            probs[outcome] = 0
+    
+    # Calculate fair probabilities (removing margin)
+    if total_prob <= 0:
+        return {}
+    
+    fair_probs = {k: v / total_prob for k, v in probs.items()}
+    
+    # Calculate edge for each outcome
+    for outcome, odd in odds_by_outcome.items():
+        if odd and hasattr(odd, 'decimal_odds') and odd.decimal_odds and outcome in fair_probs and fair_probs[outcome] > 0:
+            fair_odds = 1 / fair_probs[outcome]
+            actual_odds = odd.decimal_odds
+            edge = ((actual_odds / fair_odds) - 1) * 100
+            edges[outcome] = round(edge, 2)
+        else:
+            edges[outcome] = 0
+    
+    return edges
+
+def get_active_positions():
+    """Get active positions from current betting sessions"""
+    positions = {}
+    
+    try:
+        with db_manager.get_db_session() as db:
+            # Get recent paper/live trading sessions (last 24 hours)
+            from datetime import datetime, timedelta
+            recent_time = datetime.utcnow() - timedelta(hours=24)
+            
+            active_sessions = db.query(BettingSession).filter(
+                BettingSession.session_type.in_(['paper', 'live']),
+                BettingSession.created_at >= recent_time
+            ).order_by(BettingSession.created_at.desc()).limit(10).all()
+            
+            if not active_sessions:
+                return positions
+            
+            session_ids = [s.id for s in active_sessions]
+            
+            # Get all bets from these sessions grouped by market and outcome
+            active_bets = db.query(
+                Bet.source_id,
+                Bet.normalized_outcome,
+                func.sum(Bet.execution_stake).label('total_stake')
+            ).filter(
+                Bet.session_id.in_(session_ids)
+            ).group_by(
+                Bet.source_id,
+                Bet.normalized_outcome
+            ).all()
+            
+            # Organize by market
+            for bet in active_bets:
+                market_id = bet.source_id
+                if market_id not in positions:
+                    positions[market_id] = {}
+                positions[market_id][bet.normalized_outcome] = float(bet.total_stake or 0)
+    
+    except Exception as e:
+        logger.error(f"Error getting positions: {e}")
+    
+    return positions
 
 async def get_real_odds_data():
     """Get markets with REAL odds from database"""
@@ -595,8 +711,8 @@ async def get_real_odds_data():
     
     try:
         with db_manager.get_db_session() as db:
-            # Get markets with non-default odds
-            query = db.query(Market, Odd).join(Odd, Market.source_id == Odd.source_id).filter(
+            # First get unique markets
+            market_query = db.query(Market).join(Odd, Market.source_id == Odd.source_id).filter(
                 # Exclude default odds
                 not_(and_(
                     Odd.decimal_odds.in_([2.5, 2.8, 3.0])
@@ -605,26 +721,91 @@ async def get_real_odds_data():
             
             # Apply sport filter if configured
             if ALLOWED_SPORTS and ALLOWED_SPORTS != ['']:
-                query = query.filter(Market.sport.in_(ALLOWED_SPORTS))
+                market_query = market_query.filter(Market.sport.in_(ALLOWED_SPORTS))
                 logger.info(f"Filtering markets for sports: {ALLOWED_SPORTS}")
             
             # Apply league filter if configured
             if ALLOWED_LEAGUES and ALLOWED_LEAGUES != ['']:
-                query = query.filter(Market.league_name.in_(ALLOWED_LEAGUES))
+                market_query = market_query.filter(Market.league_name.in_(ALLOWED_LEAGUES))
                 logger.info(f"Filtering markets for leagues: {ALLOWED_LEAGUES}")
             
             # Apply nation filter if configured
             if ALLOWED_NATIONS and ALLOWED_NATIONS != ['']:
-                query = query.filter(Market.nation.in_(ALLOWED_NATIONS))
+                market_query = market_query.filter(Market.nation.in_(ALLOWED_NATIONS))
                 logger.info(f"Filtering markets for nations: {ALLOWED_NATIONS}")
             
             # Exclude "International Football" league as it contains mostly American Football
-            query = query.filter(Market.league_name != 'International Football')
+            market_query = market_query.filter(Market.league_name != 'International Football')
             
-            query = query.order_by(Market.maturity_date.desc()).limit(DASHBOARD_SETTINGS['markets_limit'])
+            market_query = market_query.distinct().order_by(Market.maturity_date.desc()).limit(DASHBOARD_SETTINGS['markets_limit'])
             
-            results = query.all()
+            market_results = market_query.all()
             
+            # Get all positions from paper trading sessions
+            positions = get_active_positions()
+            
+            # Get odds for all fetched markets
+            market_ids = [m.source_id for m in market_results]
+            
+            # Format markets with all their odds
+            for market in market_results:
+                # Get all odds for this market
+                market_odds = db.query(Odd).filter(
+                    Odd.source_id == market.source_id,
+                    not_(Odd.decimal_odds.in_([2.5, 2.8, 3.0]))
+                ).all()
+                
+                # Group odds by outcome
+                odds_by_outcome = {}
+                for odd in market_odds:
+                    odds_by_outcome[odd.outcome] = odd
+                
+                # Calculate edges for this market
+                edges = calculate_edge(odds_by_outcome)
+                
+                # Get positions for this market
+                market_positions = positions.get(market.source_id, {})
+                
+                # Create a market entry for each outcome
+                for outcome, odd in odds_by_outcome.items():
+                    # Generate links
+                    overtime_link = None
+                    blockchain_link = None
+                
+                    if market.source_id:
+                        # These IDs (like v2_0x323032...) are hex-encoded internal IDs, not blockchain addresses
+                        # They decode to date-based IDs like "2025092094118470"
+                        # So we can't generate valid blockchain explorer links
+                        
+                        # We can try Overtime Markets links, but the URL structure might not support these IDs
+                        overtime_link = f"https://overtimemarkets.xyz/markets/{market.source_id}"
+                        
+                        # No blockchain link since these aren't real blockchain addresses
+                        blockchain_link = None
+                    
+                    # Map outcomes for display
+                    outcome_position = market_positions.get(outcome, 0)
+                    edge_value = edges.get(outcome, 0)
+                    
+                    markets.append({
+                        'match_id': market.source_id,
+                        'home_team': market.home_team,
+                        'away_team': market.away_team,
+                        'sport': market.sport,
+                        'league': market.league_name or 'Unknown',
+                        'nation': market.nation or 'Unknown',
+                        'maturity_date': str(market.maturity_date),
+                        'odds': float(odd.decimal_odds),
+                        'position': odd.outcome,
+                        'source': odd.source or 'db',
+                        'blockchain_connected': bool(getattr(market, 'blockchain_id', None)),
+                        'overtime_link': overtime_link,
+                        'blockchain_link': blockchain_link,
+                        'edge': edge_value,
+                        'position_size': outcome_position,
+                        'implied_prob': float(odd.normalized_implied) if odd.normalized_implied else 0
+                    })
+                
             # Get odds distribution
             odds_dist_query = db.query(
                 Odd.decimal_odds,
@@ -633,58 +814,18 @@ async def get_real_odds_data():
                 not_(Odd.decimal_odds.in_([2.5, 2.8, 3.0]))
             )
             
-            # Apply sport filter to odds distribution too
+            # Apply filters to odds distribution
             if ALLOWED_SPORTS and ALLOWED_SPORTS != ['']:
                 odds_dist_query = odds_dist_query.filter(Market.sport.in_(ALLOWED_SPORTS))
-            
-            # Apply league filter to odds distribution too
             if ALLOWED_LEAGUES and ALLOWED_LEAGUES != ['']:
                 odds_dist_query = odds_dist_query.filter(Market.league_name.in_(ALLOWED_LEAGUES))
-            
-            # Apply nation filter to odds distribution too
             if ALLOWED_NATIONS and ALLOWED_NATIONS != ['']:
                 odds_dist_query = odds_dist_query.filter(Market.nation.in_(ALLOWED_NATIONS))
                 
             odds_dist = odds_dist_query.group_by(Odd.decimal_odds).order_by(func.count(Odd.id).desc()).limit(10).all()
-            
             odds_distribution = [{'odds': float(o[0]), 'count': o[1]} for o in odds_dist]
             
-            # Format markets
-            for market, odd in results:
-                # Generate links
-                overtime_link = None
-                blockchain_link = None
-                
-                if market.source_id:
-                    # These IDs (like v2_0x323032...) are hex-encoded internal IDs, not blockchain addresses
-                    # They decode to date-based IDs like "2025092094118470"
-                    # So we can't generate valid blockchain explorer links
-                    
-                    # We can try Overtime Markets links, but the URL structure might not support these IDs
-                    overtime_link = f"https://overtimemarkets.xyz/markets/{market.source_id}"
-                    
-                    # No blockchain link since these aren't real blockchain addresses
-                    blockchain_link = None
-                
-                markets.append({
-                    'match_id': market.source_id,
-                    'home_team': market.home_team,
-                    'away_team': market.away_team,
-                    'sport': market.sport,
-                    'league': market.league_name or 'Unknown',
-                    'nation': market.nation or 'Unknown',
-                    'maturity_date': str(market.maturity_date),
-                    'odds': float(odd.decimal_odds),
-                    'position': odd.outcome,
-                    'source': odd.source or 'db',
-                    'blockchain_connected': bool(getattr(market, 'blockchain_id', None)),
-                    'overtime_link': overtime_link,
-                    'blockchain_link': blockchain_link,
-                    # Add edge placeholder - would be calculated from signal
-                    'edge': 0.0  # This would be: (signal_prob - implied_prob) * 100
-                })
-                
-            logger.info(f"Fetched {len(markets)} markets with real odds")
+            logger.info(f"Fetched {len(markets)} markets with real odds and edges")
             
             # Cache the results
             cache.set(cache_key, {
@@ -715,6 +856,20 @@ async def get_dashboard_data():
     # Count real odds
     real_odds_count = sum(1 for m in markets if m['odds'] not in [2.5, 2.8, 3.0])
     
+    # Calculate position summary
+    total_positions = 0
+    active_bets = 0
+    position_by_outcome = {'Home': 0, 'Draw': 0, 'Away': 0}
+    
+    for market in markets:
+        if market.get('position_size', 0) > 0:
+            total_positions += market['position_size']
+            active_bets += 1
+            # Map position to outcome type
+            position = market.get('position', '')
+            if position in position_by_outcome:
+                position_by_outcome[position] += market['position_size']
+    
     # Get trading status
     trading_status = {'status': 'Active', 'bankroll': 10000}
     if session_manager:
@@ -736,7 +891,10 @@ async def get_dashboard_data():
         'stats': {
             'total_markets': len(markets),
             'real_odds_count': real_odds_count,
-            'odds_range': odds_range
+            'odds_range': odds_range,
+            'total_positions': total_positions,
+            'active_bets': active_bets,
+            'positions_by_outcome': position_by_outcome
         },
         'odds_distribution': odds_distribution
     }
