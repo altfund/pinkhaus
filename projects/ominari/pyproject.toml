@@ -42,6 +42,8 @@ dependencies = [
 	"flask-socketio>=5.5.1",
 	"redis>=6.4.0",
 	"psycopg2-binary>=2.9.10",
+	"cryptography>=46.0.3",
+	"eth-account>=0.13.7",
 ]
 
 [project.scripts]

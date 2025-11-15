@@ -41,7 +41,7 @@ class LiquidityAwareTradingSystem:
         self.is_running = False
         
         # Trading parameters with liquidity constraints
-        self.min_edge = 2.0  # Minimum 2% edge
+        self.min_edge = -1.0  # Temporarily allow negative edge for testing
         self.max_slippage = 1.0  # Maximum 1% slippage allowed
         self.min_liquidity = 100.0  # Minimum $100 liquidity required
         self.max_bet_pct = 5.0  # Max 5% of bankroll per bet

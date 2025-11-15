@@ -396,6 +396,10 @@ class DiscordNotifier:
             ]
         
         return self._send_embed(embed)
+    
+    def send_embed(self, embed: Dict) -> bool:
+        """Send a custom embed message to Discord"""
+        return self._send_embed(embed)
 
 
 # Global instance

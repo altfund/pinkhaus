@@ -1316,15 +1316,15 @@ def start_automated_trading():
     env['DATABASE_URL'] = os.getenv('DATABASE_URL', 'postgresql://ominari_user:ominari_2025_secure@localhost:5999/ominari_production')
     
     try:
-        # Start integrated trading system (includes real odds + liquidity + paper/real trading)
+        # Start integrated trading system with heartbeat (includes real odds + liquidity + paper/real trading + hourly updates)
         trading_proc = subprocess.Popen(
-            [sys.executable, 'integrated_trading_system.py'],
+            [sys.executable, 'integrated_trading_with_heartbeat.py'],
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
-        logger.info(f"Started integrated trading system (PID: {trading_proc.pid})")
-        logger.info("✅ System includes: real odds + blockchain liquidity + paper trading + Discord notifications")
+        logger.info(f"Started integrated trading system with heartbeat (PID: {trading_proc.pid})")
+        logger.info("✅ System includes: real odds + blockchain liquidity + paper trading + Discord notifications + hourly portfolio updates")
         
         # Start performance monitor
         monitor_proc = subprocess.Popen(
