@@ -79,6 +79,7 @@ print("  - ✓ Real-time market data with edge calculation")
 print("  - ✓ Automated paper trading with $10,000 starting bankroll")
 print("  - ✓ Blockchain data synchronization")
 print("  - ✓ Performance tracking and analytics")
+print("  - ✓ Hourly portfolio updates via Discord")
 print("\nPress Ctrl+C to stop all services\n")
 
 # Keep main process alive

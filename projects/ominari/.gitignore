@@ -170,3 +170,6 @@ venv_temp/
 # Trading process files
 trading_pid.txt
 trading_log.txt
+
+# Trading keys and configuration
+config/.trading_key

@@ -1,126 +1,171 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Demo Paper Trading Script
-Simulates some trades to demonstrate the trading system.
+Demo paper trading with notifications
+Shows how the system works without real money
 """
 
-import json
-import pandas as pd
-from datetime import datetime, timezone, timedelta
-import random
+import asyncio
+import os
+import sys
+import time
+from datetime import datetime, timezone
 
-def create_demo_trades():
-    """Create some demo trades for testing."""
-    # Create portfolio
-    portfolio = {
-        'cash': 8500.0,  # Started with 10k, placed 1500 in bets
-        'positions': {},
-        'total_value': 10000.0,
-        'trades': 15,
-        'wins': 9,
-        'losses': 6,
-        'pending_bets': {}
-    }
+# Add project root to path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# Set up environment
+os.environ['PG_PORT'] = '5999'
+
+from database_v2 import db_manager
+from models import Market, Odd, Bet, BettingSession
+from config.bankroll_config import BankrollConfig
+# from integrated_trading_system import IntegratedTradingSystem
+
+def show_portfolio_status():
+    """Display current portfolio status"""
+    config = BankrollConfig()
+    print("\n💰 Portfolio Status")
+    print("=" * 40)
+    print(f"Current Bankroll: ${config.get_current_bankroll():,.2f}")
+    print(f"Initial Bankroll: $10,000.00")
     
-    # Add some pending bets
-    pending_matches = [
-        {
-            'match_id': 'match_001',
-            'match': 'Liverpool vs Manchester United',
-            'bet_on': 'Liverpool',
-            'odds': 2.10,
-            'stake': 100.0,
-            'potential_return': 210.0,
-            'signal_prob': 0.55,
-            'market_prob': 0.476,
-            'edge': 0.074,
-            'confidence': 0.8,
-            'kick_off': (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
-        },
-        {
-            'match_id': 'match_002',
-            'match': 'Barcelona vs Real Madrid',
-            'bet_on': 'Draw',
-            'odds': 3.25,
-            'stake': 75.0,
-            'potential_return': 243.75,
-            'signal_prob': 0.35,
-            'market_prob': 0.308,
-            'edge': 0.042,
-            'confidence': 0.7,
-            'kick_off': (datetime.now(timezone.utc) + timedelta(hours=5)).isoformat()
-        }
-    ]
+    try:
+        stats = config.get_performance_stats()
+        total_trades = len(config.trades) if hasattr(config, 'trades') else 0
+        print(f"Total Trades: {total_trades}")
+        if total_trades > 0:
+            wins = sum(1 for t in config.trades if t.get('result') == 'won')
+            win_rate = (wins / total_trades) * 100
+            print(f"Win Rate: {win_rate:.1f}%")
+        current = config.get_current_bankroll()
+        roi = ((current - 10000) / 10000) * 100
+        print(f"ROI: {roi:.2f}%")
+        print(f"Total P&L: ${current - 10000:.2f}")
+    except:
+        # No trades yet
+        print(f"Total Trades: 0")
+        print(f"Win Rate: 0.0%")
+        print(f"ROI: 0.00%")
+        print(f"Total P&L: $0.00")
     
-    for bet in pending_matches:
-        portfolio['pending_bets'][bet['match_id']] = bet
+def show_recent_trades():
+    """Display recent trades"""
+    print("\n📊 Recent Trades")
+    print("=" * 40)
     
-    # Save portfolio
-    with open('paper_portfolio.json', 'w') as f:
-        json.dump(portfolio, f, indent=2)
-    
-    # Create trade history
-    trades = []
-    base_time = datetime.now(timezone.utc) - timedelta(days=7)
-    
-    matches = [
-        ('Arsenal vs Chelsea', 'Arsenal', 'Chelsea'),
-        ('Bayern Munich vs Dortmund', 'Bayern Munich', 'Draw'),
-        ('Juventus vs AC Milan', 'Draw', 'AC Milan'),
-        ('PSG vs Lyon', 'PSG', 'Lyon'),
-        ('Atletico Madrid vs Sevilla', 'Atletico Madrid', 'Draw'),
-        ('Inter Milan vs Roma', 'Inter Milan', 'Roma'),
-        ('Manchester City vs Tottenham', 'Manchester City', 'Draw'),
-        ('Ajax vs PSV', 'Ajax', 'PSV'),
-        ('Porto vs Benfica', 'Draw', 'Benfica'),
-        ('Celtic vs Rangers', 'Celtic', 'Rangers'),
-        ('Valencia vs Villarreal', 'Valencia', 'Draw'),
-        ('Napoli vs Lazio', 'Napoli', 'Lazio'),
-        ('Bayer Leverkusen vs RB Leipzig', 'Draw', 'RB Leipzig'),
-        ('Monaco vs Marseille', 'Monaco', 'Marseille'),
-        ('Sporting CP vs Braga', 'Sporting CP', 'Draw')
-    ]
-    
-    for i, (match, home_team, away_team) in enumerate(matches):
-        timestamp = base_time + timedelta(hours=i*12)
-        kick_off = timestamp - timedelta(hours=1)
+    with db_manager.get_db_session() as db:
+        recent_bets = db.query(Bet).order_by(
+            Bet.created_at.desc()
+        ).limit(5).all()
         
-        # Randomly choose who to bet on
-        bet_options = [home_team, away_team]
-        if 'Draw' in bet_options:
-            bet_on = 'Draw'
-            odds = random.uniform(3.0, 3.8)
-        else:
-            bet_on = random.choice(bet_options)
-            odds = random.uniform(1.8, 2.8)
-        
-        stake = random.uniform(50, 150)
-        signal_prob = random.uniform(0.35, 0.65)
-        
-        trades.append({
-            'timestamp': timestamp.isoformat(),
-            'match_id': f'hist_{i:03d}',
-            'match': match,
-            'bet_on': bet_on,
-            'odds': round(odds, 2),
-            'stake': round(stake, 2),
-            'potential_return': round(stake * odds, 2),
-            'signal_prob': round(signal_prob, 3),
-            'market_prob': round(1/odds, 3),
-            'edge': round(signal_prob - 1/odds, 3),
-            'confidence': round(random.uniform(0.6, 0.9), 2),
-            'kick_off': kick_off.isoformat()
-        })
+        if not recent_bets:
+            print("No trades yet - the system will place trades when it finds positive edge opportunities!")
+            return
+            
+        for bet in recent_bets:
+            # Get market info from source_id
+            market = db.query(Market).filter(Market.source_id == bet.source_id).first()
+            if not market:
+                continue
+                
+            status_icon = "⏳"  # Bet model doesn't have status field
+            print(f"{status_icon} {market.home_team} vs {market.away_team}")
+            print(f"   Bet: {bet.normalized_outcome} @ {bet.odds:.2f}")
+            print(f"   Stake: ${bet.stake:.2f}")
+            print()
+
+def show_market_opportunities():
+    """Display current market opportunities"""
+    print("\n🔥 Market Opportunities")
+    print("=" * 40)
     
-    # Save trades
-    trades_df = pd.DataFrame(trades)
-    trades_df.to_csv('paper_trades.csv', index=False)
+    with db_manager.get_db_session() as db:
+        # Get markets with positive edge
+        markets = db.query(Market).filter(
+            Market.is_active == True
+        ).order_by(Market.maturity_date.asc()).limit(10).all()
+        
+        opportunities = 0
+        for market in markets:
+            odds = db.query(Odd).filter(
+                Odd.source_id == market.source_id
+            ).all()
+            
+            if len(odds) >= 2:
+                # Simple edge check
+                total_prob = sum(1/odd.decimal_odds for odd in odds)
+                
+                for odd in odds:
+                    fair_prob = (1/odd.decimal_odds) / total_prob
+                    fair_odds = 1 / fair_prob
+                    edge = ((odd.decimal_odds / fair_odds) - 1) * 100
+                    
+                    if edge > 2:  # Positive edge threshold
+                        print(f"✅ {market.home_team} vs {market.away_team}")
+                        print(f"   {odd.outcome}: {odd.decimal_odds} (Edge: {edge:.2f}%)")
+                        opportunities += 1
+                        break
+                        
+        if opportunities == 0:
+            print("No positive edge opportunities at the moment.")
+            print("The system continuously scans for profitable bets...")
+
+def main():
+    print("🎮 Ominari Paper Trading Demo")
+    print("=" * 50)
+    print()
+    print("This demo shows how the paper trading system works:")
+    print("• Real-time market data from blockchain")
+    print("• Automated edge calculation")
+    print("• Kelly criterion bet sizing")
+    print("• Portfolio tracking")
+    print("• Risk management")
+    print()
     
-    print("✅ Demo data created successfully!")
-    print(f"   - Portfolio: {portfolio['wins']} wins, {portfolio['losses']} losses")
-    print(f"   - Pending bets: {len(portfolio['pending_bets'])}")
-    print(f"   - Historical trades: {len(trades)}")
+    # Check Discord config
+    webhook_configured = bool(os.getenv('DISCORD_WEBHOOK_URL'))
+    if os.path.exists('config/discord_config.json'):
+        import json
+        with open('config/discord_config.json', 'r') as f:
+            config = json.load(f)
+            webhook_configured = bool(config.get('webhook_url'))
+    
+    if webhook_configured:
+        print("✅ Discord notifications configured")
+        print("   You'll receive alerts for:")
+        print("   • New trades placed")
+        print("   • Trade results (wins/losses)")
+        print("   • Daily portfolio summaries")
+        print("   • High opportunity markets")
+    else:
+        print("⚠️  Discord not configured")
+        print("   Run: ./scripts/setup_discord.sh")
+        print("   to receive trade notifications")
+    
+    # Show current status
+    show_portfolio_status()
+    show_recent_trades()
+    show_market_opportunities()
+    
+    print("\n💡 The system is running at: http://localhost:8888")
+    print("   • Dashboard shows live markets and edges")
+    print("   • Trades are placed automatically when edges > 2%")
+    print("   • All trades use paper money (no real funds)")
+    print("   • Portfolio updates in real-time")
+    
+    print("\n📈 What happens next:")
+    print("   1. System scans markets every minute")
+    print("   2. Calculates edge for each outcome")
+    print("   3. Places bets on positive edge markets")
+    print("   4. Tracks results and updates portfolio")
+    print("   5. Sends Discord notifications (if configured)")
+    
+    print("\n🎯 Ready for real trading?")
+    print("   1. Configure wallet: ./scripts/setup_wallet.sh")
+    print("   2. Fund with USDC/sUSD")
+    print("   3. System automatically switches to real mode")
+    print("   4. All safety features activate")
+    print("   5. Start with testnet for practice!")
 
 if __name__ == "__main__":
-    create_demo_trades()
+    main()

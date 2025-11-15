@@ -1,41 +1,50 @@
-#!/usr/bin/env python3
-"""Check trading status"""
+#\!/usr/bin/env python3
+"""Check trading system status"""
+
 import os
-os.environ.update({
-    'PG_HOST': 'localhost',
-    'PG_PORT': '5999', 
-    'PG_USER': 'ominari_user',
-    'PG_PASSWORD': 'ominari_2025_secure',
-    'PG_DB': 'ominari_production'
-})
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from paper_trading_postgres_integrated import PaperTradingSessionManager
+# Set up environment
+os.environ['PG_PORT'] = '5999'
 
-# Create manager
-manager = PaperTradingSessionManager()
+from database_v2 import db_manager
+from models import Market, Odd, Bet, BettingSession
+from datetime import datetime, timezone, timedelta
 
-# Get current session
-current_session = manager.get_current_session()
-print(f"Current session: {current_session}")
-
-# Get session data  
-if current_session:
-    session = manager.get_session(current_session)
-    print(f"Session data: {session}")
+with db_manager.get_db_session() as db:
+    # Check recent bets
+    recent_bets = db.query(Bet).order_by(Bet.created_at.desc()).limit(10).all()
+    print(f"Recent bets: {len(recent_bets)}")
     
-    # Get positions
-    positions = manager.get_positions(current_session)
-    open_positions = [p for p in positions if p['status'] in ['pending', 'open']]
+    # Check betting sessions
+    recent_sessions = db.query(BettingSession).order_by(BettingSession.created_at.desc()).limit(5).all()
+    print(f"Recent sessions: {len(recent_sessions)}")
     
-    print(f"\nTotal positions: {len(positions)}")
-    print(f"Open positions: {len(open_positions)}")
+    # Check markets with positive edge
+    recent_time = datetime.now(timezone.utc) - timedelta(hours=24)
+    active_markets = db.query(Market).filter(
+        Market.maturity_date > datetime.now(timezone.utc),
+        Market.created_at > recent_time
+    ).limit(100).all()
     
-    if open_positions:
-        total_stake = sum(float(p['stake']) for p in open_positions) 
-        print(f"Total stake: ${total_stake:,.2f}")
-        print(f"Exposure: {total_stake / 10000 * 100:.1f}%")
-        
-        # Show last few trades
-        print("\nLast 5 open positions:")
-        for pos in open_positions[-5:]:
-            print(f"  {pos['match_id']} - {pos['bet_on']} - ${pos['stake']}")
+    print(f"Active markets in last 24h: {len(active_markets)}")
+    
+    # Check for positive edge markets
+    positive_edge_count = 0
+    for market in active_markets[:20]:  # Check first 20
+        odds = db.query(Odd).filter(Odd.source_id == market.source_id).all()
+        if len(odds) >= 2:
+            # Calculate edge
+            total_prob = sum(1/odd.decimal_odds for odd in odds)
+            for odd in odds:
+                fair_prob = (1/odd.decimal_odds) / total_prob
+                fair_odds = 1 / fair_prob
+                edge = ((odd.decimal_odds / fair_odds) - 1) * 100
+                if edge > 2:
+                    positive_edge_count += 1
+                    print(f"Positive edge found: {market.home_team} vs {market.away_team}, {odd.outcome} @ {odd.decimal_odds} (edge: {edge:.2f}%)")
+                    break
+    
+    print(f"\nTotal markets with positive edge (>2%): {positive_edge_count}")
+EOF < /dev/null

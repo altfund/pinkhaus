@@ -11,11 +11,15 @@ import sys
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
-# Set up environment
-os.environ['PG_PORT'] = '5999'
-
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# Load environment variables from .env file
+from load_env import load_dotenv
+load_dotenv()
+
+# Set up environment
+os.environ['PG_PORT'] = '5999'
 
 from database_v2 import db_manager
 from models import Market, Odd, Bet, BettingSession
@@ -63,7 +67,12 @@ class IntegratedTradingSystem:
             wallet = self.real_config.get_wallet_address()
             mode_info += f" - Wallet: {wallet[:6]}...{wallet[-4:]}"
             
-        discord_notifier.send_startup_message(extra_info=mode_info)
+        # Send startup notification
+        if discord_notifier.enabled:
+            discord_notifier.send_startup_message(extra_info=mode_info)
+            logger.info("Discord startup notification sent")
+        else:
+            logger.info("Discord notifications disabled - configure with ./scripts/setup_discord.sh")
         
         # Check balances if real trading
         if self.real_engine:

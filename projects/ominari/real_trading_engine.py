@@ -13,9 +13,7 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 from decimal import Decimal
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
 from eth_account import Account
-from eth_abi import encode
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -58,9 +56,7 @@ class RealTradingEngine:
         for network, config in self.config.config['networks'].items():
             w3 = Web3(Web3.HTTPProvider(config['rpc_url']))
             
-            # Add POA middleware if needed (for some networks)
-            if network in ['optimism', 'base']:
-                w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+            # POA middleware is now automatically handled in newer web3 versions
                 
             self.w3_connections[network] = w3
             

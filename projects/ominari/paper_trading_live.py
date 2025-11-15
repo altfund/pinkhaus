@@ -116,13 +116,24 @@ class LivePaperTrader:
                     # Calculate fair probabilities (remove vig)
                     total_prob = sum(1/odd.decimal_odds for odd in odds_by_outcome.values())
                     
+                    # Method 1: Simple edge - if total prob < 1, there's an arbitrage
+                    # Method 2: Remove margin proportionally
+                    margin = total_prob - 1
+                    
                     for outcome, odd in odds_by_outcome.items():
-                        # Calculate fair probability
                         implied_prob = 1 / odd.decimal_odds
-                        fair_prob = implied_prob / total_prob
                         
-                        # Calculate edge
-                        edge = self.calculate_edge(fair_prob, odd.decimal_odds)
+                        # Method 1: For positive edge detection
+                        if total_prob < 1.0:
+                            # Arbitrage opportunity - all outcomes have positive edge
+                            edge = ((1/total_prob) - 1) * 100  # Arbitrage edge
+                            # Calculate fair probability from edge: fair_odds = market_odds / (1 + edge/100)
+                            fair_odds = odd.decimal_odds / (1 + edge/100)
+                            fair_prob = 1 / fair_odds
+                        else:
+                            # Method 2: Remove margin proportionally
+                            fair_prob = implied_prob / total_prob
+                            edge = self.calculate_edge(fair_prob, odd.decimal_odds)
                         
                         if edge >= self.min_edge:
                             logger.info(f"Found opportunity: {market.home_team} vs {market.away_team}, {outcome} @ {odd.decimal_odds}, edge={edge:.2f}%")
@@ -155,7 +166,10 @@ class LivePaperTrader:
                 bankroll
             )
             
+            logger.info(f"Calculated bet amount: ${bet_amount:.2f} (min: ${self.min_bet})")
+            
             if bet_amount < self.min_bet:
+                logger.info(f"Bet amount ${bet_amount:.2f} below minimum ${self.min_bet}, skipping")
                 return None
                 
             # Check risk limits
@@ -208,7 +222,7 @@ class LivePaperTrader:
                 return bet
                 
         except Exception as e:
-            logger.error(f"Error placing bet: {e}")
+            logger.error(f"Error placing bet: {e}", exc_info=True)
             return None
             
     async def update_bet_results(self):
