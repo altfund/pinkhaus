@@ -28,6 +28,7 @@ os.environ['USE_POSTGRESQL'] = '1'
 from dashboard_config import ALLOWED_SPORTS, ALLOWED_LEAGUES, ALLOWED_NATIONS, DASHBOARD_SETTINGS, get_display_league
 from models import Market, Odd, Bet, BettingSession
 from config.bankroll_config import BankrollConfig
+from unified_portfolio_calculator import UnifiedPortfolioCalculator
 
 # Flask app setup
 app = Flask(__name__)
@@ -374,6 +375,32 @@ DASHBOARD_HTML = """
                 </div>
             </div>
             
+            <div>
+                <h3>🎯 Market Chunk Analysis</h3>
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="chunk-markets">0</div>
+                        <div class="stat-label">Markets in Chunk</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="chunk-signals">0</div>
+                        <div class="stat-label">Signals Generated</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="chunk-edge">0%</div>
+                        <div class="stat-label">Avg Edge</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="chunk-confidence">0.000</div>
+                        <div class="stat-label">Avg Confidence</div>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; padding: 8px; background: #1a1a1a; border-radius: 4px; font-size: 11px;">
+                    <div><strong>Chunk ID:</strong> <span id="chunk-id">-</span></div>
+                    <div style="margin-top: 4px; color: #888;"><span id="chunk-info">Loading...</span></div>
+                </div>
+            </div>
+            
             <div class="odds-summary">
                 <h4>Odds Distribution</h4>
                 <div id="odds-dist">Loading...</div>
@@ -490,6 +517,23 @@ DASHBOARD_HTML = """
             document.getElementById('odds-range').textContent = data.stats?.odds_range || '-';
             document.getElementById('total-positions').textContent = '$' + (data.stats?.total_positions || 0).toFixed(0);
             document.getElementById('active-bets').textContent = data.stats?.active_bets || 0;
+            
+            // Update chunk analysis
+            if (data.chunk_analysis) {
+                const chunk = data.chunk_analysis;
+                document.getElementById('chunk-markets').textContent = chunk.markets_in_chunk || 0;
+                document.getElementById('chunk-signals').textContent = chunk.signals_generated || 0;
+                
+                const edge = chunk.avg_edge || 0;
+                const edgeText = edge !== 0 ? (edge > 0 ? '+' : '') + edge.toFixed(2) + '%' : '0%';
+                const edgeEl = document.getElementById('chunk-edge');
+                edgeEl.textContent = edgeText;
+                edgeEl.style.color = edge > 0 ? '#00ff00' : edge < 0 ? '#ff4444' : '#888';
+                
+                document.getElementById('chunk-confidence').textContent = (chunk.avg_confidence || 0).toFixed(3);
+                document.getElementById('chunk-id').textContent = chunk.chunk_id || '-';
+                document.getElementById('chunk-info').textContent = chunk.chunk_info || 'No data';
+            }
             
             // Store positions globally for table rendering
             window.activePositions = data.positions || {};
@@ -784,12 +828,14 @@ try:
     from sqlalchemy import and_, or_, not_, func
     
     session_manager = PaperTradingSessionManager()
+    portfolio_calculator = UnifiedPortfolioCalculator()
     components_loaded = True
     logger.info("✅ Components loaded")
 except Exception as e:
     logger.error(f"Failed to load components: {e}")
     components_loaded = False
     session_manager = None
+    portfolio_calculator = None
 
 def calculate_edge(odds_by_outcome):
     """Calculate edge based on normalized implied probability vs fair odds"""
@@ -866,6 +912,101 @@ def get_active_positions():
         logger.error(f"Error getting positions: {e}")
     
     return positions
+
+def get_market_chunk_analysis():
+    """Get current market chunk analysis similar to heartbeat system"""
+    try:
+        with db_manager.get_db_session() as db:
+            from datetime import datetime, timedelta
+            
+            # Get recent markets for chunk analysis (similar to heartbeat)
+            recent_time = datetime.utcnow() - timedelta(hours=4)
+            future_time = datetime.utcnow() + timedelta(hours=48)
+            
+            markets = db.query(Market).filter(
+                Market.maturity_date >= recent_time,
+                Market.maturity_date <= future_time
+            ).order_by(Market.maturity_date.asc()).limit(100).all()
+            
+            if not markets:
+                return {
+                    'markets_in_chunk': 0,
+                    'signals_generated': 0,
+                    'avg_edge': 0,
+                    'avg_confidence': 0,
+                    'chunk_id': 'none',
+                    'chunk_info': 'No active markets'
+                }
+            
+            # Create current chunk (simplified version of heartbeat logic)
+            current_chunk = {
+                'markets': markets,
+                'chunk_id': f"chunk_{datetime.now().strftime('%Y%m%d_%H%M')}",
+                'market_count': len(markets)
+            }
+            
+            # Analyze chunk signals
+            try:
+                from fixed_edge_calculation import FixedEdgeSignalProvider
+                edge_provider = FixedEdgeSignalProvider()
+                
+                total_signals = 0
+                total_edge = 0
+                total_confidence = 0
+                
+                # Process markets in the chunk
+                for market in markets[:30]:  # Limit to 30 for performance
+                    # Get odds
+                    odds_records = db.query(Odd).filter(
+                        Odd.source_id == market.source_id
+                    ).order_by(Odd.updated_at.desc()).limit(6).all()
+                    
+                    if len(odds_records) >= 3:
+                        odds_data = {}
+                        for odd in odds_records:
+                            if odd.outcome not in odds_data:
+                                odds_data[odd.outcome] = odd.decimal_odds
+                                
+                        # Generate edge signals
+                        try:
+                            edge_signals = edge_provider.generate_signals_for_market(market, odds_data)
+                            if edge_signals:
+                                for signal_key, signal_data in edge_signals.items():
+                                    total_signals += 1
+                                    total_edge += signal_data.get('edge', 0)
+                                    total_confidence += signal_data.get('confidence', 0)
+                        except Exception as e:
+                            logger.debug(f"Signal generation failed for {market.source_id}: {e}")
+                
+                # Calculate averages
+                avg_edge = (total_edge / total_signals) if total_signals > 0 else 0
+                avg_confidence = (total_confidence / total_signals) if total_signals > 0 else 0
+                
+                return {
+                    'markets_in_chunk': len(markets),
+                    'signals_generated': total_signals,
+                    'avg_edge': round(avg_edge, 2),
+                    'avg_confidence': round(avg_confidence, 3),
+                    'chunk_id': current_chunk['chunk_id'],
+                    'chunk_info': f'Active chunk with {len(markets)} markets'
+                }
+                
+            except Exception as e:
+                logger.error(f"Error analyzing chunk signals: {e}")
+                return {
+                    'markets_in_chunk': len(markets),
+                    'signals_generated': 0,
+                    'avg_edge': 0,
+                    'avg_confidence': 0,
+                    'chunk_id': current_chunk['chunk_id'],
+                    'chunk_info': f'Analysis error: {str(e)[:50]}...'
+                }
+                
+    except Exception as e:
+        logger.error(f"Error getting chunk analysis: {e}")
+        return {
+            'error': str(e)
+        }
 
 async def get_real_odds_data():
     """Get markets with REAL odds from database"""
@@ -1028,6 +1169,9 @@ async def get_dashboard_data():
     # Get actual positions from database
     positions = get_active_positions()
     
+    # Get market chunk analysis
+    chunk_analysis = get_market_chunk_analysis()
+    
     # Calculate position summary
     total_positions = 0
     active_bets = 0
@@ -1048,53 +1192,45 @@ async def get_dashboard_data():
                 elif outcome == '2':
                     position_by_outcome['Away'] += stake
     
-    # Get trading status from bankroll config
+    # Get trading status using unified portfolio calculator
     try:
-        bankroll_config = BankrollConfig()
-        current_bankroll = bankroll_config.get_current_bankroll()
-        perf_stats = bankroll_config.get_performance_stats()
-        
-        trading_status = {
-            'status': 'Active' if bankroll_config.is_trading_enabled() else 'Paused',
-            'bankroll': current_bankroll,
-            'pnl': perf_stats['total_pnl'],
-            'roi': perf_stats['roi'],
-            'win_rate': perf_stats['win_rate']
-        }
+        if portfolio_calculator:
+            # Use the unified portfolio calculator for consistent results
+            metrics = portfolio_calculator.get_current_portfolio_metrics(force_reload=True)
+            
+            trading_status = {
+                'status': 'Active',
+                'bankroll': metrics.portfolio_value,  # CORRECT: Portfolio value from unified calculator
+                'pnl': metrics.total_pnl,
+                'roi': metrics.roi_percentage,
+                'win_rate': metrics.win_rate,
+                'current_bankroll': metrics.current_bankroll,
+                'active_positions': metrics.active_positions,
+                'total_stake': metrics.total_stake
+            }
+            logger.info(f"✅ Dashboard using unified portfolio: ${metrics.portfolio_value:,.2f} (corrected)")
+        else:
+            raise Exception("Portfolio calculator not available")
+            
     except Exception as e:
-        logger.error(f"Error loading bankroll config: {e}")
-        # Fallback to database lookup
-        trading_status = {'status': 'Active', 'bankroll': 10000}
-        
+        logger.error(f"Error loading unified portfolio calculator: {e}")
+        # Fallback to bankroll config
         try:
-            with db_manager.get_db_session() as db:
-                # Get most recent paper trading session
-                from datetime import datetime, timedelta
-                latest_session = db.query(BettingSession).filter(
-                    BettingSession.is_paper == True
-                ).order_by(BettingSession.created_at.desc()).first()
-                
-                if latest_session:
-                    # Calculate current bankroll based on initial + P&L
-                    session_bets = db.query(Bet).filter(
-                        Bet.betting_session_id == latest_session.id
-                    ).all()
-                    
-                    total_pnl = 0
-                    for bet in session_bets:
-                        if bet.status == 'won':
-                            total_pnl += (bet.payout or 0) - bet.stake
-                        elif bet.status == 'lost':
-                            total_pnl -= bet.stake
-                    
-                    current_bankroll = float(latest_session.bankroll) + total_pnl
-                    trading_status = {
-                        'status': 'Active',
-                        'bankroll': current_bankroll
-                    }
-        except:
+            bankroll_config = BankrollConfig()
+            current_bankroll = bankroll_config.get_current_bankroll()
+            perf_stats = bankroll_config.get_performance_stats()
+            
+            trading_status = {
+                'status': 'Active' if bankroll_config.is_trading_enabled() else 'Paused',
+                'bankroll': current_bankroll,
+                'pnl': perf_stats['total_pnl'],
+                'roi': perf_stats['roi'],
+                'win_rate': perf_stats['win_rate']
+            }
+        except Exception as e2:
+            logger.error(f"Error loading bankroll config: {e2}")
             # Final fallback
-            pass
+            trading_status = {'status': 'Active', 'bankroll': 10000}
     
     return {
         'markets': markets[:50],  # Limit to 50 for display
@@ -1108,7 +1244,8 @@ async def get_dashboard_data():
             'positions_by_outcome': position_by_outcome
         },
         'odds_distribution': odds_distribution,
-        'positions': positions  # Include positions data
+        'positions': positions,  # Include positions data
+        'chunk_analysis': chunk_analysis  # Include chunk analysis
     }
 
 @app.route('/')
@@ -1316,15 +1453,15 @@ def start_automated_trading():
     env['DATABASE_URL'] = os.getenv('DATABASE_URL', 'postgresql://ominari_user:ominari_2025_secure@localhost:5999/ominari_production')
     
     try:
-        # Start integrated trading system with heartbeat (includes real odds + liquidity + paper/real trading + hourly updates)
+        # Start Carver Enhanced Trading System (includes Robert Carver systematic framework + multi-market Kelly + volatility targeting + signals)
         trading_proc = subprocess.Popen(
-            [sys.executable, 'integrated_trading_with_heartbeat.py'],
+            [sys.executable, 'complete_carver_system.py'],
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
-        logger.info(f"Started integrated trading system with heartbeat (PID: {trading_proc.pid})")
-        logger.info("✅ System includes: real odds + blockchain liquidity + paper trading + Discord notifications + hourly portfolio updates")
+        logger.info(f"Started Carver Enhanced Trading System (PID: {trading_proc.pid})")
+        logger.info("✅ System includes: Carver systematic framework + multi-signal combination + volatility targeting + multi-market Kelly + portfolio optimization + Discord notifications + hourly portfolio updates")
         
         # Start performance monitor
         monitor_proc = subprocess.Popen(
