@@ -43,7 +43,7 @@ DASHBOARD_HTML = """
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Ominari Blockchain Trading - Real Odds</title>
+    <title>Ominari Trading Platform</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
@@ -332,15 +332,15 @@ DASHBOARD_HTML = """
 <body>
     <div class="header">
         <div>
-            <h1>🔗 Ominari Blockchain Trading</h1>
-            <div>Live Markets with Real Odds</div>
+            <h1>⚡ Ominari Trading Platform</h1>
+            <div>Live Market Analytics & Portfolio Management</div>
         </div>
         <div id="connection-status">⚡ Connecting...</div>
     </div>
     
     <div class="main-container">
         <div class="markets-section">
-            <h2>📈 Live Markets - Real Odds <span style=\"font-size: 14px; color: #888;\">(${allowed_sports})</span></h2>
+            <h2>📈 Live Markets <span style=\"font-size: 14px; color: #888;\">(${allowed_sports})</span></h2>
             <div id="markets-container">Loading markets...</div>
         </div>
         
@@ -354,11 +354,11 @@ DASHBOARD_HTML = """
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="real-odds">0</div>
-                        <div class="stat-label">Real Odds</div>
+                        <div class="stat-label">Live Odds</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="bankroll">$0</div>
-                        <div class="stat-label">Bankroll</div>
+                        <div class="stat-label">Portfolio Value</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="odds-range">-</div>
@@ -376,15 +376,15 @@ DASHBOARD_HTML = """
             </div>
             
             <div>
-                <h3>🎯 Market Chunk Analysis</h3>
+                <h3>🎯 Market Analysis</h3>
                 <div class="stat-grid">
                     <div class="stat-card">
                         <div class="stat-value" id="chunk-markets">0</div>
-                        <div class="stat-label">Markets in Chunk</div>
+                        <div class="stat-label">Active Markets</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="chunk-signals">0</div>
-                        <div class="stat-label">Signals Generated</div>
+                        <div class="stat-label">Trading Signals</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="chunk-edge">0%</div>
@@ -396,7 +396,7 @@ DASHBOARD_HTML = """
                     </div>
                 </div>
                 <div style="margin-top: 10px; padding: 8px; background: #1a1a1a; border-radius: 4px; font-size: 11px;">
-                    <div><strong>Chunk ID:</strong> <span id="chunk-id">-</span></div>
+                    <div><strong>Session ID:</strong> <span id="chunk-id">-</span></div>
                     <div style="margin-top: 4px; color: #888;"><span id="chunk-info">Loading...</span></div>
                 </div>
             </div>
@@ -429,11 +429,11 @@ DASHBOARD_HTML = """
             
             <div>
                 <h3>🎮 Controls</h3>
-                <button id="refresh-btn" class="button" style="width: 100%;">Refresh Real Data</button>
+                <button id="refresh-btn" class="button" style="width: 100%;">Refresh Data</button>
             </div>
             
             <div>
-                <h3>📊 Recent Paper Trades</h3>
+                <h3>📊 Recent Trades</h3>
                 <div id="trades-container" style="max-height: 300px; overflow-y: auto; background: #1a1a1a; padding: 10px; border-radius: 8px;">
                     <table class="trades-table" style="width: 100%; font-size: 11px;">
                         <thead>
@@ -474,7 +474,7 @@ DASHBOARD_HTML = """
         
         socket.on('connect', function() {
             document.getElementById('connection-status').textContent = '✅ Connected';
-            addLog('Connected - requesting real odds data');
+            addLog('Connected - requesting live data');
             socket.emit('request_dashboard_data');
             reconnectAttempts = 0;
         });
@@ -501,7 +501,7 @@ DASHBOARD_HTML = """
         
         document.getElementById('refresh-btn').onclick = function() {
             socket.emit('request_dashboard_data');
-            addLog('Refreshing real odds data...');
+            addLog('Refreshing live data...');
         };
         
         function updateDashboard(data) {
@@ -557,7 +557,7 @@ DASHBOARD_HTML = """
             // Update markets
             if (data.markets && data.markets.length > 0) {
                 updateMarkets(data.markets);
-                addLog(`Loaded ${data.markets.length} markets with real odds`);
+                addLog(`Loaded ${data.markets.length} markets with live odds`);
             }
         }
         
@@ -976,7 +976,7 @@ def get_market_chunk_analysis():
                                     total_edge += signal_data.get('edge', 0)
                                     total_confidence += signal_data.get('confidence', 0)
                         except Exception as e:
-                            logger.debug(f"Signal generation failed for {market.source_id}: {e}")
+                            logger.debug(f"Edge calculation failed for {market.source_id}: {e}")
                 
                 # Calculate averages
                 avg_edge = (total_edge / total_signals) if total_signals > 0 else 0
@@ -992,7 +992,7 @@ def get_market_chunk_analysis():
                 }
                 
             except Exception as e:
-                logger.error(f"Error analyzing chunk signals: {e}")
+                logger.error(f"Error analyzing market signals: {e}")
                 return {
                     'markets_in_chunk': len(markets),
                     'signals_generated': 0,
@@ -1003,7 +1003,7 @@ def get_market_chunk_analysis():
                 }
                 
     except Exception as e:
-        logger.error(f"Error getting chunk analysis: {e}")
+        logger.error(f"Error getting market analysis: {e}")
         return {
             'error': str(e)
         }
@@ -1135,7 +1135,7 @@ async def get_real_odds_data():
             odds_dist = odds_dist_query.group_by(Odd.decimal_odds).order_by(func.count(Odd.id).desc()).limit(10).all()
             odds_distribution = [{'odds': float(o[0]), 'count': o[1]} for o in odds_dist]
             
-            logger.info(f"Fetched {len(markets)} markets with real odds and edges")
+            logger.info(f"Fetched {len(markets)} markets with live odds")
             
             # Cache the results
             cache.set(cache_key, {
@@ -1195,12 +1195,12 @@ async def get_dashboard_data():
     # Get trading status using unified portfolio calculator
     try:
         if portfolio_calculator:
-            # Use the unified portfolio calculator for consistent results
+            # Get current portfolio metrics
             metrics = portfolio_calculator.get_current_portfolio_metrics(force_reload=True)
             
             trading_status = {
                 'status': 'Active',
-                'bankroll': metrics.portfolio_value,  # CORRECT: Portfolio value from unified calculator
+                'bankroll': metrics.portfolio_value,  # Portfolio value
                 'pnl': metrics.total_pnl,
                 'roi': metrics.roi_percentage,
                 'win_rate': metrics.win_rate,
@@ -1208,13 +1208,13 @@ async def get_dashboard_data():
                 'active_positions': metrics.active_positions,
                 'total_stake': metrics.total_stake
             }
-            logger.info(f"✅ Dashboard using unified portfolio: ${metrics.portfolio_value:,.2f} (corrected)")
+            logger.info(f"✅ Portfolio calculated: ${metrics.portfolio_value:,.2f}")
         else:
             raise Exception("Portfolio calculator not available")
             
     except Exception as e:
-        logger.error(f"Error loading unified portfolio calculator: {e}")
-        # Fallback to bankroll config
+        logger.error(f"Error loading portfolio calculator: {e}")
+        # Fallback to legacy config
         try:
             bankroll_config = BankrollConfig()
             current_bankroll = bankroll_config.get_current_bankroll()
@@ -1228,7 +1228,7 @@ async def get_dashboard_data():
                 'win_rate': perf_stats['win_rate']
             }
         except Exception as e2:
-            logger.error(f"Error loading bankroll config: {e2}")
+            logger.error(f"Error loading portfolio data: {e2}")
             # Final fallback
             trading_status = {'status': 'Active', 'bankroll': 10000}
     
@@ -1428,14 +1428,14 @@ def handle_connect():
 @socketio.on('request_dashboard_data')
 @ws_rate_limit()
 def handle_request():
-    logger.info('Dashboard data requested - fetching real odds')
+    logger.info('Dashboard data requested - fetching live odds')
     asyncio.run(send_update())
 
 async def send_update():
     try:
         data = await get_dashboard_data()
         socketio.emit('dashboard_update', data)
-        logger.info(f"Sent {len(data.get('markets', []))} markets with real odds")
+        logger.info(f"Sent {len(data.get('markets', []))} markets with live odds")
     except Exception as e:
         logger.error(f"Update error: {e}")
         socketio.emit('dashboard_update', {'error': str(e)})
@@ -1478,17 +1478,17 @@ def start_automated_trading():
         return False
 
 if __name__ == '__main__':
-    logger.info("Starting Real Odds Dashboard on port 8888...")
+    logger.info("Starting Ominari Trading Dashboard on port 8888...")
     logger.info("Rate limiting enabled: 60 req/min general, 30 req/min API, 120 req/min WebSocket")
     logger.info("Caching enabled: 30s TTL for market data")
-    logger.info("Fetching markets with actual odds from database...")
+    logger.info("Loading live market data from database...")
     
     # Start automated trading system
     if start_automated_trading():
-        logger.info("✅ Automated trading system started successfully")
+        logger.info("✅ Trading system started successfully")
         logger.info("📊 Performance monitor available at http://localhost:8889")
     else:
-        logger.warning("⚠️ Automated trading system failed to start - continuing without it")
+        logger.warning("⚠️ Trading system failed to start - continuing without it")
     
     # Log cache and rate limit stats periodically
     def log_stats():
