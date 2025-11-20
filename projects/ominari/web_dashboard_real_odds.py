@@ -870,46 +870,32 @@ def calculate_edge(odds_by_outcome):
     return edges
 
 def get_active_positions():
-    """Get active positions from current betting sessions"""
+    """Get active positions from current trading session using JSON data (same as heartbeat)"""
     positions = {}
     
     try:
-        with db_manager.get_db_session() as db:
-            # Get recent paper/live trading sessions (last 24 hours)
-            from datetime import datetime, timedelta
-            recent_time = datetime.utcnow() - timedelta(hours=24)
+        # Access session data directly like heartbeat does
+        from paper_trading_sessions import PaperTradingSessionManager
+        
+        session_manager = PaperTradingSessionManager()
+        active_session = session_manager.get_current_session()
+        
+        if active_session and 'positions' in active_session:
+            session_positions = active_session['positions']
             
-            active_sessions = db.query(BettingSession).filter(
-                BettingSession.session_type.in_(['paper', 'live']),
-                BettingSession.created_at >= recent_time
-            ).order_by(BettingSession.created_at.desc()).limit(10).all()
-            
-            if not active_sessions:
-                return positions
-            
-            session_ids = [s.id for s in active_sessions]
-            
-            # Get all bets from these sessions grouped by market and outcome
-            active_bets = db.query(
-                Bet.source_id,
-                Bet.normalized_outcome,
-                func.sum(Bet.execution_stake).label('total_stake')
-            ).filter(
-                Bet.session_id.in_(session_ids)
-            ).group_by(
-                Bet.source_id,
-                Bet.normalized_outcome
-            ).all()
-            
-            # Organize by market
-            for bet in active_bets:
-                market_id = bet.source_id
+            # Convert from session format to dashboard format
+            for market_id, position_data in session_positions.items():
                 if market_id not in positions:
                     positions[market_id] = {}
-                positions[market_id][bet.normalized_outcome] = float(bet.total_stake or 0)
-    
+                
+                outcome = position_data.get('outcome', 'unknown')
+                total_stake = float(position_data.get('total_stake', 0))
+                
+                if total_stake > 0:
+                    positions[market_id][outcome] = total_stake
+        
     except Exception as e:
-        logger.error(f"Error getting positions: {e}")
+        logger.error(f"Error getting positions from JSON sessions: {e}")
     
     return positions
 
