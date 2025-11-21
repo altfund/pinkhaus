@@ -24,6 +24,8 @@ from fixed_edge_calculation import FixedEdgeSignalProvider
 from database_v2 import db_manager
 from models import Market, Odd
 from notifications.discord_notifier import discord_notifier
+from trading_costs import RealisticTradingCostCalculator
+from conservative_edge_calculator import ConservativeEdgeCalculator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,9 +36,12 @@ class FixedEdgeTradingExecutor:
     def __init__(self):
         self.session_manager = PaperTradingSessionManager()
         self.edge_provider = FixedEdgeSignalProvider()
+        self.cost_calculator = RealisticTradingCostCalculator()
+        self.conservative_calculator = ConservativeEdgeCalculator()
         self.trading_cycle_minutes = 15  # Trade every 15 minutes
         self.max_trades_per_cycle = 3
         self.running = False
+        self.min_conservative_edge = 2.0  # Minimum 2% conservative edge required
         
     def get_or_create_session(self) -> str:
         """Get active trading session - find or create session with trades."""
@@ -72,11 +77,13 @@ class FixedEdgeTradingExecutor:
         try:
             with db_manager.get_db_session() as db:
                 now = datetime.now(timezone.utc)
+                # Convert to naive datetime for database comparison
+                now_naive = now.replace(tzinfo=None)
                 
                 # Get upcoming markets in next 24 hours
                 markets = db.query(Market).filter(
-                    Market.maturity_date > now + timedelta(minutes=30),  # At least 30 min future
-                    Market.maturity_date < now + timedelta(hours=24),   # Within 24 hours
+                    Market.maturity_date > now_naive + timedelta(minutes=30),  # At least 30 min future
+                    Market.maturity_date < now_naive + timedelta(hours=24),   # Within 24 hours
                     Market.sport == 'Soccer',
                     Market.is_finished == False
                 ).limit(20).all()
@@ -107,9 +114,56 @@ class FixedEdgeTradingExecutor:
             logger.error(f"Error finding tradeable markets: {e}")
             return []
     
+    def filter_signals_with_conservative_edge(self, signals: dict, market, odds_data) -> dict:
+        """Filter signals using conservative edge calculation."""
+        # Get conservative edge metrics
+        conservative_edges = self.conservative_calculator.calculate_conservative_edge(market, odds_data)
+        
+        filtered_signals = {}
+        
+        for signal_key, signal_data in signals.items():
+            outcome = signal_data.get('outcome')
+            raw_edge = signal_data.get('edge', 0)
+            
+            # Find matching conservative edge
+            conservative_edge_data = None
+            for edge_outcome, edge_metrics in conservative_edges.items():
+                if edge_outcome.lower() == outcome.lower():
+                    conservative_edge_data = edge_metrics
+                    break
+            
+            if conservative_edge_data:
+                conservative_edge = conservative_edge_data.final_conservative_edge
+                
+                # Only trade if conservative edge meets minimum threshold
+                if conservative_edge >= self.min_conservative_edge:
+                    # Update signal with conservative metrics
+                    filtered_signal = signal_data.copy()
+                    filtered_signal.update({
+                        'raw_edge': raw_edge,
+                        'conservative_edge': conservative_edge,
+                        'edge': conservative_edge,  # Use conservative edge
+                        'market_efficiency': conservative_edge_data.market_efficiency_factor,
+                        'uncertainty_discount': conservative_edge_data.uncertainty_discount,
+                        'competition_factor': conservative_edge_data.competition_factor,
+                        'confidence_score': conservative_edge_data.confidence_score
+                    })
+                    
+                    filtered_signals[signal_key] = filtered_signal
+                    
+                    logger.info(f"✅ Conservative Signal: {market.home_team} vs {market.away_team} - {outcome} @ {signal_data.get('market_odds', 0):.2f} = {conservative_edge:+.2f}% edge (was {raw_edge:+.2f}%)")
+                else:
+                    logger.info(f"❌ Signal filtered: {market.home_team} vs {market.away_team} - {outcome} conservative edge {conservative_edge:+.2f}% < {self.min_conservative_edge}% threshold")
+        
+        return filtered_signals
+    
     def execute_trades_for_signals(self, signals: dict, market, odds_data):
-        """Execute actual trades for qualifying signals."""
+        """Execute actual trades for qualifying signals with dynamic position management."""
         trades = []
+        
+        # Get current session to check existing positions
+        session = self.session_manager.get_current_session()
+        existing_positions = session.get('positions', {}) if session else {}
         
         for signal_key, signal_data in signals.items():
             edge = signal_data.get('edge', 0)
@@ -118,43 +172,120 @@ class FixedEdgeTradingExecutor:
             market_odds = signal_data.get('market_odds', 3.0)
             forecast = signal_data.get('forecast', 0.33)
             
-            # Calculate position size using Kelly
+            # Calculate optimal position size using Kelly
             edge_decimal = edge / 100
             kelly_fraction = edge_decimal / (market_odds - 1) if market_odds > 1 else 0
             safe_kelly = kelly_fraction * 0.25  # 25% Kelly
             
             # Get current bankroll
-            session = self.session_manager.get_current_session()
-            current_bankroll = session.get('current_bankroll', 10000)
+            current_bankroll = session.get('current_bankroll', 10000) if session else 10000
             
-            # Calculate stake
+            # Calculate optimal stake
             theoretical_stake = current_bankroll * safe_kelly
             max_stake = min(200, current_bankroll * 0.02)  # 2% max position
-            final_stake = min(theoretical_stake, max_stake)
+            optimal_stake = min(theoretical_stake, max_stake)
             
-            if final_stake >= 10:  # Min bet $10
-                trade = {
-                    'market_id': market.source_id,
-                    'market_name': f"{market.home_team} vs {market.away_team}",
-                    'outcome': outcome,
-                    'stake': final_stake,
-                    'odds': market_odds,
-                    'maturity_date': market.maturity_date.isoformat(),
-                    'signal_type': 'fixed_edge',
-                    'edge': edge,
-                    'confidence': confidence,
-                    'forecast': forecast,
-                    'kelly_fraction': kelly_fraction
-                }
+            # Check if we already have a position for this market + outcome
+            position_key = f"{market.source_id}_{outcome}"
+            existing_position = existing_positions.get(position_key)
+            
+            if existing_position:
+                current_stake = existing_position.get('total_stake', 0)
+                current_odds = existing_position.get('avg_odds', market_odds)
                 
-                trades.append(trade)
+                # Calculate position difference
+                stake_difference = optimal_stake - current_stake
+                rebalance_threshold = current_stake * 0.15  # 15% rebalance threshold
                 
-                logger.info(f"💰 EXECUTING TRADE:")
-                logger.info(f"  Market: {trade['market_name']}")
-                logger.info(f"  Bet: {outcome.upper()} @ {market_odds:.2f}")
-                logger.info(f"  Edge: {edge:+.2f}%")
-                logger.info(f"  Stake: ${final_stake:.2f}")
-                logger.info(f"  Kelly: {kelly_fraction:.4f}")
+                # Check if we should rebalance (adjust position)
+                if abs(stake_difference) > max(rebalance_threshold, 10):  # Min $10 change
+                    if stake_difference > 0:
+                        # Increase position size
+                        additional_stake = stake_difference
+                        base_trade = {
+                            'market_id': market.source_id,
+                            'market_name': f"{market.home_team} vs {market.away_team}",
+                            'outcome': outcome,
+                            'stake': additional_stake,
+                            'odds': market_odds,
+                            'maturity_date': market.maturity_date.isoformat() if market.maturity_date else None,
+                            'signal_type': 'position_increase',
+                            'edge': edge,
+                            'confidence': confidence,
+                            'forecast': forecast,
+                            'kelly_fraction': kelly_fraction,
+                            'position_action': 'increase',
+                            'existing_stake': current_stake,
+                            'new_total_stake': current_stake + additional_stake
+                        }
+                        
+                        # Apply realistic trading costs to increase (with sport context)
+                        trade = self.cost_calculator.apply_costs_to_trade(
+                            base_trade, {'sport': 'soccer'}
+                        )
+                        
+                        effective_odds = trade['effective_odds']
+                        cost_impact = trade['fee_info']['total_fee']
+                        effective_stake = trade['fee_info']['execution_stake']
+                        
+                        trades.append(trade)
+                        logger.info(f"📈 INCREASING POSITION (with costs):")
+                        logger.info(f"  Market: {trade['market_name']}")
+                        logger.info(f"  Bet: {outcome.upper()} @ {market_odds:.3f} → {effective_odds:.3f}")
+                        logger.info(f"  Edge: {edge:+.2f}%")
+                        logger.info(f"  Current Stake: ${current_stake:.2f}")
+                        logger.info(f"  Additional: ${additional_stake:.2f} + ${cost_impact:.2f} fees = ${effective_stake:.2f}")
+                        logger.info(f"  New Total: ${current_stake + additional_stake:.2f}")
+                        
+                    # Note: We could implement position reduction here too, but for simplicity
+                    # in paper trading, we'll only increase positions when edge improves
+                else:
+                    logger.info(f"⚖️ Position within rebalance threshold: {market.home_team} vs {market.away_team} - {outcome.upper()}")
+                    logger.info(f"  Current: ${current_stake:.2f}, Optimal: ${optimal_stake:.2f}, Diff: ${stake_difference:.2f}")
+            else:
+                # No existing position - create new one
+                if optimal_stake >= 10:  # Min bet $10
+                    # Create base trade
+                    base_trade = {
+                        'market_id': market.source_id,
+                        'market_name': f"{market.home_team} vs {market.away_team}",
+                        'outcome': outcome,
+                        'stake': optimal_stake,
+                        'odds': market_odds,
+                        'maturity_date': market.maturity_date.isoformat() if market.maturity_date else None,
+                        'signal_type': 'new_position',
+                        'edge': edge,
+                        'confidence': confidence,
+                        'forecast': forecast,
+                        'kelly_fraction': kelly_fraction,
+                        'position_action': 'new'
+                    }
+                    
+                    # Apply realistic trading costs (with sport context)
+                    trade = self.cost_calculator.apply_costs_to_trade(
+                        base_trade, {'sport': 'soccer'}
+                    )
+                    
+                    # Recalculate edge after costs (important for Kelly sizing)
+                    effective_odds = trade['effective_odds']
+                    cost_impact = trade['fee_info']['total_fee']
+                    effective_stake = trade['fee_info']['execution_stake']
+                    
+                    # Adjusted Kelly edge with costs
+                    if effective_odds > 1.0:
+                        adjusted_edge = ((forecast * effective_odds - 1) / (effective_odds - 1)) * 100
+                        trade['adjusted_edge'] = adjusted_edge
+                    else:
+                        trade['adjusted_edge'] = edge
+                    
+                    trades.append(trade)
+                    logger.info(f"💰 NEW POSITION (with costs):")
+                    logger.info(f"  Market: {trade['market_name']}")
+                    logger.info(f"  Bet: {outcome.upper()} @ {market_odds:.3f} → {effective_odds:.3f} (after slippage)")
+                    logger.info(f"  Original Edge: {edge:+.2f}% → Adjusted: {trade.get('adjusted_edge', edge):+.2f}%")
+                    logger.info(f"  Stake: ${optimal_stake:.2f} + ${cost_impact:.2f} fees = ${effective_stake:.2f}")
+                    logger.info(f"  Fee Breakdown: {trade['fee_info']['fee_breakdown']}")
+                    logger.info(f"  Kelly: {kelly_fraction:.4f}")
         
         return trades
     
@@ -162,6 +293,9 @@ class FixedEdgeTradingExecutor:
         """Run one trading cycle."""
         try:
             logger.info(f"🔄 Running Trading Cycle - {datetime.now().strftime('%H:%M:%S')}")
+            
+            # Reload sessions from disk to sync with heartbeat system
+            self.session_manager.sessions = self.session_manager._load_sessions()
             
             # Get session
             session_id = self.get_or_create_session()
@@ -188,29 +322,41 @@ class FixedEdgeTradingExecutor:
                 signals = self.edge_provider.generate_signals_for_market(market, odds_data)
                 
                 if signals:
-                    # Execute trades
-                    trades = self.execute_trades_for_signals(signals, market, odds_data)
+                    # Apply conservative edge filtering
+                    conservative_signals = self.filter_signals_with_conservative_edge(signals, market, odds_data)
                     
-                    if trades:
-                        # Record trades in session
-                        success = self.session_manager.record_trades(session_id, trades)
+                    if conservative_signals:
+                        # Execute trades
+                        trades = self.execute_trades_for_signals(conservative_signals, market, odds_data)
                         
-                        if success:
-                            trades_executed.extend(trades)
-                            total_trades += len(trades)
-                            logger.info(f"✅ Recorded {len(trades)} trades for {market.home_team} vs {market.away_team}")
-                        else:
-                            logger.error(f"❌ Failed to record trades for {market.home_team} vs {market.away_team}")
+                        if trades:
+                            # Record trades in session
+                            success = self.session_manager.record_trades(session_id, trades)
+                            
+                            if success:
+                                trades_executed.extend(trades)
+                                total_trades += len(trades)
+                                logger.info(f"✅ Recorded {len(trades)} trades for {market.home_team} vs {market.away_team}")
+                            else:
+                                logger.error(f"❌ Failed to record trades for {market.home_team} vs {market.away_team}")
             
-            # Report results
+            # Report results with costs
             if trades_executed:
                 total_stake = sum(t['stake'] for t in trades_executed)
+                total_fees = sum(t.get('fee_info', {}).get('total_fee', 0) for t in trades_executed)
+                total_execution_cost = sum(t.get('fee_info', {}).get('execution_stake', t['stake']) for t in trades_executed)
                 avg_edge = sum(t['edge'] for t in trades_executed) / len(trades_executed)
+                
+                # Calculate adjusted edge after costs
+                adjusted_edges = [t.get('adjusted_edge', t['edge']) for t in trades_executed if t.get('adjusted_edge')]
+                avg_adjusted_edge = sum(adjusted_edges) / len(adjusted_edges) if adjusted_edges else avg_edge
                 
                 logger.info(f"🎯 CYCLE COMPLETE:")
                 logger.info(f"  Trades Executed: {len(trades_executed)}")
                 logger.info(f"  Total Stake: ${total_stake:.2f}")
-                logger.info(f"  Average Edge: {avg_edge:+.2f}%")
+                logger.info(f"  Total Fees: ${total_fees:.2f} ({total_fees/total_stake*100:.1f}%)")
+                logger.info(f"  Total Cost: ${total_execution_cost:.2f}")
+                logger.info(f"  Average Edge: {avg_edge:+.2f}% → {avg_adjusted_edge:+.2f}% (after costs)")
                 
                 # Send Discord notification
                 embed = {
@@ -223,7 +369,9 @@ class FixedEdgeTradingExecutor:
                             "name": "Execution Summary",
                             "value": f"**Trades**: {len(trades_executed)}\n"
                                    f"**Total Stake**: ${total_stake:.2f}\n"
-                                   f"**Avg Edge**: {avg_edge:+.2f}%",
+                                   f"**Total Fees**: ${total_fees:.2f} ({total_fees/total_stake*100:.1f}%)\n"
+                                   f"**Total Cost**: ${total_execution_cost:.2f}\n"
+                                   f"**Avg Edge**: {avg_edge:+.2f}% → {avg_adjusted_edge:+.2f}%",
                             "inline": False
                         }
                     ]

@@ -116,8 +116,10 @@ class ConservativeEdgeCalculator:
             uncertainty_score *= 0.90
         
         # Time to match (closer = more information available)
-        if hasattr(market, 'maturity_date'):
-            time_to_match = market.maturity_date - datetime.now(timezone.utc)
+        if hasattr(market, 'maturity_date') and market.maturity_date:
+            # Convert both to naive datetime for comparison 
+            now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+            time_to_match = market.maturity_date - now_naive
             if time_to_match < timedelta(hours=2):  # Very close to kickoff
                 uncertainty_score *= 1.05  # Slightly less uncertain (more info available)
             elif time_to_match > timedelta(days=3):  # Far future
