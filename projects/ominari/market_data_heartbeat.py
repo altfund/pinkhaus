@@ -62,6 +62,7 @@ class MarketDataHeartbeat:
             position_updates = []
             total_stakes = 0
             total_odds_shift = 0
+            total_positions = 0  # Track ALL open positions
 
             with db_manager.get_db_session() as db:
                 for pos_key, position in current_session.get('positions', {}).items():
@@ -73,8 +74,9 @@ class MarketDataHeartbeat:
                     stake = position.get('total_stake', 0)
                     entry_odds = position.get('avg_odds', 1.0)
 
-                    # ALWAYS count this position's stake regardless of odds availability
+                    # ALWAYS count this position's stake and increment position count
                     total_stakes += stake
+                    total_positions += 1
 
                     try:
                         # Find market by team name (approximate match)
@@ -126,7 +128,7 @@ class MarketDataHeartbeat:
             return {
                 'total_stakes': total_stakes,
                 'position_updates': position_updates,
-                'positions_count': len(position_updates),
+                'positions_count': total_positions,  # Use total open positions, not just those with odds
                 'total_odds_shift': total_odds_shift
             }
             
