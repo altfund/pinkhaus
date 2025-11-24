@@ -39,37 +39,27 @@ class FixedEdgeTradingExecutor:
         self.cost_calculator = RealisticTradingCostCalculator()
         self.conservative_calculator = ConservativeEdgeCalculator()
         self.trading_cycle_minutes = 15  # Trade every 15 minutes
-        self.max_trades_per_cycle = 3
         self.running = False
         self.min_conservative_edge = 2.0  # Minimum 2% conservative edge required
+
+        # Portfolio-level constraints (not per-cycle limits)
+        self.max_portfolio_exposure = 0.20  # Max 20% of bankroll at risk total
+        self.max_position_size = 0.02  # Max 2% per individual position
         
     def get_or_create_session(self) -> str:
-        """Get active trading session - find or create session with trades."""
+        """Get active trading session - ALWAYS use current session."""
         current_session = self.session_manager.get_current_session()
-        
-        # Use existing session with trades if available
-        if current_session and current_session.get('positions'):
-            logger.info(f"Using existing session {current_session['session_id']} with {len(current_session.get('positions', {}))} positions")
-            return current_session['session_id']
-        
-        # Look for most recent session with actual trades
-        all_sessions_dict = self.session_manager.sessions.get("sessions", {})
-        
-        # Find session with positions or trades, sorted by created_at
-        sessions_with_trades = []
-        for session_id, session_data in all_sessions_dict.items():
-            if session_data.get('positions') or session_data.get('trades'):
-                sessions_with_trades.append((session_id, session_data))
-        
-        # Sort by created_at and get most recent
-        if sessions_with_trades:
-            sessions_with_trades.sort(key=lambda x: x[1].get('created_at', ''), reverse=True)
-            session_id = sessions_with_trades[0][0]
-            logger.info(f"Found existing trading session: {session_id}")
+
+        if current_session:
+            session_id = current_session['session_id']
+            logger.info(f"Using current session: {session_id}")
+            logger.info(f"  Bankroll: ${current_session.get('current_bankroll', 0):,.2f}")
+            logger.info(f"  Positions: {len(current_session.get('positions', {}))}")
+            logger.info(f"  Total Trades: {current_session['performance'].get('total_trades', 0)}")
             return session_id
-        
-        # Create new session only if no active trading session exists
-        logger.info("No active trading session found, creating new one")
+
+        # Create new session only if no current session exists
+        logger.info("No current session found, creating new one")
         return self.session_manager.create_session(10000)
     
     def find_tradeable_markets(self):
@@ -89,8 +79,23 @@ class FixedEdgeTradingExecutor:
                 ).limit(20).all()
                 
                 tradeable_markets = []
-                
+
                 for market in markets:
+                    # SAFETY CHECK: Skip obviously non-soccer markets
+                    # (In case database has old misclassified data)
+                    team_text = f"{market.home_team} {market.away_team}".lower()
+
+                    # Block obvious non-soccer team names (NBA/NHL/NFL)
+                    non_soccer = any(indicator in team_text for indicator in [
+                        'lakers', 'celtics', 'warriors', 'heat', 'bulls', 'nuggets',  # NBA
+                        'canadiens', 'bruins', 'lightning', 'blackhawks', 'penguins',  # NHL
+                        'patriots', 'cowboys', 'packers', '49ers', 'steelers'  # NFL
+                    ])
+
+                    if non_soccer:
+                        logger.info(f"⏭️  Skipping non-soccer market: {market.home_team} vs {market.away_team}")
+                        continue
+
                     # Get odds
                     odds_records = db.query(Odd).filter(
                         Odd.source_id == market.source_id
@@ -290,55 +295,98 @@ class FixedEdgeTradingExecutor:
         return trades
     
     async def run_trading_cycle(self):
-        """Run one trading cycle."""
+        """Run one trading cycle with portfolio-wide optimization."""
         try:
             logger.info(f"🔄 Running Trading Cycle - {datetime.now().strftime('%H:%M:%S')}")
-            
+
             # Reload sessions from disk to sync with heartbeat system
             self.session_manager.sessions = self.session_manager._load_sessions()
-            
+
             # Get session
             session_id = self.get_or_create_session()
-            
+            current_session = self.session_manager.get_current_session()
+
+            # Calculate current portfolio exposure
+            current_bankroll = current_session.get('current_bankroll', 10000) if current_session else 10000
+            existing_positions = current_session.get('positions', {}) if current_session else {}
+            current_exposure = sum(pos.get('total_stake', 0) for pos in existing_positions.values())
+
+            logger.info(f"💰 Bankroll: ${current_bankroll:,.2f}")
+            logger.info(f"📊 Current Exposure: ${current_exposure:,.2f} ({current_exposure/current_bankroll*100:.1f}%)")
+
             # Find tradeable markets
             markets = self.find_tradeable_markets()
             logger.info(f"📊 Found {len(markets)} tradeable markets")
-            
+
             if not markets:
                 logger.info("No tradeable markets found")
                 return
-            
-            total_trades = 0
-            trades_executed = []
-            
+
+            # STEP 1: Collect ALL opportunities across entire universe
+            all_opportunities = []
+
             for market_data in markets:
-                if total_trades >= self.max_trades_per_cycle:
-                    break
-                    
                 market = market_data['market']
                 odds_data = market_data['odds_data']
-                
+
                 # Generate signals
                 signals = self.edge_provider.generate_signals_for_market(market, odds_data)
-                
+
                 if signals:
                     # Apply conservative edge filtering
                     conservative_signals = self.filter_signals_with_conservative_edge(signals, market, odds_data)
-                    
+
                     if conservative_signals:
-                        # Execute trades
+                        # Create trade opportunities
                         trades = self.execute_trades_for_signals(conservative_signals, market, odds_data)
-                        
                         if trades:
-                            # Record trades in session
-                            success = self.session_manager.record_trades(session_id, trades)
-                            
-                            if success:
-                                trades_executed.extend(trades)
-                                total_trades += len(trades)
-                                logger.info(f"✅ Recorded {len(trades)} trades for {market.home_team} vs {market.away_team}")
-                            else:
-                                logger.error(f"❌ Failed to record trades for {market.home_team} vs {market.away_team}")
+                            all_opportunities.extend(trades)
+
+            logger.info(f"🎯 Found {len(all_opportunities)} total opportunities")
+
+            if not all_opportunities:
+                logger.info("No qualifying opportunities found this cycle")
+                return
+
+            # STEP 2: Rank by edge and apply portfolio constraints
+            # Sort by adjusted edge (highest first)
+            all_opportunities.sort(key=lambda x: x.get('adjusted_edge', x['edge']), reverse=True)
+
+            # STEP 3: Allocate capital respecting portfolio limits
+            trades_to_execute = []
+            cumulative_new_exposure = 0
+            max_new_exposure = (self.max_portfolio_exposure * current_bankroll) - current_exposure
+
+            logger.info(f"💼 Max new exposure available: ${max_new_exposure:,.2f}")
+
+            for opportunity in all_opportunities:
+                stake = opportunity['stake']
+
+                # Check individual position limit
+                if stake > current_bankroll * self.max_position_size:
+                    continue
+
+                # Check if adding this would exceed portfolio exposure limit
+                if cumulative_new_exposure + stake <= max_new_exposure:
+                    trades_to_execute.append(opportunity)
+                    cumulative_new_exposure += stake
+                else:
+                    # Portfolio exposure limit reached
+                    logger.info(f"⚠️ Portfolio exposure limit reached - skipping remaining opportunities")
+                    break
+
+            logger.info(f"✅ Selected {len(trades_to_execute)} trades for execution (from {len(all_opportunities)} opportunities)")
+
+            # STEP 4: Execute selected trades
+            trades_executed = []
+            if trades_to_execute:
+                success = self.session_manager.record_trades(session_id, trades_to_execute)
+
+                if success:
+                    trades_executed = trades_to_execute
+                    logger.info(f"✅ Recorded {len(trades_executed)} trades")
+                else:
+                    logger.error(f"❌ Failed to record trades")
             
             # Report results with costs
             if trades_executed:
@@ -393,7 +441,9 @@ class FixedEdgeTradingExecutor:
         self.running = True
         logger.info("🚀 Starting Fixed Edge Trading Executor")
         logger.info(f"⏱️ Trading cycle: Every {self.trading_cycle_minutes} minutes")
-        logger.info(f"🎯 Max trades per cycle: {self.max_trades_per_cycle}")
+        logger.info(f"📊 Portfolio-based allocation:")
+        logger.info(f"   Max portfolio exposure: {self.max_portfolio_exposure*100:.0f}% of bankroll")
+        logger.info(f"   Max position size: {self.max_position_size*100:.0f}% of bankroll")
         
         # Send startup notification
         embed = {
