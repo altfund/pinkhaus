@@ -21,21 +21,31 @@ class PortfolioMetrics:
     # Core values
     initial_bankroll: float
     current_bankroll: float  # Available cash
-    portfolio_value: float   # Total net worth
-    
+    portfolio_value: float   # Total net worth (MTM - includes unrealized)
+
+    # CORRECT BETTING ACCOUNTING (NEW)
+    book_value: float        # Cash + Stakes at cost (no unrealized P&L)
+    book_pnl: float          # Realized P&L only (from settled trades)
+    book_roi_percentage: float  # ROI based on book value
+
     # P&L breakdown
     realized_pnl: float      # Closed position profits/losses
     unrealized_pnl: float    # Mark-to-market on open positions
-    total_pnl: float         # realized + unrealized
-    
+    total_pnl: float         # realized + unrealized (MTM)
+
+    # Cash-based metrics (DEPRECATED - use book_value instead)
+    cash_portfolio_value: float  # Current cash only (missing stakes)
+    cash_pnl: float             # Cash change from initial
+    cash_roi_percentage: float   # ROI based on cash only
+
     # Position data
     active_positions: int
     total_stake: float       # Total deployed capital
-    
+
     # Performance
-    roi_percentage: float    # Total return on initial capital
+    roi_percentage: float    # Total return on initial capital (MTM)
     win_rate: float         # Percentage of winning closed trades
-    
+
     # Meta
     session_id: str
     last_updated: datetime
@@ -69,9 +79,15 @@ class UnifiedPortfolioCalculator:
                 initial_bankroll=10000.0,
                 current_bankroll=10000.0,
                 portfolio_value=10000.0,
+                book_value=10000.0,
+                book_pnl=0.0,
+                book_roi_percentage=0.0,
                 realized_pnl=0.0,
                 unrealized_pnl=0.0,
                 total_pnl=0.0,
+                cash_portfolio_value=10000.0,
+                cash_pnl=0.0,
+                cash_roi_percentage=0.0,
                 active_positions=0,
                 total_stake=0.0,
                 roi_percentage=0.0,
@@ -95,15 +111,21 @@ class UnifiedPortfolioCalculator:
         total_stake = sum(pos.get('total_stake', 0) for pos in positions.values())
         unrealized_pnl = sum(pos.get('pnl', 0) for pos in positions.values())
         
-        # CORRECT PORTFOLIO CALCULATION: Never double-count deployed capital
-        # Portfolio = Initial capital + All P&L (realized + unrealized)
-        # This is the accounting formula that matches reality
+        # MTM PORTFOLIO CALCULATION: Total net worth including unrealized gains
         total_pnl = realized_pnl + unrealized_pnl
         portfolio_value = initial_bankroll + total_pnl
-        
-        # Performance metrics
         roi_percentage = (total_pnl / initial_bankroll * 100) if initial_bankroll > 0 else 0.0
         
+        # CASH-BASED PORTFOLIO CALCULATION: Actual cash position only (DEPRECATED)
+        cash_pnl = current_bankroll - initial_bankroll
+        cash_portfolio_value = current_bankroll  # Just the actual cash
+        cash_roi_percentage = (cash_pnl / initial_bankroll * 100) if initial_bankroll > 0 else 0.0
+
+        # BOOK VALUE CALCULATION: Correct betting accounting (Cash + Stakes at cost)
+        book_value = current_bankroll + total_stake  # Total capital (cash + deployed)
+        book_pnl = realized_pnl  # Only realized P&L from settled trades
+        book_roi_percentage = (book_pnl / initial_bankroll * 100) if initial_bankroll > 0 else 0.0
+
         # Calculate win rate from closed trades
         winning_trades = performance.get('winning_trades', 0)
         losing_trades = performance.get('losing_trades', 0)
@@ -114,9 +136,15 @@ class UnifiedPortfolioCalculator:
             initial_bankroll=initial_bankroll,
             current_bankroll=current_bankroll,
             portfolio_value=portfolio_value,
+            book_value=book_value,
+            book_pnl=book_pnl,
+            book_roi_percentage=book_roi_percentage,
             realized_pnl=realized_pnl,
             unrealized_pnl=unrealized_pnl,
             total_pnl=total_pnl,
+            cash_portfolio_value=cash_portfolio_value,
+            cash_pnl=cash_pnl,
+            cash_roi_percentage=cash_roi_percentage,
             active_positions=active_positions,
             total_stake=total_stake,
             roi_percentage=roi_percentage,
@@ -126,28 +154,28 @@ class UnifiedPortfolioCalculator:
         )
     
     def _get_active_trading_session(self) -> Optional[Dict[str, Any]]:
-        """Find the active trading session with positions/trades."""
-        # First try the current session
+        """Find the active trading session - always use current session."""
+        # Always use the current session, even if it has no positions/trades
         current_session = self.session_manager.get_current_session()
-        
-        if current_session and (current_session.get('positions') or current_session.get('trades')):
+
+        if current_session:
             return current_session
-        
-        # Look for any session with actual trading activity
+
+        # Fallback: Look for any session with actual trading activity
         all_sessions = self.session_manager.sessions.get("sessions", {})
-        
+
         # Find sessions with positions or trades, sorted by creation time
         active_sessions = []
         for session_id, session_data in all_sessions.items():
             if session_data.get('positions') or session_data.get('trades'):
                 session_data['session_id'] = session_id  # Ensure session_id is set
                 active_sessions.append((session_id, session_data))
-        
+
         if active_sessions:
             # Sort by creation time and get most recent
             active_sessions.sort(key=lambda x: x[1].get('created_at', ''), reverse=True)
             return active_sessions[0][1]
-        
+
         return None
     
     def validate_portfolio_calculation(self) -> Dict[str, Any]:
