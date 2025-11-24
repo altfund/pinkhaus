@@ -73,6 +73,9 @@ class MarketDataHeartbeat:
                     stake = position.get('total_stake', 0)
                     entry_odds = position.get('avg_odds', 1.0)
 
+                    # ALWAYS count this position's stake regardless of odds availability
+                    total_stakes += stake
+
                     try:
                         # Find market by team name (approximate match)
                         team_name = market_name.split(' vs ')[0][:10]
@@ -109,7 +112,6 @@ class MarketDataHeartbeat:
                                     'odds_movement': ((current_odds - entry_odds) / entry_odds) * 100
                                 })
 
-                                total_stakes += stake
                                 total_odds_shift += potential_shift
 
                             else:
