@@ -571,7 +571,10 @@ class CarverHeartbeatWithBacktest:
             logger.info("🚨 Checking for overdue positions to settle...")
             try:
                 from datetime import timedelta
-                
+
+                # Force reload session data from disk to get latest state
+                self.session_manager.sessions = self.session_manager._load_sessions()
+
                 # Get current session and check for overdue positions
                 current_session = self.session_manager.get_current_session()
                 if current_session and current_session.get('positions'):
