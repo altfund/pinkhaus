@@ -55,6 +55,8 @@ class MarketDataHeartbeat:
     def get_live_position_values(self) -> Dict:
         """Get current odds for all open positions and track movements"""
         try:
+            # Force reload session data from disk to get latest state
+            self.session_manager.sessions = self.session_manager._load_sessions()
             current_session = self.session_manager.get_current_session()
             if not current_session or not current_session.get('positions'):
                 return {'total_stakes': 0, 'position_updates': [], 'total_odds_shift': 0}
