@@ -121,29 +121,117 @@ def process_games_into_markets(games: List[Dict], source: str) -> int:
             is_resolved = game.get('isGameFinished', game.get('resolved', False))
             last_update = game.get('lastUpdate', 0)
 
-            # DETERMINISTIC SPORT DETECTION from tags (used by Overtime contracts)
-            # Tags contain sport ID: 9004=Soccer, 9001=American Football, etc.
-            tags = game.get('tags', [])
-            sport_tag = tags[0] if tags and len(tags) > 0 else None
+            # SOCCER-ONLY FILTERING: Tournament + Team Name Based
+            # (API doesn't provide tags field, so use deterministic patterns)
 
-            # TAG MAPPING (from Overtime contracts)
-            TAG_TO_SPORT_ID = {
-                9001: 0,  # American Football
-                9002: 1,  # Basketball
-                9003: 2,  # Baseball
-                9015: 3,  # Hockey
-                9004: 4,  # Soccer
-                9007: 5,  # Boxing/MMA
-                9008: 6,  # Tennis
-                9010: 7,  # Motorsports
-                9011: 8,  # Golf
-                9012: 9,  # Cricket
+            league = game.get('tournamentName', '')
+
+            # Method 1: Known Soccer Tournaments/Leagues (DETERMINISTIC)
+            SOCCER_TOURNAMENTS = {
+                # Major European Leagues
+                'premier league', 'la liga', 'serie a', 'bundesliga', 'ligue 1',
+                'eredivisie', 'primeira liga', 'scottish premiership',
+                # International
+                'uefa champions league', 'uefa europa league', 'copa libertadores',
+                'copa sudamericana', 'afc champions league', 'concacaf',
+                'world cup', 'euro', 'copa america',
+                # Other Leagues
+                'mls', 'liga mx', 'championship', 'league one', 'league two',
+                'j league', 'k league', 'a-league', 'superliga', 'ekstraklasa',
+                'allsvenskan', 'eliteserien', 'jupiler pro league',
+                # Lower Leagues
+                'national league', 'vanarama', 'isthmian', 'southern league',
+                # Women's
+                'wsl', "women's super league", 'nwsl', 'd1 feminine',
             }
 
-            sport_id = TAG_TO_SPORT_ID.get(sport_tag, 4)  # Default to Soccer if no tag
+            # Check if tournament is known soccer league
+            is_soccer_tournament = any(
+                soccer_league in league.lower()
+                for soccer_league in SOCCER_TOURNAMENTS
+            )
 
-            # SOCCER ONLY - Skip non-soccer sports
-            if sport_id != 4:
+            # Check for non-soccer tournament indicators
+            NON_SOCCER_LEAGUES = {
+                'itf', 'atp', 'wta',  # Tennis
+                'nba', 'wnba', 'ncaa basketball',  # Basketball
+                'nfl', 'ncaa football',  # American Football
+                'nhl',  # Hockey
+                'mlb',  # Baseball
+                'esl', 'iem', 'blast', 'pgl', 'cs:go', 'dota', 'league of legends',  # Esports
+            }
+            is_non_soccer_tournament = any(
+                non_soccer in league.lower()
+                for non_soccer in NON_SOCCER_LEAGUES
+            )
+
+            # Skip if clearly non-soccer tournament
+            if is_non_soccer_tournament:
+                continue
+
+            # Method 2: Team Name Patterns (BACKUP - if no tournament match)
+            if not is_soccer_tournament and len(teams) >= 2:
+                team_text = ' '.join(team.get('name', '') for team in teams).lower()
+
+                # Soccer club indicators
+                SOCCER_INDICATORS = {
+                    ' fc ', ' cf ', ' sc ', ' afc ', ' bfc ', ' cfc ',
+                    'united', 'city fc', 'athletic', 'real ', 'sporting',
+                    'arsenal', 'liverpool', 'chelsea', 'barcelona', 'madrid',
+                    'juventus', 'milan', 'inter', 'bayern', 'dortmund',
+                    'ajax', 'benfica', 'porto', 'celtic fc', 'albion',
+                    'wanderers', 'rovers', 'hotspur', 'villa',
+                }
+
+                has_soccer_indicators = any(
+                    indicator in team_text
+                    for indicator in SOCCER_INDICATORS
+                )
+
+                # Non-soccer sport indicators (HIGH CONFIDENCE)
+                NON_SOCCER_INDICATORS = {
+                    # NBA
+                    'lakers', 'celtics', 'warriors', 'heat', 'bulls', 'nuggets',
+                    'knicks', 'nets', 'sixers', 'bucks', 'raptors', 'mavericks',
+                    # NFL
+                    'patriots', 'cowboys', 'packers', '49ers', 'steelers',
+                    'eagles', 'ravens', 'chiefs', 'seahawks', 'broncos',
+                    # NHL
+                    'canadiens', 'maple leafs', 'bruins', 'lightning', 'blackhawks',
+                    'penguins', 'rangers', 'flyers', 'red wings', 'oilers',
+                    # Baseball
+                    'yankees', 'red sox', 'dodgers', 'cubs', 'astros',
+                    # Esports Teams (CS:GO, Dota, LoL, etc.)
+                    'fnatic', 'navi', 'natus vincere', 'faze', 'g2 esports',
+                    'team liquid', 'cloud9', 'astralis', 'vitality', 'mouz',
+                    'ence', 'big clan', 'heroic', 'og esports', 'spirit',
+                    'eternal fire', 'havu', 'complexity', 'ninjas in pyjamas',
+                    'virtus.pro', 'mousesports', 'team secret', 'evil geniuses',
+                    'tsm', 't1 esports', 'gen.g', 'drx',
+                }
+
+                # Tennis detection: individual names (2-3 words each) with no club suffixes
+                is_likely_tennis = (
+                    len(teams) == 2 and
+                    all(len(team.get('name', '').split()) <= 3 for team in teams) and
+                    not any(suffix in team_text for suffix in [' fc', ' cf', ' sc', ' afc', 'united'])
+                )
+
+                has_non_soccer = (
+                    any(indicator in team_text for indicator in NON_SOCCER_INDICATORS) or
+                    is_likely_tennis
+                )
+
+                # Skip if clearly not soccer
+                if has_non_soccer:
+                    continue
+
+                # Skip if no soccer indicators found
+                if not has_soccer_indicators:
+                    continue
+
+            # Skip if not a soccer tournament and team check failed
+            elif not is_soccer_tournament:
                 continue
             
             # Skip finished games
@@ -216,24 +304,11 @@ def process_games_into_markets(games: List[Dict], source: str) -> int:
                 if db.query(Market).filter(Market.source_id == market_id).first():
                     continue
                     
-                # Sport mapping
-                sport_map = {
-                    0: "American Football",
-                    1: "Basketball",
-                    2: "Baseball", 
-                    3: "Hockey",
-                    4: "Soccer",
-                    5: "Boxing/MMA",
-                    6: "Tennis",
-                    7: "Motorsports",
-                    8: "Golf",
-                    9: "Cricket"
-                }
-                
+                # All markets are soccer (filtered above)
                 market = Market(
                     source_id=market_id,
                     source=source,
-                    sport=sport_map.get(sport_id, "Soccer"),
+                    sport="Soccer",
                     league_name=league,
                     market_type="winner",
                     home_team=home_team,
@@ -246,19 +321,15 @@ def process_games_into_markets(games: List[Dict], source: str) -> int:
                 
                 # Add realistic soccer odds with lower margins for better edges
                 import random
-                if sport_map.get(sport_id) == "Soccer":
-                    # Soccer: home, away, draw - optimized for 3-5% margins instead of 15%+
-                    odds_sets = [
-                        {'home': 2.45, 'away': 3.10, 'draw': 3.20},  # Home favored, 4.2% margin
-                        {'home': 3.20, 'away': 2.45, 'draw': 3.00},  # Away favored, 3.8% margin  
-                        {'home': 2.95, 'away': 2.85, 'draw': 3.10},  # Even match, 3.5% margin
-                        {'home': 2.05, 'away': 4.20, 'draw': 3.40},  # Strong home favorite, 4.8% margin
-                        {'home': 4.00, 'away': 2.10, 'draw': 3.30},  # Strong away favorite, 4.5% margin
-                    ]
-                    odds = random.choice(odds_sets)
-                else:
-                    # Other sports: home, away - also lower margins
-                    odds = {'home': 2.05, 'away': 1.95}  # 2.4% margin
+                # Soccer: home, away, draw - optimized for 3-5% margins instead of 15%+
+                odds_sets = [
+                    {'home': 2.45, 'away': 3.10, 'draw': 3.20},  # Home favored, 4.2% margin
+                    {'home': 3.20, 'away': 2.45, 'draw': 3.00},  # Away favored, 3.8% margin
+                    {'home': 2.95, 'away': 2.85, 'draw': 3.10},  # Even match, 3.5% margin
+                    {'home': 2.05, 'away': 4.20, 'draw': 3.40},  # Strong home favorite, 4.8% margin
+                    {'home': 4.00, 'away': 2.10, 'draw': 3.30},  # Strong away favorite, 4.5% margin
+                ]
+                odds = random.choice(odds_sets)
                 
                 for outcome, decimal_odds in odds.items():
                     american = int((decimal_odds - 1) * 100) if decimal_odds >= 2 else int(-100 / (decimal_odds - 1))
@@ -280,7 +351,7 @@ def process_games_into_markets(games: List[Dict], source: str) -> int:
                 markets_added += 1
                 
                 logger.info(f"✅ Added: {home_team} vs {away_team}")
-                logger.info(f"   Sport: {sport_map.get(sport_id, 'Unknown')}")
+                logger.info(f"   League: {league}")
                 logger.info(f"   Date: {maturity}")
                 
         except Exception as e:

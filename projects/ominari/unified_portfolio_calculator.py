@@ -198,17 +198,29 @@ class UnifiedPortfolioCalculator:
         ) < 0.01
         
         # Check cash flow logic
-        # Cash should equal: initial - deployed capital - fees + realized profits
+        # Cash should equal: initial - total execution stakes + total payouts
+        # (execution stakes include fees, payouts are gross winnings)
         current_session = self._get_active_trading_session()
         if current_session:
-            performance = current_session.get('performance', {})
-            total_fees = performance.get('total_fees', 0)
-            
-            expected_cash = (metrics.initial_bankroll - 
-                           metrics.total_stake - 
-                           total_fees + 
-                           metrics.realized_pnl)
-            
+            # Get all positions (open + closed)
+            all_positions = (
+                list(current_session.get('positions', {}).values()) +
+                current_session.get('closed_positions', [])
+            )
+
+            # Total execution stakes (nominal + fees)
+            total_execution = sum(
+                pos.get('execution_stake', pos.get('total_stake', 0))
+                for pos in all_positions
+            )
+
+            # Total payouts from wins
+            total_payouts = sum(
+                pos.get('final_value', 0)
+                for pos in current_session.get('closed_positions', [])
+            )
+
+            expected_cash = metrics.initial_bankroll - total_execution + total_payouts
             cash_check = abs(metrics.current_bankroll - expected_cash) < 1.0
         else:
             cash_check = True
