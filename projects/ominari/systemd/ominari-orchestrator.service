@@ -1,0 +1,34 @@
+[Unit]
+Description=Ominari Strategy Testing Orchestrator
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ess
+Group=ess
+WorkingDirectory=/home/ess/Documents/apps/ominari/projects/ominari
+Environment="PATH=/home/ess/Documents/apps/ominari/projects/ominari/.flox/run/x86_64-linux.ominari.dev/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PG_PORT=5999"
+
+# Run the orchestrator
+ExecStart=/home/ess/Documents/apps/ominari/projects/ominari/.flox/run/x86_64-linux.ominari.dev/bin/python3 automated_strategy_orchestrator.py
+
+# Restart policy
+Restart=always
+RestartSec=30
+
+# Resource limits
+LimitNOFILE=65536
+Nice=5
+
+# Logging
+StandardOutput=append:/home/ess/Documents/apps/ominari/projects/ominari/logs/orchestrator.log
+StandardError=append:/home/ess/Documents/apps/ominari/projects/ominari/logs/orchestrator-error.log
+
+# Graceful shutdown
+TimeoutStopSec=60
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target
