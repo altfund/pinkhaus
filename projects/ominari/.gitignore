@@ -108,6 +108,8 @@ coverage.xml
 
 # Django stuff:
 *.log
+*.log.*
+logs/
 local_settings.py
 db.sqlite3
 
@@ -138,6 +140,10 @@ celerybeat-schedule
 
 # Environments
 .env
+.env.*
+.env.local
+.env.testnet
+.env.production
 .venv
 env/
 venv/
@@ -160,8 +166,10 @@ venv.bak/
 
 .pdf
 
-# Flox postgres data
+# Flox postgres data and sockets
 .flox/postgres/data/
+.flox/postgres/socket/
+.flox/env/manifest.lock
 *.out
 
 # Temporary venv

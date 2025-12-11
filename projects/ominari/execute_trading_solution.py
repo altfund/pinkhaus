@@ -6,6 +6,22 @@ Integrates the fixed edge calculation with actual trade execution
 
 import os
 import sys
+
+# CRITICAL: Force .venv packages to load first
+# Add .venv site-packages to the FRONT of sys.path before any imports
+venv_site_packages = os.path.join(os.path.dirname(__file__), '.venv', 'lib', 'python3.13', 'site-packages')
+if os.path.exists(venv_site_packages):
+    sys.path.insert(0, venv_site_packages)
+
+# Remove PYTHONPATH pollution from flox environment
+if 'PYTHONPATH' in os.environ:
+    del os.environ['PYTHONPATH']
+if 'PYTHONHOME' in os.environ:
+    del os.environ['PYTHONHOME']
+
+# Clean sys.path of any flox packages AFTER adding venv
+sys.path = [p for p in sys.path if p == venv_site_packages or '.flox/' not in p]
+
 import asyncio
 import logging
 import time
@@ -17,13 +33,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Load environment
 from load_env import load_dotenv
 load_dotenv()
+
+# Use PostgreSQL on port 5999 (same as backtest system)
 os.environ['PG_PORT'] = '5999'
 
 from paper_trading_sessions import PaperTradingSessionManager
 from fixed_edge_calculation import FixedEdgeSignalProvider
 from database_v2 import db_manager
 from models import Market, Odd
-from notifications.discord_notifier import discord_notifier
+from notifications.smart_notifier import smart_notifier
 from trading_costs import RealisticTradingCostCalculator
 from conservative_edge_calculator import ConservativeEdgeCalculator
 
@@ -309,7 +327,8 @@ class FixedEdgeTradingExecutor:
             # Calculate current portfolio exposure
             current_bankroll = current_session.get('current_bankroll', 10000) if current_session else 10000
             existing_positions = current_session.get('positions', {}) if current_session else {}
-            current_exposure = sum(pos.get('total_stake', 0) for pos in existing_positions.values())
+            # Use total_stake field (positions aggregate multiple trades)
+            current_exposure = sum(pos.get('total_stake', pos.get('stake', 0)) for pos in existing_positions.values())
 
             logger.info(f"💰 Bankroll: ${current_bankroll:,.2f}")
             logger.info(f"📊 Current Exposure: ${current_exposure:,.2f} ({current_exposure/current_bankroll*100:.1f}%)")
@@ -385,6 +404,33 @@ class FixedEdgeTradingExecutor:
                 if success:
                     trades_executed = trades_to_execute
                     logger.info(f"✅ Recorded {len(trades_executed)} trades")
+
+                    # Send individual enhanced notifications for each trade
+                    try:
+                        from trading_notifications import trading_notifier
+                        import asyncio
+
+                        for trade in trades_executed:
+                            # Send comprehensive trade notification
+                            asyncio.create_task(
+                                trading_notifier.notify_trade_placed(
+                                    market_name=trade['bet_name'],
+                                    outcome=trade['outcome'],
+                                    stake=trade['stake'],
+                                    odds=trade['odds'],
+                                    edge=trade['edge'],
+                                    entry_prob=trade.get('fair_prob', 1/trade['odds']),
+                                    kelly_fraction=0.25,
+                                    maturity_date=None,  # Not available in trade dict
+                                    current_positions=len(existing_positions) + len(trades_executed),
+                                    total_stake=current_exposure + sum(t['stake'] for t in trades_executed),
+                                    bankroll=current_bankroll
+                                )
+                            )
+                        logger.info(f"📤 Sent {len(trades_executed)} trade notifications to Discord")
+                    except Exception as e:
+                        logger.warning(f"Failed to send enhanced trade notifications: {e}")
+
                 else:
                     logger.error(f"❌ Failed to record trades")
             
@@ -426,7 +472,7 @@ class FixedEdgeTradingExecutor:
                 }
                 
                 try:
-                    discord_notifier.send_embed(embed)
+                    smart_notifier.send_embed(embed, message_type="trade")
                 except:
                     pass
                     
@@ -454,7 +500,7 @@ class FixedEdgeTradingExecutor:
         }
         
         try:
-            discord_notifier.send_embed(embed)
+            smart_notifier.send_embed(embed, message_type="general")
         except:
             pass
         
