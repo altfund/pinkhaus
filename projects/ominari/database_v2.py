@@ -5,13 +5,20 @@ PostgreSQL Database Manager V2
 Updated from SQLite to PostgreSQL with enhanced connection management.
 """
 
+import os
+import sys
+
+# CRITICAL: Force .venv packages to load first
+venv_site_packages = os.path.join(os.path.dirname(__file__), '.venv', 'lib', 'python3.13', 'site-packages')
+if os.path.exists(venv_site_packages) and venv_site_packages not in sys.path:
+    sys.path.insert(0, venv_site_packages)
+
 from sqlalchemy import create_engine, event, pool, text
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import OperationalError
 from contextlib import contextmanager
 import time
 import logging
-import os
 from typing import Generator
 from datetime import datetime, timedelta
 
@@ -26,7 +33,8 @@ PG_CONFIG = {
     'database': os.getenv('PG_DB', 'ominari_production')
 }
 
-DB_URL = f"postgresql://{PG_CONFIG['user']}:{PG_CONFIG['password']}@{PG_CONFIG['host']}:{PG_CONFIG['port']}/{PG_CONFIG['database']}"
+# Check for DATABASE_URL environment variable first, otherwise use PostgreSQL config
+DB_URL = os.getenv('DATABASE_URL') or f"postgresql://{PG_CONFIG['user']}:{PG_CONFIG['password']}@{PG_CONFIG['host']}:{PG_CONFIG['port']}/{PG_CONFIG['database']}"
 
 # Connection pool configuration optimized for PostgreSQL
 POOL_CONFIG = {
@@ -52,21 +60,33 @@ class DatabaseManager:
     def engine(self):
         """Lazy initialization of database engine."""
         if self._engine is None:
-            self._engine = create_engine(
-                self.db_url,
-                **POOL_CONFIG,
-                echo=False,  # Set to True for SQL debugging
-                future=True
-            )
+            # Use pool config only for PostgreSQL, not SQLite
+            if self.db_url.startswith('sqlite'):
+                self._engine = create_engine(
+                    self.db_url,
+                    echo=False,
+                    future=True
+                )
+            else:
+                self._engine = create_engine(
+                    self.db_url,
+                    **POOL_CONFIG,
+                    echo=False,  # Set to True for SQL debugging
+                    future=True
+                )
 
-            # Configure PostgreSQL session settings
-            @event.listens_for(self._engine, "connect")
-            def set_postgresql_search_path(dbapi_connection, connection_record):
-                with dbapi_connection.cursor() as cursor:
-                    # Set search path to include ominari schema
-                    cursor.execute("SET search_path TO ominari, public")
-                    cursor.execute("SET statement_timeout = '300s'")
-                    cursor.execute("SET work_mem = '32MB'")
+            # Configure PostgreSQL session settings (only for PostgreSQL)
+            if not self.db_url.startswith('sqlite'):
+                @event.listens_for(self._engine, "connect")
+                def set_postgresql_search_path(dbapi_connection, connection_record):
+                    cursor = dbapi_connection.cursor()
+                    try:
+                        # Set search path to include ominari schema
+                        cursor.execute("SET search_path TO ominari, public")
+                        cursor.execute("SET statement_timeout = '300s'")
+                        cursor.execute("SET work_mem = '32MB'")
+                    finally:
+                        cursor.close()
 
             logger.info("PostgreSQL engine created with connection pooling")
 
